@@ -29,3 +29,7 @@ The tests drive headless Chrome over the DevTools protocol (Node 22+, no depende
 ## Not affiliated
 
 This project is not affiliated with, endorsed by, or connected to Pioneer DJ / AlphaTheta, 1010music, or Squarp Instruments. Product names are trademarks of their owners and are used only to say what each simulation is of. No manuals, firmware, samples or artwork from those companies are included. The explanations are written from scratch, with page references to the official manuals.
+
+## License
+
+MIT, see [LICENSE](LICENSE). It covers the code and text in this repository only, not the instruments, their names or their manuals.
