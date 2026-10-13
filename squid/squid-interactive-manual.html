@@ -1,0 +1,1160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQUID Interactive Manual</title>
+<style>
+:root{
+  --bg:#f4f3ef; --fg:#1d1d1f; --muted:#5b5b60; --card:#ffffff; --line:#d9d7d0; --accent:#c2410c; --accent-fg:#fff;
+  --wish:#d97706; --ok:#15803d; --combo:#0284c7;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141416; --fg:#ececef; --muted:#a1a1aa; --card:#1e1e22; --line:#33333a; --accent:#fb923c; --accent-fg:#111;
+    --wish:#fbbf24; --ok:#4ade80; --combo:#38bdf8;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141416; --fg:#ececef; --muted:#a1a1aa; --card:#1e1e22; --line:#33333a; --accent:#fb923c; --accent-fg:#111;
+  --wish:#fbbf24; --ok:#4ade80; --combo:#38bdf8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:14px 16px 8px;max-width:1400px;margin:0 auto}
+h1{font-size:20px;margin:0}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:1400px;margin:0 auto;padding:6px 16px}
+.bar button,.bar select{font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+.bar button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.bar .hint{color:var(--muted);font-size:12px;margin-left:auto}
+#deviceWrap{max-width:1400px;margin:0 auto;padding:4px 16px}
+#device{width:100%;height:auto;display:block;touch-action:pan-y pinch-zoom;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.viewbar{display:none;gap:6px;align-items:center;max-width:1400px;margin:0 auto;padding:2px 16px}
+.viewbar span{font-size:12px;color:var(--muted)}
+.viewbar button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+.viewbar button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.hint .touch{display:none}
+@media (pointer:coarse){.hint .desk{display:none}.hint .touch{display:inline}}
+main{max-width:1400px;margin:0 auto;padding:8px 16px 40px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px}
+@media (max-width:860px){main{grid-template-columns:minmax(0,1fr)}.bar .hint{margin-left:0}.viewbar{display:flex}
+  #tourBox:not([hidden]){position:fixed;left:8px;right:8px;bottom:8px;z-index:15;max-height:38vh;overflow:auto;box-shadow:0 6px 24px rgba(0,0,0,.3)}
+  main{padding-bottom:40vh}}
+@media (max-width:480px){header{padding-top:10px}h1{font-size:18px}.sub{font-size:12px}.bar button,.bar select{padding:6px 8px}#comboList li{flex-wrap:wrap}#comboList .cd{flex-basis:100%;order:3}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.card h2{font-size:16px;margin:0 0 6px}
+.card h3{font-size:13px;margin:12px 0 4px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.card p{margin:6px 0}
+.pg{font-size:12px;color:var(--muted)}
+.fw{border-left:3px solid var(--accent);padding:4px 10px;margin:8px 0;font-size:13px}
+.wishbox{border-left:3px solid var(--wish);padding:4px 10px;margin:8px 0;font-size:13px}
+.wishbox b{color:var(--wish)}
+kbd{font:12px ui-monospace,monospace;border:1px solid var(--line);border-radius:4px;padding:0 4px}
+#tourBox .step{font-size:14px}
+#tourBox .nav{display:flex;gap:8px;margin-top:8px}
+#tourBox button{font:inherit;font-size:13px;padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+#tourBox .done{color:var(--ok)}
+ul.tight{margin:4px 0;padding-left:18px}
+ul.tight li{margin:2px 0}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+/* device */
+.ctl{cursor:pointer}
+.ctl:focus{outline:none}
+.hl .face{stroke:#fb923c!important;stroke-width:3!important}
+#tip{position:fixed;z-index:20;max-width:300px;padding:8px 10px;border-radius:8px;background:var(--card);color:var(--fg);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.18);font-size:12.5px;line-height:1.4;pointer-events:none}
+#tip b{display:block;font-size:13px;margin-bottom:2px}
+#tip .s{color:var(--muted);margin-top:4px}
+#tip .s em{color:var(--accent);font-style:normal;font-weight:600}
+.tourTarget .face{stroke:#22d3ee!important;stroke-width:4!important;animation:pulse 1s infinite}
+@keyframes pulse{50%{stroke-opacity:.3}}
+.latched .face{stroke:#facc15!important;stroke-width:3!important;stroke-dasharray:6 3}
+.ctl{transform-box:fill-box;transform-origin:center;transition:transform .12s ease-out}
+.ctl.big{transform:scale(1.15)}
+@media (prefers-reduced-motion:reduce){.ctl{transition:none}}
+.partner .face{stroke:#38bdf8!important;stroke-width:3!important}
+.comboHl .face,.comboDemo .face{stroke:#38bdf8!important;stroke-width:4.5!important}
+.comboDemo .face{animation:pulse .5s infinite}
+.comboDot{fill:#38bdf8;stroke:#000;stroke-width:1;pointer-events:none}
+#tip .cmb+.cmb{margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}
+#tip .cmb em{color:var(--combo);font-style:normal;font-weight:600}
+#comboQ{width:100%;font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+#comboList{max-height:440px;overflow:auto;margin-top:8px}
+#comboList ul{list-style:none;margin:0;padding:0}
+#comboList li{display:flex;gap:8px;align-items:baseline;padding:5px 6px;border-radius:6px;font-size:13px;cursor:default}
+#comboList li:hover{background:var(--bg)}
+#comboList .ct{font-weight:600;white-space:nowrap;color:var(--combo)}
+#comboList .cd{flex:1}
+#comboList .cplay{font:inherit;font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+#comboList i{font-size:11px;color:var(--muted);white-space:nowrap}
+.wishDot{fill:var(--wish);stroke:#000;stroke-width:1;pointer-events:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>SQUID interactive manual</h1>
+  <p class="sub">Unofficial fan recreation of the Toraiz SQUID multitrack sequencer (firmware 1.13). Front-panel layout and behaviour from the Operating Instructions + v1.10 addendum; screen text taken from the v1.13 firmware. Not affiliated with Pioneer DJ / AlphaTheta.</p>
+</header>
+<div class="bar">
+  <select id="exSel" aria-label="Example projects"><option value="">Example projects…</option></select>
+  <select id="tourSel" aria-label="Guided tours"><option value="">Guided tours…</option></select>
+  <button id="soundBtn" aria-pressed="false">Sound</button>
+  <button id="wishBtn" aria-pressed="false">Wish-list layer</button>
+  <button id="comboBtn" aria-pressed="true">Combo markers</button>
+  <button id="resetBtn">Reset demo</button>
+  <span class="hint"><span class="touch">Tap = press · long-press = hold/latch · drag a knob up/down = turn · tap a control for its tip</span><span class="desk">Click = press · right-click or long-press = hold/latch · wheel or drag = turn · <kbd>Space</kbd> play · <kbd>Shift</kbd> SHIFT · <kbd>←</kbd><kbd>→</kbd><kbd>Enter</kbd> selector · <kbd>Esc</kbd> BACK</span></span>
+</div>
+<div class="viewbar" role="group" aria-label="Panel view"><span>View</span><button data-v="pads">Pads</button><button data-v="controls">Controls</button><button data-v="full">Whole</button></div>
+<div id="deviceWrap"><svg id="device" viewBox="36 56 1278 766" role="application" aria-label="SQUID front panel"></svg></div>
+<main>
+  <section class="card" id="info" aria-live="polite"></section>
+  <section>
+    <div class="card" id="tourBox" hidden></div>
+    <div class="card" id="comboCard">
+      <h2>Button combinations</h2>
+      <p class="pg">Right-click or long-press (latch) any control marked <b style="color:var(--combo)">+</b>, or hold a pad, and the controls it combines with light up blue; hover one to read the combo. Hover a row below to see both controls, click Show to watch it.</p>
+      <input id="comboQ" type="search" placeholder="Filter, e.g. pad, loop, delete, mirror" aria-label="Filter combinations">
+      <div id="comboList"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>About this simulation</h2>
+      <p>The screen, menus, pad modes, step editing, pattern sets, mutes, copy/paste, interpolation, randomizer, running direction, speed and rhythmic controls, trigger probability and speed modulation all work. Turn on <b>Sound</b> to hear it through a built-in drum kit and synths, or pick one of the <b>Example projects</b>.</p>
+      <details><summary>Simplified or not simulated</summary>
+        <ul class="tight">
+          <li>No MIDI/CV/sync output; the rear jacks are labels only.</li>
+          <li>Sounds are a built-in drum kit and simple synths standing in for whatever the real tracks would drive over MIDI/CV. Drum tracks use the General MIDI drum map (36 kick, 38 snare, 42 closed hat…).</li><li>Swing delays the audio of even steps; the pads still light on the grid. Groove Bend shifts the current track only.</li>
+          <li>Arpeggiator, Note Repeat and real-time automation recording are display-only.</li>
+          <li>Chord-mode voicings and default Harmonizer chords are illustrative; the 18 chord set <i>names</i> come from the firmware.</li>
+          <li>Time Warp shows the mode and pad layout but doesn't record.</li>
+          <li>Skip-back direction is approximated (two steps forward, one back).</li>
+          <li>Projects: Create New and Restore Demo work; other file operations only show their screens.</li>
+        </ul>
+      </details>
+      <p class="pg">Sources: SQUID Operating Instructions (fw 1.0), v1.10 Addendum, v1.13 change history, string tables from <code>trzis1__v113.bin</code>. Wish-list items from <code>feature-requests.md</code>.</p>
+    </div>
+  </section>
+</main>
+<script>
+"use strict";
+/* ---------- reference data (manual + firmware strings) ---------- */
+const SCALES=[["CHROMA",[0,1,2,3,4,5,6,7,8,9,10,11]],["IONIAN",[0,2,4,5,7,9,11]],["DORIAN",[0,2,3,5,7,9,10]],["PHRYGIAN",[0,1,3,5,7,8,10]],
+["LYDIAN",[0,2,4,6,7,9,11]],["MIXOLYDN",[0,2,4,5,7,9,10]],["AEOLIAN",[0,2,3,5,7,8,10]],["LOCRIAN",[0,1,3,5,6,8,10]],["M. PENTA",[0,2,4,7,9]],
+["m. PENTA",[0,3,5,7,10]],["WHOLE T.",[0,2,4,6,8,10]],["DIMINISH",[0,2,3,5,6,8,9,11]],["COMBO D.",[0,1,3,4,6,7,9,10]],["ALTERED",[0,1,3,4,6,8,10]],
+["M. BLUES",[0,2,3,4,7,9]],["m. BLUES",[0,3,5,6,7,10]],["RAGA B.",[0,1,4,5,7,8,11]],["RAGA G.",[0,1,4,6,7,9,11]],["RAGA T.",[0,1,3,6,7,8,11]],
+["HAWAIIAN",[0,2,3,7,9]],["RYUKYU",[0,4,5,7,11]],["JP MIYAKO",[0,1,5,7,8]],["HARMO m.",[0,2,3,5,7,8,11]]];
+const NOTE=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const SHAPES=["Triangle1","Triangle2","Sine","Cosine","Saw","Square"];
+const CHORDSETS=["Dawn","Moody","Dusk","Farewell","Spark","Ascent","Journey","Grace","Breeze","Childhood","Pride","Blessing","Sunny","Winter","Ancient","Gratitude","Floaty","Forward"];
+const CHORDS={"M":[0,4,7],"m":[0,3,7],"7":[0,4,7,10],"M7":[0,4,7,11],"m7":[0,3,7,10],"mM7":[0,3,7,11],"6":[0,4,7,9],"m6":[0,3,7,9],"9":[0,4,7,10,14],
+"M9":[0,4,7,11,14],"m9":[0,3,7,10,14],"69":[0,4,7,9,14],"m69":[0,3,7,9,14],"sus4":[0,5,7],"7sus4":[0,5,7,10],"dim":[0,3,6],"aug":[0,4,8],"aug7":[0,4,8,10],
+"add9":[0,4,7,14],"7+5":[0,4,8,10],"7-5":[0,4,6,10],"m7-5":[0,3,6,10],"7(#9)":[0,4,7,10,15],"7-9":[0,4,7,10,13]};
+const CHORDNAMES=Object.keys(CHORDS);
+const GATES=[0.125,0.25,0.375,0.5,0.625,0.75,0.875,1,1.25,1.5,1.75,2,2.5,3,4,6,8,12,16,24,32,48,64];
+const TCOLORS=["#ff3b30","#ff7a1a","#ffb000","#ffe14d","#b6f03c","#34d058","#2fd4a0","#22d3ee","#3b9cff","#4f6bff","#8b5cf6","#c45cff","#ff4fd8","#ff5c8a","#e8e8e8","#9aa0a6"];
+const TRANSPOSE_PADS=[5,7,10,12,1,2,3,4,-4,-3,-2,-1,-12,-10,-7,-5];
+const range=(a,b,f=x=>String(x))=>{const r=[];for(let i=a;i<=b;i++)r.push(f(i));return r};
+const CH=["Disable",...range(1,16,i=>"MIDI Ch."+i),...range(1,16,i=>"USB Ch."+i)];
+const NOTES_ALL=range(0,127,i=>NOTE[i%12]+(Math.floor(i/12)-1));
+
+/* GLOBAL menu, v1.13 labels (Power Management replaced Auto Power Off in 1.13; Track Speed removed in 1.10) */
+const ACT="__action";
+const GLOBAL_MENU=[
+ ["Project Settings",[["Create New",ACT],["Open (recent)",ACT],["Open (by creation)",ACT],["Open (by name)",ACT],["Save",ACT],["Save As",ACT],["Rename & Save",ACT],["Delete",ACT]]],
+ ["Brightness Settings",[["Display",["1","2","3","4"],1],["Buttons Full Lit",["1","2","3","4","5"],3],["Pads Full Lit",["1","2","3","4"],2],["Pads Dim Lit",["1","2","3","4"],2]]],
+ ["Pad Settings",[["Velocity",["Disable","Enable"],1],["Velocity Curve",["Soft 3","Soft 2","Soft 1","Linear","Hard"],1],
+   ["Velocity Threshold",["Low 4","Low 3","Low 2","Low 1","Normal",...range(1,11,i=>"High "+i)],4],
+   ["Velocity Sensitivity",[...range(1,11,i=>"Light "+(12-i)),"Normal",...range(1,4,i=>"Heavy "+i)],11]]],
+ ["CV/GATE OUT Settings",[["CV/GATE1 From",CH,0],["CV/GATE2 From",CH,0]]],
+ ["CV Settings",[["CV1 Range",["Hz/V 8V","V/Oct 1V","V/Oct 2V","V/Oct 5V","V/Oct 10V","V/Oct -5V"],3],["CV1 Ref. Note",NOTES_ALL.slice(0,97),36],
+   ["CV2 Range",["Hz/V 8V","V/Oct 1V","V/Oct 2V","V/Oct 5V","V/Oct 10V","V/Oct -5V"],3],["CV2 Ref. Note",NOTES_ALL.slice(0,97),36]]],
+ ["GATE Settings",[["GATE1 Mode",["S-Trigger","V-Trigger 5V","V-Trigger 10V"],1],["GATE1 Polarity",["-","+"],1],["GATE2 Mode",["S-Trigger","V-Trigger 5V","V-Trigger 10V"],1],["GATE2 Polarity",["-","+"],1]]],
+ ["Sync Common Settings",[["Sync Source",["DIN MIDI","USB MIDI","DIN SYNC","CLOCK","Internal"],4],["Master Clock Mode",["Disable","Enable"],1]]],
+ ["DIN SYNC Settings",[["OUT1 Sync Mode",["Sync24","Sync48"],0],["OUT1 Cont/Rst Start",["Disable","Enable"],0],["OUT2 Mode",["IN","OUT"],0],["OUT2 Sync Mode",["Sync24","Sync48"],0],["OUT2 Cont/Rst Start",["Disable","Enable"],0]]],
+ ["CLOCK Settings",[["OUT Sync Mode",["1ppqn","2ppqn","4ppqn","24ppqn","48ppqn"],3],["OUT Polarity",["-","+"],1],["IN Sync Mode",["1step","1ppqn","2ppqn","4ppqn","24ppqn","48ppqn","Gate"],4],["IN Polarity",["-","+"],1]]],
+ ["MIDI IN Settings",[["Sync",["Disable","Receive"],1],["Start/Stop",["Disable","Receive"],1],["Rec Channel",["Disable","MIDI Ch.All",...range(1,16,i=>"MIDI Ch."+i),"USB Ch.All",...range(1,16,i=>"USB Ch."+i)],1]]],
+ ["MIDI OUT Settings",[["OUT1 Mode",["OUT","OUT+MIDI IN","OUT+USB IN"],0],["OUT1 Sync",["Disable","Send"],1],["OUT1 Start/Stop",["Disable","Send"],1],
+   ["OUT2 Mode",["OUT","OUT+MIDI IN","OUT+USB IN","THRU (MIDI IN)","THRU (USB IN)"],3],["OUT2 Sync",["Disable","Send"],1],["OUT2 Start/Stop",["Disable","Send"],1],
+   ["USB Mode",["OUT","OUT+MIDI IN"],0],["USB Sync",["Disable","Send"],1],["USB Start/Stop",["Disable","Send"],1]]],
+ ["Randomizer Settings",[["Trigger Type",["Euclid Based","Normal"],0],["Pitch Type",["Melodic","Normal"],0],["Pitch Min",NOTES_ALL,48],["Pitch Max",NOTES_ALL,72],
+   ["Gate Min",GATES.filter(g=>g<=16).map(g=>g+" Steps"),0],["Gate Max",GATES.filter(g=>g<=16).map(g=>g+" Steps"),7],
+   ["Velocity Min",range(0,127),60],["Velocity Max",range(0,127),100],["CC Min",range(0,127),0],["CC Max",range(0,127),127]]],
+ ["Etc Settings",[["Middle C",["C3","C4","C5"],1],["Power Management",["Disable","Enable"],1],["Step Preview",["Disable","Enable","Ena(Mute Cur Tr)","Ena(Mute All Tr)","Ena(Stop/Pause)"],1],
+   ["Reset All Settings",ACT],["Restore Demo",ACT],["System Info",ACT]]]
+];
+
+/* ---------- panel layout (coordinates traced from the manual's control-panel diagram) ---------- */
+const C=[];
+const B=(id,x,y,w,h,label,o={})=>C.push({id,t:"btn",x,y,w,h,label,...o});
+const K=(id,x,y,r,label,o={})=>C.push({id,t:"knob",x,y,r,label,...o});
+// global section
+B("shift",88,176,54,30,"SHIFT");
+B("rec",194,175,64,32,"●",{sub:"UNDO",led:"#ff3b30"});
+B("stop",266,175,64,32,"■");
+B("play",338,175,64,32,"▶",{sub:"RESTART",led:"#34d058"});
+K("tap",458,190,23,"TAP",{btn:true,sub:"QUANTIZE"});
+B("global",528,146,56,32,"GLOBAL");
+B("back",531,212,50,15,"",{cap:"BACK",pill:true});
+K("rotary",668,190,22,"",{enc:true});
+B("tw",1100,172,56,40,"TIME\nWARP");
+// phrase arrangement
+K("shape",118,322,21,"SHAPE");K("modlen",210,322,21,"MOD  LENGTH");K("depth",305,322,21,"DEPTH",{center:true});
+K("scaleK",445,322,21,"SCALE",{badge:"KEY"});B("arp",503,306,50,32,"ARP",{sub:"SETTING"});
+K("swing",160,470,23,"SWING");
+C.push({id:"groove",t:"slider",x:92,y:612,w:160});
+C.push({id:"autoLed",t:"led",x:282,y:628});
+B("rev",289,426,46,30,"REV");B("dRight",371,425,50,32,"→");B("dDown",437,425,50,32,"↓");B("dZig",503,425,50,32,"⇌");
+B("sb",289,496,46,36,"SWITCH\nBACK");B("dCw",371,500,50,32,"↻");B("dCcw",437,500,50,32,"↺");B("dSkip",503,500,50,32,"∿");
+B("half",371,600,48,32,"1/2X",{sub:"NUDGE −"});B("ghold",437,600,50,32,"GATE\nHOLD");B("dbl",503,600,50,32,"2X",{sub:"NUDGE +"});
+B("r4",80,724,48,30,"1/4");B("r8",146,724,50,30,"1/8");B("r16",213,724,50,30,"1/16");B("r32",279,724,48,30,"1/32");
+B("trip",354,724,50,30,"TRIPLET");B("dot",420,724,50,30,"DOTTED");
+K("trigprob",535,738,24,"TRIG\nPROB",{btn:true,sub:"SETTING"});
+// step edit
+B("track",604,260,64,32,"TRACK",{sub:"SETTING"});B("mute",604,306,64,32,"TRK MUTE");
+B("pattern",604,357,64,32,"PATTERN",{sub:"PATTERN SET"});B("scale",604,421,64,32,"SCALE",{sub:"CHORD"});B("transpose",604,469,64,34,"TRANSPOSE");
+B("trigger",604,536,64,32,"TRIGGER",{sub:"CC"});B("tie",604,588,64,32,"TIE",{sub:"CV SLIDE"});B("active",604,640,64,32,"ACTIVE",{sub:"TRIG RANDOM"});
+B("copy",714,259,76,33,"COPY");B("paste",806,259,76,33,"PASTE");
+B("left",896,259,86,33,"◀",{sub:"PAGE LENGTH −"});B("right",986,259,72,33,"▶",{sub:"PAGE LENGTH +"});
+for(let i=0;i<16;i++)C.push({id:"pad"+i,t:"pad",i,x:712+(i%4)*90,y:320+Math.floor(i/4)*90,w:78,h:78});
+for(let i=0;i<6;i++)B("h"+(i+1),697+i*63,726,50,30,String(i+1));
+B("iPitch",1103,278,52,32,"PITCH",{sub:"RANDOM"});B("iGate",1103,378,52,32,"GATE",{sub:"RANDOM"});B("iVel",1103,470,52,32,"VELOCITY",{sub:"RANDOM"});
+B("fixed",1103,627,52,34,"FIXED\nLENGTH",{sub:"SETTING"});
+K("k1",1234,295,22,"PITCH / CC 1");K("k2",1234,392,22,"GATE / CC 2");K("k3",1234,486,22,"VELOCITY / CC 3");K("k4",1234,590,22,"COUNT / CC 4");K("k5",1234,686,22,"DIVIDE / CC 5",{badge:"STEP SHIFT"});
+
+/* ---------- manual text per control: [name, function, SHIFT function, pages] ---------- */
+const INFO={
+ shift:["SHIFT button","Hold while pressing another button or turning a knob to reach its alternative function (the label printed under it).","—","p.9"],
+ rec:["● Record button","Toggles recording of pad performance, Harmonizer performance and automation (Groove Bend, Speed Control, Rhythmic Control) in real time. Press ● then ▶ to record while the pattern plays.","UNDO: shows the history of up to 16 past operations; turn the selector to restore one. SHIFT+● again steps back one.","p.9, 27, 104"],
+ stop:["■ Stop button","Stops pattern playback.","—","p.9"],
+ play:["▶ Play button","Plays or pauses the pattern. Up to 8 notes per track can sound at once.","RESTART: restarts the sequence from the first step without stopping.","p.9, 26"],
+ tap:["TAP button","Press, then turn the selector to set the BPM (30–300). Tap twice or more to set the BPM from the tap interval.","QUANTIZE: Quantize Range for real-time recording (OFF, 1/32, 1/16, 1/8).","p.10, 28, 140"],
+ global:["GLOBAL button","Opens the GLOBAL menu: project management and all unit settings. Hold GLOBAL and press a pad to jump to a settings category.","—","p.10, 108"],
+ back:["BACK button","Returns to the higher menu layer, or cancels a value you are editing.","SHIFT+BACK while naming: delete character.","p.10"],
+ rotary:["Rotary selector","Turn to select menu items and change values; press to confirm. Its job changes with the pad mode: output destination (TRACK), pattern speed (PATTERN), Note Repeat layout (SCALE), chord set (CHORD), CC knob/number (CC), note slot of a held pad (TRIGGER).","SHIFT+turn: BPM decimals / output terminal (TRACK mode).","p.10"],
+ tw:["TIME WARP button","Auto-records the last 256 steps (16 bars) of all tracks in the background. Enter Time Warp, choose a 1–4 bar length with the selector, tap a pad (1 bar each, pad 1 oldest) to preview, then press PATTERN and a pad to save it as a new pattern. Since v1.10 playback keeps running when you enter/leave.","—","p.10, 106"],
+ shape:["SHAPE knob","Speed Modulation waveform: Triangle1, Triangle2, Sine, Cosine, Saw, Square. Speed Modulation speeds up and slows down playback in a cycle to create grooves.","—","p.11, 80–85"],
+ modlen:["MOD LENGTH knob","Speed Modulation cycle length, 2–64 steps. Kept even if direction or pattern length changes.","—","p.11, 83"],
+ depth:["DEPTH knob","Speed Modulation strength, −64 to +63. 0 = no modulation.","—","p.11, 85"],
+ scaleK:["SCALE knob","Melodic Control: choose one of 23 scales. Pattern pitches are corrected to the scale automatically, and SCALE-mode pads light the scale.","KEY: set the key of the scale (transposes the pattern).","p.11, 87–90"],
+ arp:["ARP button","Turns the Arpeggiator on/off. Notes on polyphonic steps (or held pads when stopped) play as arpeggios.","SETTING: Rate, Style, Range, Gate Length.","p.11, 91, 142"],
+ swing:["SWING knob","Groove Control: delays the even steps, 0–100 % (100 % = offset to 1/32T). Affects internal triggers only, not clock output.","—","p.12, 92"],
+ groove:["GROOVE BEND slider","Drag left to make triggers drag, right to make them rush, by up to 1 step, like playing a real instrument. Recordable as automation; AUTOMATION ON lights when recorded.","—","p.12, 93"],
+ autoLed:["AUTOMATION ON indicator","Lit when Groove Bend automation is recorded on the pattern.","—","p.12"],
+ rev:["REV button","Reverses the running direction currently selected.","—","p.12, 97"],
+ dRight:["→ button","Running Direction: left to right, row by row (normal).","Mirror horizontally (right to left).","p.12, 95"],
+ dDown:["↓ button","Running Direction: top to bottom, column by column.","Mirror horizontally.","p.12, 96"],
+ dZig:["Zigzag button","Running Direction: snake through the rows, alternating direction each row.","Mirror horizontally.","p.12, 96"],
+ sb:["SWITCH BACK button","Playback bounces back and forth between the first and last steps in the selected direction.","—","p.12, 98"],
+ dCw:["Clockwise button","Running Direction: spiral clockwise from the outside in.","Mirror horizontally.","p.12, 96"],
+ dCcw:["Counter-clockwise button","Running Direction: spiral counter-clockwise from the outside in.","Mirror horizontally.","p.12, 96"],
+ dSkip:["Skip back button","Running Direction: steps forward and skips back. (Approximated here as two forward, one back.)","Mirror horizontally.","p.12, 97"],
+ half:["1/2X button","Hold during playback to play the current pattern at half speed (gates double). The position keeps running in the background and resumes on release.","NUDGE −: temporarily slow the BPM (±5 BPM/s) to beat-match; when slaved, delays by one clock (v1.10).","p.12, 99"],
+ ghold:["GATE HOLD button","Hold to freeze the currently sounding notes as if the phrase stopped; playback resumes from the background position on release.","—","p.12, 99"],
+ dbl:["2X button","Hold during playback to double the current pattern's speed.","NUDGE +: temporarily speed up the BPM; when slaved, advances one clock (v1.10).","p.12, 100"],
+ r4:["1/4 loop button","Rhythmic Control: hold to loop 4 steps from the playing position. TRIPLET ×2/3, DOTTED ×3/2.","HOLD: keep looping after release.","p.12, 101"],
+ r8:["1/8 loop button","Hold to loop 2 steps.","HOLD.","p.12, 101"],
+ r16:["1/16 loop button","Hold to loop 1 step.","HOLD.","p.12, 101"],
+ r32:["1/32 loop button","Hold to loop half a step.","HOLD.","p.12, 101"],
+ trip:["TRIPLET button","Hold with a loop button: loop length ×2/3 (e.g. 1/4+TRIPLET = 8/3 steps).","HOLD.","p.12, 102"],
+ dot:["DOTTED button","Hold with a loop button: loop length ×3/2 (e.g. 1/4+DOTTED = 6 steps).","HOLD.","p.12, 102"],
+ trigprob:["TRIG PROB button","Turns Trigger Probability on/off: each trigger in the pattern randomly plays or is skipped according to the rate.","SETTING: Trigger Probability Rate 10–100 % (default 50 %).","p.12, 103, 144"],
+ track:["TRACK button","Pad mode: select the current track (pads = tracks 1–16, lit in track colours). Hold from another mode for a momentary switch. Turn the selector to pick the output (None, MIDI1/2, USB ch. 1–16, CV/GATE1/2).","SETTING: Track Name, Mono/Poly, Track Color, Track Delay, Bank Select MSB/LSB, Program Change.","p.13, 31, 145"],
+ mute:["TRK MUTE button","Pad mode: press a pad to mute/unmute that track. SHIFT+pad solos (red).","SHIFT+TRK MUTE: unmute and unsolo everything.","p.13, 33"],
+ pattern:["PATTERN button","Pad mode: select one of 64 patterns per track (4 pages of 16, ◀/▶ to page). Changes during playback wait for the next bar; SHIFT+pad switches immediately. Turn the selector for Pattern Speed ×0.25–×2.0 (v1.10).","PATTERN SET: 16 saved combinations of each track's pattern + mute state. Empty pad = save, lit pad = load (next bar).","p.13, 34–38"],
+ scale:["SCALE button","Pad mode: play notes of the current scale (keynote bright, scale notes dim). ◀/▶ shifts the range by 4 semitones. Selector: Note Repeat layout.","CHORD: play chords; choose one of 18 chord sets and transpose ±12 with the selector.","p.13, 39–45"],
+ transpose:["TRANSPOSE button","Pad mode: hold a pad to transpose the current pattern in real time (−12…+12), back on release. Recordable.","—","p.13, 46"],
+ trigger:["TRIGGER button","Pad mode for step programming: press pads to mute/unmute steps. Hold a pad and turn PITCH, GATE, VELOCITY, COUNT, DIVIDE (or ◀/▶ for OFFSET). With no pad held, the knobs edit every step of the pattern.","CC: assign up to 5 CC numbers to the knobs and sequence CC values per step.","p.13, 47–63"],
+ tie:["TIE button","Hold TIE and press steps to tie them to the previous step (purple).","CV SLIDE: glide CV pitch into the next step (CV/GATE outputs only).","p.13, 64–65"],
+ active:["ACTIVE button","Hold ACTIVE and press steps to make them inactive: skipped entirely, shortening the pattern.","TRIG RANDOM: randomly mute/unmute every step (Euclid Based or Normal, see Randomizer settings).","p.13, 66, 70"],
+ copy:["COPY button","Hold COPY and press a pad to copy a step, pattern, pattern set or note (depends on mode).","COPY+PASTE together = DELETE mode: initialise a step, delete a pattern/set, or erase recorded automation.","p.14, 73–77"],
+ paste:["PASTE button","Hold PASTE and press a pad to paste what you copied.","With COPY: DELETE mode.","p.14, 73"],
+ left:["◀ button","Previous page of steps or patterns; lowers the note range in SCALE mode; transposes chords in CHORD mode. Hold a step to change OFFSET.","PAGE LENGTH −: remove a page from the pattern (1–4 pages = up to 64 steps).","p.14, 55"],
+ right:["▶ button","Next page; raises the range in SCALE mode. Hold a step to change OFFSET.","PAGE LENGTH +: add a page (max 4 pages / 64 steps).","p.14, 55"],
+ h1:["HARMONIZER buttons 1–6","Hold during playback or while playing pads in SCALE mode to turn each note into the chord set on that button. Hold a step + press a button to store the chord on the step.","SETTING: choose the chord type for the button (24 types), or tap pads to build a USER chord.","p.14, 71, 148"],
+ iPitch:["INTERPOLATION · PITCH","Press, then hold steps and turn PITCH to set up to 5 points (start, middle, end). Press again: the steps in between are interpolated. In CC mode it works on CC1.","RANDOM: randomise the pitch of every step (in scale; Melodic or Normal type).","p.14, 67–70"],
+ iGate:["INTERPOLATION · GATE","Interpolate GATE values between points (CC2 in CC mode).","RANDOM: randomise gates within Gate Min/Max.","p.14, 67–70"],
+ iVel:["INTERPOLATION · VELOCITY","Interpolate VELOCITY values between points (CC3 in CC mode).","RANDOM: randomise velocities within Velocity Min/Max.","p.14, 67–70"],
+ fixed:["FIXED LENGTH button","Loops the pattern at a fixed length regardless of its steps; turns on at the next bar.","SETTING: Fixed Length 0.25–16 beats (default 4).","p.14, 79, 151"],
+ k1:["PITCH / CC 1 knob","TRIGGER mode: pitch of the held step(s), C-1…G9. CC mode: value of CC1. INTERPOLATION PITCH: set a point.","—","p.15, 53, 61"],
+ k2:["GATE / CC 2 knob","Gate length 0.125–64 steps / CC2.","—","p.15, 53"],
+ k3:["VELOCITY / CC 3 knob","Velocity 0–127 / CC3.","—","p.15, 53"],
+ k4:["COUNT / CC 4 knob","COUNT: how many steps the pad lasts (1–4) / CC4.","—","p.15, 49"],
+ k5:["DIVIDE / CC 5 knob","DIVIDE: retrigger the step 1–4 times / CC5.","STEP SHIFT: rotate all steps of the pattern forwards/backwards.","p.15, 50, 78"],
+ pad:["16 pads","Velocity-sensitive RGB pads. What they do depends on the pad mode button lit on the left (TRACK, TRK MUTE, PATTERN, SCALE, TRANSPOSE, TRIGGER, TIE, ACTIVE). Right-click or long-press a pad here to hold it while you turn a knob.","SHIFT+pad: STEP JUMP in TRIGGER mode, immediate switch in PATTERN mode, solo in TRK MUTE mode, Pad Sequence Start in SCALE mode.","p.14, 29"]
+};
+["h2","h3","h4","h5","h6"].forEach(h=>INFO[h]=INFO.h1);
+
+/* ---------- multi-press combos ---------- */
+const PADS=[...Array(16)].map((_,i)=>"pad"+i),KNOBS=["k1","k2","k3","k4","k5"],LOOPS=["r4","r8","r16","r32"],HARMS=["h1","h2","h3","h4","h5","h6"];
+// modifier key: [label, controls that make it]
+const MODS={shift:["SHIFT",["shift"]],copy:["COPY",["copy"]],paste:["PASTE",["paste"]],del:["COPY+PASTE",["copy","paste"]],global:["GLOBAL",["global"]],
+  tie:["TIE",["tie"]],active:["ACTIVE",["active"]],pad:["Held pad",PADS],loop:["Held loop button",LOOPS],tripdot:["TRIPLET / DOTTED",["trip","dot"]],
+  track:["Held TRACK",["track"]],mute:["Held TRK MUTE",["mute"]],pattern:["Held PATTERN",["pattern"]]};
+const SHIFTPAD={trigger:"STEP JUMP: playback jumps to this step (while playing).",cc:"STEP JUMP: playback jumps to this step.",pattern:"Switch to this pattern immediately instead of at the next bar.",mute:"Solo this track (red).",scale:"Pad Sequence Start: tapping a pad starts the sequence."};
+// [modifier, targets, what it does, manual page, simulated? (default yes)]  — from the Operating Instructions
+const COMBOS=[
+ ["shift",PADS,"STEP JUMP (TRIGGER), immediate pattern switch (PATTERN), solo (TRK MUTE), Pad Sequence Start (SCALE).","p.33, 34, 39, 78"],
+ ["global",PADS,"Jump straight to a GLOBAL settings category (pad 1 = first category).","p.108"],
+ ["copy",PADS,"Copy a step (TRIGGER/CC), pattern (PATTERN) or pattern set (PATTERN SET); it lights blue.","p.73"],
+ ["copy",["paste"],"Hold both for DELETE mode, then press a pad.","p.75"],
+ ["paste",PADS,"Paste what you copied onto this pad.","p.73"],
+ ["paste",["copy"],"Hold both for DELETE mode, then press a pad.","p.75"],
+ ["del",PADS,"DELETE: initialise a step, delete a pattern or a pattern set.","p.75"],
+ ["tie",PADS,"Tie this step to the previous one (purple).","p.64"],
+ ["active",PADS,"Make this step inactive: skipped entirely, shortening the pattern.","p.66"],
+ ["pad",KNOBS,"Edit only the held step: PITCH, GATE, VELOCITY, COUNT, DIVIDE (CC1–5 in CC mode).","p.53, 61"],
+ ["pad",["left","right"],"Move the held step's OFFSET (micro-timing).","p.55"],
+ ["pad",["rotary"],"Turn to pick a polyphonic note slot on the held step; press to add / unmute it.","p.47–60"],
+ ["pad",HARMS,"Store this button's chord on the held step; press the same button again to remove it.","p.71"],
+ ["loop",["trip","dot"],"Loop length ×2/3 (TRIPLET) or ×3/2 (DOTTED); 1/4 + DOTTED = 6 steps.","p.102"],
+ ["tripdot",LOOPS,"Start a triplet or dotted loop: length ×2/3 or ×3/2.","p.102"],
+ ["track",PADS,"Momentary TRACK mode: pick a track; pads return to the previous mode on release.","p.29",false],
+ ["mute",PADS,"Momentary TRK MUTE: mute tracks without leaving the current mode.","p.33",false],
+ ["pattern",PADS,"Momentary PATTERN mode: switch patterns without leaving the current mode.","p.34",false],
+];
+C.forEach(c=>{const inf=INFO[c.id];if(!inf||c.t==="pad"||["shift","copy","paste"].includes(c.id)||/^h[2-6]$/.test(c.id)||!inf[2]||inf[2]==="—")return;
+  COMBOS.push(["shift",c.id==="h1"?HARMS:[c.id],inf[2]==="HOLD."?INFO.r4[2]:inf[2],inf[3]])});
+const FW={
+ global:"Firmware 1.13 renamed <i>Auto Power Off</i> to <i>Power Management</i> (now 20 minutes, EU Ecodesign). Menu labels on this screen are copied from the 1.13 firmware.",
+ track:"Track Speed was removed in 1.10 and replaced by per-pattern speed (PATTERN mode + selector). Track Delay and Bank Select/Program Change were added in 1.10.",
+ scale:"The 18 chord set names (Dawn … Forward) are taken from the firmware's string table.",
+ trigprob:"Trigger Probability Rate applies to the whole pattern; there is no per-step probability value.",
+ tw:"Since 1.10 sequence playback keeps running when entering or leaving Time Warp.",
+ active:"The Euclid Based trigger randomizer was added in 1.10.",
+ iPitch:"The Melodic pitch randomizer was added in 1.10.",
+ pattern:"Pattern Set editing (per-track pattern and mute while holding a set pad) and Pattern Set copy/paste were added in 1.10."
+};
+/* wish-list layer: owner requests (feature-requests.md), none implemented through 1.13 */
+const WISH=[
+ [["pattern"],"Song mode / pattern chaining","Automatic playlist of patterns or pattern sets with repeat counts (the SP-16 has one). Also asked for: more than 16 pattern sets, switching sets without resetting position or mutes."],
+ [["right","left"],"Longer patterns","Native 8-bar patterns; today the maximum is 4 pages = 64 steps."],
+ [["k1","k2","k3","k4","k5"],"Performance page / CC control","A page where CC knobs stay live while you change patterns or mute tracks; CC control of SQUID parameters from incoming MIDI; recording incoming CCs."],
+ [["swing","groove"],"Global groove","Adjust swing/groove for all tracks at once (e.g. hold GLOBAL + turn), plus Groove Bend as a CC destination."],
+ [["trigprob"],"Per-step probability","Probability or conditional mute per individual step, not only one rate for the whole pattern."],
+ [["iPitch","iGate","iVel"],"Interpolation curves","Linear vs exponential curves for CV interpolation; microtiming as a randomizer target."],
+ [["global","rotary"],"Seamless project switching","Load another project without stopping the sequencer, and more patterns per project for full live sets."],
+ [["copy"],"Quick pad copy","SP-style quick copy of a pad, and track presets/templates."],
+ [["track"],"Track presets","Save and load track definitions; a 'Selected Track' option for the global MIDI track setting."],
+ [["scale","transpose"],"MIDI-following chords","Chord and transpose that follow incoming MIDI, not just the scale."]
+];
+
+/* ---------- state ---------- */
+let S;
+function emptyStep(){return{on:false,notes:[{p:60,g:1,v:100,o:0}],count:1,div:1,tie:false,act:true,slide:false,ch:null,cc:[0,0,0,0,0],ccOn:false}}
+function emptyPattern(){return{pages:1,steps:Array.from({length:64},emptyStep),speed:2}}
+const SPEEDS=["x0.25","x0.5","x1.0","x1.5","x2.0"],SPEEDV=[0.25,0.5,1,1.5,2];
+// inst = which built-in sound the simulation uses for the track (the real unit only sends MIDI/CV)
+const newTracks=()=>range(1,16).map((n,i)=>({name:"Track "+String(n).padStart(2,"0"),color:i,out:i<4?1+i:0,mono:false,delay:0,msb:0,lsb:0,pc:0,
+    cur:0,pats:{},muted:false,solo:false,cc:[1,7,10,71,74],phase:0,lastKey:null,playIdx:-1,queued:null,inst:["drums","bass","pad","lead"][i]||"pluck"}));
+function demo(){
+  const tr=newTracks();
+  const p1=emptyPattern(); // drums-ish: kick/hat pitches
+  [0,4,8,12].forEach(s=>{p1.steps[s].on=true;p1.steps[s].notes=[{p:36,g:.5,v:120,o:0}]});
+  [2,6,10,14].forEach(s=>{p1.steps[s].on=true;p1.steps[s].notes=[{p:42,g:.25,v:80,o:0}]});
+  p1.steps[14].div=2;
+  tr[0].pats[0]=p1; tr[0].name="Drums";
+  const p2=emptyPattern(),bass=[48,48,0,51,0,48,55,0,48,0,53,0,51,0,46,0];
+  bass.forEach((n,s)=>{if(n){p2.steps[s].on=true;p2.steps[s].notes=[{p:n,g:.75,v:100,o:0}]}});
+  p2.steps[6].tie=false; tr[1].pats[0]=p2; tr[1].name="Bass";
+  const p3=emptyPattern(),ch=[[60,63,67],[58,62,65],[56,60,63],[55,58,62]];
+  ch.forEach((c,k)=>{const s=p3.steps[k*4];s.on=true;s.notes=c.map(p=>({p,g:3,v:90,o:0}))});
+  tr[2].pats[0]=p3; tr[2].name="Chords";
+  const p4=emptyPattern(),lead=[72,0,75,74,0,72,70,0,67,0,70,72,0,0,75,0];
+  lead.forEach((n,s)=>{if(n){p4.steps[s].on=true;p4.steps[s].notes=[{p:n,g:.5,v:96,o:0}]}});
+  p4.pages=2; for(let s=16;s<32;s++){const n=lead[(s*3)%16];if(n){p4.steps[s].on=true;p4.steps[s].notes=[{p:n+(s%5==0?12:0),g:.5,v:88,o:0}]}}
+  tr[3].pats[0]=p4; tr[3].name="Lead";
+  baseState(tr);
+}
+function baseState(tr){
+  const settings={};GLOBAL_MENU.forEach(([,items])=>items.forEach(([l,o,d])=>{if(o!==ACT)settings[l]=d}));
+  S={tracks:tr,track:0,sets:Array(16).fill(null),curSet:-1,mode:"track",page:0,
+    playing:false,paused:false,rec:false,bpm:120,gphase:0,lastBar:0,beat:0,
+    shift:false,shiftKey:false,held:new Set(),latched:new Set(),heldPads:new Set(),
+    scale:6,key:0,arp:false,shape:4,modLen:16,depth:0,swing:0,groove:0,autoRec:false,
+    dir:"dRight",mirror:false,rev:false,sb:false,trigProb:false,probRate:50,fixed:false,fixedLen:16,quant:2,
+    arpSet:{Rate:5,Style:0,Range:0,"Gate Length":99},harm:["M","m","7","M7","m7","sus4"],
+    interp:null,ccSel:0,ccEditNum:false,scaleRange:0,noteRepeat:0,chordSet:0,chordTrs:0,
+    menu:null,popup:null,history:[],tw:false,twLen:0,clip:null,noteSel:0,
+    settings,transposeHold:0,harmHold:null,loop:null,flash:{},project:"SQUID demo project"};
+}
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const svg=$("#device"),NS="http://www.w3.org/2000/svg";
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);(parent||svg).appendChild(e);return e}
+const T=()=>S.tracks[S.track];
+function pat(t=T(),create=true){let p=t.pats[t.cur];if(!p&&create){p=t.pats[t.cur]=emptyPattern()}return p}
+const curStepIdx=i=>S.page*16+i;
+function setting(l){return S.settings[l]}
+const midC=()=>["C3","C4","C5"][setting("Middle C")];
+const noteName=n=>{const off={C3:-1,C4:0,C5:1}[midC()];return NOTE[((n%12)+12)%12]+(Math.floor(n/12)-1+off)};
+function quantize(n){const sc=SCALES[S.scale][1],k=S.key;let best=n,bd=99;for(let d=-6;d<=6;d++){const m=n+d,r=((m-k)%12+12)%12;if(sc.includes(r)&&Math.abs(d)<bd){bd=Math.abs(d);best=m}}return best}
+function popup(l1,l2,r1,r2,ms=1400){S.popup={l1,l2,r1,r2,until:performance.now()+ms};draw()}
+function pushHist(op){const t=T();S.history.unshift({op,t:S.track,p:t.cur,data:JSON.stringify(pat())});S.history.length=Math.min(S.history.length,16)}
+const isHeld=id=>S.held.has(id)||S.latched.has(id);
+const shiftOn=()=>S.shift||S.shiftKey||S.latched.has("shift");
+function useShift(){if(S.latched.has("shift")){S.latched.delete("shift");}S.shift=false;refreshCtl("shift")}
+
+/* ---------- running direction ---------- */
+function order16(dir,mir){
+  let o;
+  switch(dir){
+    case "dDown":o=[0,4,8,12,1,5,9,13,2,6,10,14,3,7,11,15];break;
+    case "dZig":o=[0,1,2,3,7,6,5,4,8,9,10,11,15,14,13,12];break;
+    case "dCw":o=[0,1,2,3,7,11,15,14,13,12,8,4,5,6,10,9];break;
+    case "dCcw":o=[0,4,8,12,13,14,15,11,7,3,2,1,5,9,10,6];break;
+    case "dSkip":o=[0,1,2,1,2,3,4,5,6,5,6,7,8,9,10,9,10,11,12,13,14,13,14,15];break; // approximation: 2 forward, 1 back
+    default:o=range(0,15,Number);
+  }
+  return mir?o.map(i=>i-(i%4)+3-(i%4)):o;
+}
+function sequence(p){
+  const pages=p.pages;let seq=[];
+  for(let pg=0;pg<pages;pg++)seq=seq.concat(order16(S.dir,S.mirror).map(i=>pg*16+i));
+  seq=seq.filter(i=>p.steps[i].act);
+  if(!seq.length)return [];
+  if(S.rev)seq.reverse();
+  if(S.sb&&seq.length>2)seq=seq.concat(seq.slice(1,-1).reverse());
+  return seq;
+}
+
+/* ---------- audio: synthesized drum kit + simple synths, scheduled on the audio clock ---------- */
+let AC=null,sound=false,OUT=null,NOISE=null;
+const LAT=0.06; // s of lookahead: notes are placed at their exact step time + LAT, hiding timer jitter
+function ensureAC(){if(AC)return AC;AC=new (window.AudioContext||window.webkitAudioContext)();
+  const comp=AC.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;OUT=AC.createGain();OUT.gain.value=.7;OUT.connect(comp).connect(AC.destination);
+  NOISE=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const d=NOISE.getChannelData(0);for(let k=0;k<d.length;k++)d[k]=Math.random()*2-1;return AC}
+// performance.now() ms -> audio-clock seconds. currentTime advances in chunks, so keep the running max of the offset (slowly decaying to follow drift)
+let acOff=-1e9;
+function acAt(pt){const cur=AC.currentTime-performance.now()/1000;acOff=Math.max(cur,acOff-.00002);return pt/1000+acOff}
+const hz=m=>440*Math.pow(2,(m-69)/12);
+function osc(type,f,t,end){const o=AC.createOscillator();o.type=type;o.frequency.setValueAtTime(f,t);o.start(t);o.stop(end);return o}
+function noise(t,end){const n=AC.createBufferSource();n.buffer=NOISE;n.loop=true;n.start(t,Math.random()*.5);n.stop(end);return n}
+function filt(type,f,q=1){const b=AC.createBiquadFilter();b.type=type;b.frequency.value=f;b.Q.value=q;return b}
+// src -> filters -> percussive envelope -> out
+function hit(src,t,peak,dec,...fx){let x=src;fx.forEach(f=>{x.connect(f);x=f});const g=AC.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(peak,.0002),t+.002);g.gain.exponentialRampToValueAtTime(.0001,t+.002+dec);x.connect(g).connect(OUT)}
+// General MIDI drum map (35-59); other notes fold into that range
+function drum(n,t,v){const a=v/127,G=n>=35&&n<=59?n:35+((n%25)+25)%25;
+  if(G<=36){const o=osc("sine",160,t,t+.6);o.frequency.exponentialRampToValueAtTime(42,t+.13);hit(o,t,a,.45);hit(osc("triangle",900,t,t+.03),t,.2*a,.012)}
+  else if(G===37){hit(osc("triangle",1700,t,t+.06),t,.35*a,.03);hit(noise(t,t+.06),t,.2*a,.02,filt("highpass",2500))}
+  else if(G===38||G===40){hit(osc("triangle",190,t,t+.2),t,.4*a,.09);hit(noise(t,t+.3),t,.5*a,.17,filt("highpass",1200))}
+  else if(G===39){[0,.011,.022].forEach(d=>hit(noise(t+d,t+d+.03),t+d,.45*a,.012,filt("bandpass",1200,2)));hit(noise(t+.03,t+.35),t+.03,.4*a,.16,filt("bandpass",1200,2))}
+  else if(G===42||G===44||G===46){hit(noise(t,t+.5),t,(G===46?.22:.28)*a,G===46?.32:G===44?.08:.045,filt("highpass",7000),filt("peaking",10000,1))}
+  else if([41,43,45,47,48,50].includes(G)){const f={41:90,43:110,45:130,47:150,48:175,50:200}[G],o=osc("sine",f*1.5,t,t+.5);o.frequency.exponentialRampToValueAtTime(f,t+.08);hit(o,t,.7*a,.3)}
+  else if([49,52,55,57].includes(G))hit(noise(t,t+1.5),t,.22*a,1.1,filt("highpass",5000))
+  else if([51,53,59].includes(G)){hit(noise(t,t+.8),t,.16*a,.5,filt("bandpass",8000,3));hit(osc("square",520,t,t+.4),t,.03*a,.3,filt("highpass",3000))}
+  else if(G===56){const f=filt("bandpass",800,3);hit(osc("square",540,t,t+.3),t,.25*a,.25,f);hit(osc("square",800,t,t+.3),t,.25*a,.25,f)}
+  else hit(noise(t,t+.2),t,.2*a,.1,filt("highpass",6000))}
+const SYN={ // oscillators [type, detune cents], filter [base Hz, env peak Hz, env decay s, Q], level, attack, release
+  bass:{osc:[["sawtooth",0],["square",-1200]],f:[260,1800,.18,6],lvl:.3,at:.004,rel:.08},
+  pad:{osc:[["sawtooth",-8],["sawtooth",8]],f:[900,2400,.6,1],lvl:.1,at:.04,rel:.35},
+  lead:{osc:[["square",0],["sawtooth",6]],f:[1200,4200,.25,2],lvl:.13,at:.004,rel:.1},
+  pluck:{osc:[["triangle",0],["sawtooth",0]],f:[500,5200,.12,2],lvl:.18,at:.002,rel:.25}};
+function synth(inst,m,t,dur,v){const P=SYN[inst]||SYN.pluck,a=v/127,f=hz(m);
+  const hold=Math.max(P.at,inst==="pluck"?Math.min(dur,.1):dur),end=t+hold+P.rel;
+  const lp=filt("lowpass",P.f[0],P.f[3]);lp.frequency.setValueAtTime(P.f[0],t);lp.frequency.linearRampToValueAtTime(P.f[0]+(P.f[1]-P.f[0])*a,t+.005);lp.frequency.exponentialRampToValueAtTime(P.f[0],t+.005+P.f[2]);
+  const g=AC.createGain(),l=P.lvl*a;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(l,t+P.at);g.gain.setValueAtTime(l,t+hold);g.gain.exponentialRampToValueAtTime(.0001,end);
+  P.osc.forEach(([type,det])=>{const o=osc(type,f,t,end+.05);o.detune.value=det;o.connect(lp)});lp.connect(g).connect(OUT)}
+function blip(midi,dur,vel,inst,when){if(!sound)return;ensureAC();const t=Math.max(when??0,AC.currentTime);inst=inst||T().inst;
+  if(inst==="drums")drum(midi,t,vel);else synth(inst,midi,t,Math.max(dur,.03),vel)}
+
+/* ---------- playback (time-based, rAF) ---------- */
+let lastT=performance.now();
+function speedMod(phase){
+  if(!S.depth)return 1;const x=(phase%S.modLen)/S.modLen;
+  const w=[x<.5?4*x-1:3-4*x,x<.5?1-4*x:4*x-3,Math.sin(2*Math.PI*x),Math.cos(2*Math.PI*x),2*x-1,x<.5?1:-1][S.shape];
+  return 1+w*(S.depth/64)*0.5;
+}
+// advance() runs from both rAF and a 10 ms worker clock, so sequencing keeps time when frames drop or the tab is hidden
+let tickNow=0;
+function advance(now){
+  const dt=Math.min(now-lastT,100);if(dt<=0)return;
+  lastT=now;tickNow=now;
+  if(S.playing&&!S.paused){
+    const base=dt*S.bpm/60*4/1000;
+    S.gphase+=base;
+    const bar=Math.floor(S.gphase/16);
+    if(bar!==S.lastBar){S.lastBar=bar;S.tracks.forEach(t=>{if(t.queued!==null){t.cur=t.queued;t.queued=null;t.lastKey=null}});if(S.setQueued!=null){applySet(S.setQueued);S.setQueued=null}}
+    S.beat=Math.floor(S.gphase/4)%4;
+    S.tracks.forEach((t,ti)=>{
+      const p=t.pats[t.cur];if(!p)return;
+      let m=SPEEDV[p.speed]*speedMod(t.phase);
+      if(ti===S.track){if(isHeld("half"))m*=.5;if(isHeld("dbl"))m*=2}
+      t.phase+=base*m;
+      advanceTrack(t,ti,p,S.bpm/60*4/1000*m,base*m);
+    });
+    if(S.tw)S.twLen=Math.min(256,S.twLen+base);
+  }
+}
+try{const w=new Worker(URL.createObjectURL(new Blob(["setInterval(()=>postMessage(0),10)"],{type:"text/javascript"})));w.onmessage=()=>advance(performance.now())}
+catch(_){setInterval(()=>advance(performance.now()),10)}
+function tick(now){
+  advance(performance.now());
+  if(S.popup&&now>S.popup.until)S.popup=null;
+  drawPads();draw();
+  requestAnimationFrame(tick);
+}
+function loopLen(){
+  const base={r4:4,r8:2,r16:1,r32:.5};let id=["r4","r8","r16","r32"].find(isHeld);if(!id)return 0;
+  let L=base[id];if(isHeld("trip"))L*=2/3;if(isHeld("dot"))L*=1.5;return L;
+}
+function advanceTrack(t,ti,p,rate,dPhase){ // rate: steps per ms, dPhase: steps advanced this call
+  const seq=sequence(p);if(!seq.length)return;
+  let total=0;const starts=seq.map(i=>{const s=total;total+=p.steps[i].count;return s});
+  let pos=t.phase;
+  if(S.fixed){pos=pos%(S.fixedLen)}
+  const L=loopLen();
+  if(L){if(!S.loop)S.loop={start:{}};if(S.loop.start[ti]==null)S.loop.start[ti]=pos;const st=S.loop.start[ti];pos=st+((t.phase-(S.loop.phaseAt?.[ti]??t.phase))%L);
+    S.loop.phaseAt=S.loop.phaseAt||{};if(S.loop.phaseAt[ti]==null){S.loop.phaseAt[ti]=t.phase;pos=st}}
+  else S.loop=null;
+  if(ti===S.track&&S.groove)pos+=S.groove/100; // Groove Bend: rush (right) / drag (left) by up to 1 step
+  pos=((pos%total)+total)%total;
+  let k=0;while(k<starts.length-1&&starts[k+1]<=pos)k++;
+  const si=seq[k],step=p.steps[si],within=(pos-starts[k])/step.count,sub=Math.floor(within*step.div);
+  const key=si+":"+sub+":"+Math.floor(t.phase/(L||1e9));
+  if(isHeld("ghold")&&ti===S.track){return}
+  if(key!==t.lastKey){t.lastKey=key;t.playIdx=si;
+    let over=pos-(starts[k]+sub/step.div*step.count);if(!(over>=0&&over<=dPhase))over=0; // how far past the step start we already are
+    fire(t,ti,step,sub,si,AC?acAt(tickNow-over/rate)+LAT:0,1/(rate*1000))}
+}
+function audible(t){const anySolo=S.tracks.some(x=>x.solo);return anySolo?t.solo:!t.muted}
+function fire(t,ti,step,sub,si,when,stepSec){
+  if(!step.on||(step.tie&&sub===0))return;
+  if(S.trigProb&&Math.random()*100>=S.probRate){S.flash["skip"+ti]=performance.now();return}
+  S.flash[ti]=performance.now();
+  if(!audible(t))return;
+  const drums=t.inst==="drums";
+  if(S.swing&&si%2)when+=S.swing/100*stepSec/3; // even steps (2,4,..) delayed, 100 % = 1/32T
+  let notes=step.notes;
+  if(t.mono)notes=notes.slice(0,1);
+  let pitches=[];
+  notes.forEach(n=>{if(drums)return pitches.push([n.p,n]);let p=quantize(n.p)+(ti===S.track?S.transposeHold:0);pitches.push([p,n]);
+    const ch=step.ch||(S.harmHold&&CHORDS[S.harm[S.harmHold-1]]);if(ch&&n===notes[0])ch.slice(1).forEach(iv=>pitches.push([quantize(p+iv),n]))});
+  pitches.slice(0,8).forEach(([p,n])=>blip(p,n.g*stepSec/step.div,n.v,t.inst,when+(n.o||0)/6*stepSec));
+}
+
+/* ---------- pattern sets ---------- */
+function applySet(i){const s=S.sets[i];if(!s)return;s.forEach((e,ti)=>{S.tracks[ti].cur=e.p;S.tracks[ti].muted=e.m;S.tracks[ti].lastKey=null});S.curSet=i}
+
+/* ---------- drawing the panel ---------- */
+const ctlEls={};
+function build(){
+  svg.innerHTML="";
+  const defs=el("defs",{});
+  const lg=el("linearGradient",{id:"bodyG",x1:0,y1:0,x2:0,y2:1},defs);el("stop",{offset:0,"stop-color":"#2a2b2f"},lg);el("stop",{offset:1,"stop-color":"#1b1c1f"},lg);
+  const kg=el("radialGradient",{id:"knobG",cx:.4,cy:.35,r:.75},defs);el("stop",{offset:0,"stop-color":"#6a6d73"},kg);el("stop",{offset:1,"stop-color":"#1d1e21"},kg);
+  // chassis + top strip
+  el("rect",{x:44,y:62,width:1262,height:752,rx:16,fill:"url(#bodyG)",stroke:"#000"});
+  el("rect",{x:44,y:62,width:1262,height:44,rx:12,fill:"#151619"});
+  [["IN/OUT 2 — DIN SYNC — OUT1",110],["CLOCK IN — OUT",305],["GATE 2 — CV 2   GATE 1 — CV 1",410],["MIDI IN",690],["MIDI OUT 1",790],["MIDI THRU/OUT 2",895],["USB",1032],["⏻",1112],["DC IN",1190]]
+    .forEach(([s,x])=>txt(s,x,90,10,"#a7a9ad","start"));
+  // section frames
+  el("rect",{x:52,y:118,width:1246,height:122,rx:10,fill:"none",stroke:"#000","stroke-width":4});
+  el("rect",{x:52,y:248,width:536,height:550,rx:10,fill:"none",stroke:"#000","stroke-width":4});
+  el("rect",{x:596,y:248,width:702,height:550,rx:10,fill:"none",stroke:"#000","stroke-width":4});
+  txt("MULTITRACK SEQUENCER   SQUID",88,152,11,"#d0d2d6","start");
+  // headers
+  [["SPEED MODULATION",215,268],["MELODIC CONTROL",490,268],["GROOVE CONTROL",165,410],["RUNNING DIRECTION",422,410],["SPEED CONTROL",462,584],["RHYTHMIC CONTROL",290,706],["HARMONIZER",880,708]]
+    .forEach(([s,x,y])=>header(s,x,y));
+  txt("FLIP",462,470,9,"#d0d2d6");txt("FLIP",462,546,9,"#d0d2d6");
+  el("path",{d:"M380 462 v4 h165 v-4 M380 538 v4 h165 v-4",stroke:"#8b8d92",fill:"none"});
+  el("path",{d:"M335 441 h36 M335 514 h36 M421 441 h16 M487 441 h16 M421 516 h16 M487 516 h16",stroke:"#8b8d92"});
+  el("path",{d:"M128 739 h18 M196 739 h17 M263 739 h16",stroke:"#8b8d92"});
+  el("path",{d:"M88 765 v4 h385 v-4",stroke:"#8b8d92",fill:"none"});badge("HOLD",246,774);
+  el("path",{d:"M700 768 v4 h360 v-4",stroke:"#8b8d92",fill:"none"});badge("SETTING",880,776);
+  el("path",{d:"M752 300 v6 h92 v-6",stroke:"#8b8d92",fill:"none"});txt("DELETE",798,310,9,"#d0d2d6");
+  txt("SLOW",100,582,9,"#d0d2d6");txt("FAST",240,582,9,"#d0d2d6");txt("GROOVE BEND",140,664,11,"#e5e7eb");txt("AUTOMATION ON",250,664,8,"#d0d2d6","start");
+  el("rect",{x:1095,y:250,width:68,height:282,rx:6,fill:"none",stroke:"#8b8d92"});
+  txt("INTER",1129,262,8,"#d0d2d6");txt("POLATION",1129,272,8,"#d0d2d6");
+  [[294],[394],[486]].forEach(([y])=>el("rect",{x:1158,y:y-3,width:52,height:6,fill:"#7c7f85"}));
+  // displays
+  el("rect",{x:742,y:160,width:296,height:70,rx:6,fill:"#0b0b0c",stroke:"#000"});
+  ["L","R"].forEach((s,k)=>{const x=752+k*146;el("rect",{x,y:168,width:130,height:54,fill:"#000",stroke:"#2b2b2e"});
+    const g=el("g",{id:"disp"+s});});
+  // controls
+  C.forEach(c=>{const g=el("g",{class:"ctl",tabindex:0,"data-id":c.id});ctlEls[c.id]=g;
+    if(c.t==="btn"){
+      if(c.pill){el("rect",{class:"face",x:c.x,y:c.y,width:c.w,height:c.h,rx:7,fill:"#2a2b2f",stroke:"#c9cbd0","stroke-width":1.5},g);txt(c.cap,c.x+c.w/2,c.y-6,9,"#d0d2d6",null,g)}
+      else{el("rect",{class:"face",x:c.x,y:c.y,width:c.w,height:c.h,rx:4,fill:"#34353a",stroke:"#c9cbd0","stroke-width":1.5},g);
+        el("rect",{class:"lamp",x:c.x+3,y:c.y+3,width:c.w-6,height:c.h-6,rx:3,fill:"#000","fill-opacity":0},g);
+        const lines=c.label.split("\n");lines.forEach((l,k)=>txt(l,c.x+c.w/2,c.y+c.h/2+4+(k-(lines.length-1)/2)*11,lines.length>1?9:(l.length>3?10:12),"#f2f3f5",null,g))}
+      if(c.sub)badge(c.sub,c.x+c.w/2,c.y+c.h+11,g);
+    }else if(c.t==="knob"){
+      if(c.btn){el("circle",{class:"face",cx:c.x,cy:c.y,r:c.r,fill:"#34353a",stroke:"#c9cbd0","stroke-width":1.5},g);
+        el("circle",{class:"lamp",cx:c.x,cy:c.y,r:c.r-3,fill:"#000","fill-opacity":0},g);
+        c.label.split("\n").forEach((l,k,a)=>txt(l,c.x,c.y+4+(k-(a.length-1)/2)*10,9,"#f2f3f5",null,g));
+        if(c.sub)badge(c.sub,c.x,c.y+c.r+13,g);
+      }else{
+        el("circle",{class:"face",cx:c.x,cy:c.y,r:c.r+3,fill:"#111",stroke:"#555"},g);
+        el("circle",{cx:c.x,cy:c.y,r:c.r,fill:"url(#knobG)",stroke:"#000"},g);
+        el("line",{class:"ptr",x1:c.x,y1:c.y,x2:c.x,y2:c.y-c.r+3,stroke:"#f2f3f5","stroke-width":2.5,"stroke-linecap":"round"},g);
+        if(c.label){c.label.split("\n").forEach((l,k)=>txt(l,c.x,c.y+c.r+18+k*11,10,"#e5e7eb",null,g))}
+        if(c.badge)badge(c.badge,c.x+(c.id==="scaleK"?44:0),c.y+c.r+(c.id==="scaleK"?14:32),g);
+      }
+    }else if(c.t==="pad"){
+      el("rect",{class:"face",x:c.x,y:c.y,width:c.w,height:c.h,rx:6,fill:"#232428",stroke:"#9ca0a6","stroke-width":1.5},g);
+      el("rect",{class:"lamp",x:c.x+3,y:c.y+3,width:c.w-6,height:c.h-6,rx:4,fill:"#000"},g);
+      txt(String(c.i+1),c.x+8,c.y+15,9,"#c9cbd0","start",g);
+    }else if(c.t==="slider"){
+      el("rect",{class:"face",x:c.x,y:c.y-6,width:c.w,height:12,rx:6,fill:"#0d0d0f",stroke:"#777"},g);
+      el("rect",{class:"thumb",x:c.x+c.w/2-18,y:c.y-24,width:36,height:48,rx:10,fill:"#3b3d42",stroke:"#d0d2d6","stroke-width":1.5},g);
+    }else if(c.t==="led"){
+      el("circle",{class:"face lamp",cx:c.x,cy:c.y,r:5,fill:"#300",stroke:"#888"},g);
+    }
+  });
+  el("g",{id:"wishLayer"});el("g",{id:"comboLayer"});
+  bindAll();refreshAll();drawComboMarks($("#comboBtn").getAttribute("aria-pressed")==="true");drawWish($("#wishBtn").getAttribute("aria-pressed")==="true");
+}
+function txt(s,x,y,size,fill,anchor,parent){const t=el("text",{x,y,"font-size":size,fill,"text-anchor":anchor||"middle","font-family":"Arial,Helvetica,sans-serif","font-weight":"bold","pointer-events":"none"},parent);t.textContent=s;return t}
+function header(s,x,y,ext=30){txt(s,x,y+4,11,"#e5e7eb");const w=s.length*7+16;el("line",{x1:x-w/2-ext,y1:y,x2:x-w/2,y2:y,stroke:"#8b8d92"});el("line",{x1:x+w/2,y1:y,x2:x+w/2+ext,y2:y,stroke:"#8b8d92"})}
+function badge(s,x,y,parent){const w=Math.max(28,s.length*6.2+8);el("rect",{x:x-w/2,y:y-8,width:w,height:11,fill:"#e5e7eb"},parent);txt(s,x,y+1,8,"#111",null,parent)}
+
+/* ---------- lighting ---------- */
+function setLamp(id,color,alpha){const g=ctlEls[id];if(!g)return;const l=g.querySelector(".lamp");if(!l)return;l.setAttribute("fill",color||"#000");l.setAttribute("fill-opacity",alpha==null?0:alpha)}
+function bright(full){const f=(setting("Buttons Full Lit")+1)/5;return full?0.35+0.5*f:0.12+0.1*f}
+function refreshCtl(id){const g=ctlEls[id];if(!g)return;g.classList.toggle("latched",S.latched.has(id))}
+function refreshAll(){
+  const W="#ffffff",O="#ff8a1a",G="#34d058",R="#ff3b30",Y="#ffd400",YG="#b6f03c";
+  const lit=(id,c,on,dim=true)=>setLamp(id,c,on?bright(true):(dim?bright(false):0));
+  lit("shift",W,shiftOn());lit("rec",R,S.rec);lit("stop",W,false);
+  setLamp("play",G,S.playing?(S.paused?(Math.floor(performance.now()/300)%2?bright(true):0.05):bright(true)):bright(false));
+  setLamp("tap",W,S.playing&&S.beat%1===0&&(S.gphase%4)<0.6?bright(true):bright(false));
+  lit("global",W,!!(S.menu&&S.menu.kind==="global"));lit("tw",W,S.tw);
+  lit("arp",W,S.arp);lit("trigprob",W,S.trigProb);lit("fixed",W,S.fixed);
+  ["dRight","dDown","dZig","dCw","dCcw","dSkip"].forEach(d=>lit(d,O,S.dir===d));
+  lit("rev",YG,S.rev);lit("sb",YG,S.sb);
+  ["half","ghold","dbl","r4","r8","r16","r32","trip","dot"].forEach(d=>lit(d,W,isHeld(d)));
+  const m=S.mode;
+  lit("track",W,m==="track");lit("mute",Y,m==="mute");
+  setLamp("pattern",G,m==="pattern"?bright(true):m==="pset"?(Math.floor(performance.now()/350)%2?bright(true):0.08):bright(false));
+  setLamp("scale",R,m==="scale"?bright(true):m==="chord"?(Math.floor(performance.now()/350)%2?bright(true):0.08):bright(false));
+  lit("transpose",R,m==="transpose");
+  setLamp("trigger",O,m==="trigger"?bright(true):m==="cc"?(Math.floor(performance.now()/350)%2?bright(true):0.08):bright(false));
+  setLamp("tie",O,isHeld("tie")||m==="slide"?bright(true):bright(false));lit("active",O,isHeld("active"));
+  lit("copy",W,isHeld("copy"));lit("paste",W,isHeld("paste"));lit("left",W,false);lit("right",W,false);
+  lit("iPitch",O,S.interp&&S.interp.k===0);lit("iGate",O,S.interp&&S.interp.k===1);lit("iVel",O,S.interp&&S.interp.k===2);
+  for(let i=1;i<=6;i++)lit("h"+i,R,S.harmHold===i);
+  setLamp("autoLed","#ff3b30",S.autoRec?1:0);
+  ["shape","modlen","depth","scaleK","swing","k1","k2","k3","k4","k5","rotary"].forEach(id=>{
+    const g=ctlEls[id],c=C.find(x=>x.id===id),p=g&&g.querySelector(".ptr");if(!p)return;
+    const v={shape:S.shape/5,modlen:(S.modLen-2)/62,depth:(S.depth+64)/127,scaleK:S.scale/22,swing:S.swing/100}[id];
+    const a=v==null?(c._rot||0):(-135+270*v);p.setAttribute("transform",`rotate(${a} ${c.x} ${c.y})`)});
+  const th=ctlEls.groove.querySelector(".thumb");th.setAttribute("x",92+80-18+S.groove*0.62);
+  Object.keys(ctlEls).forEach(refreshCtl);updatePartners();
+}
+function padColor(i){
+  const t=T(),p=pat(t,false),m=S.mode,now=performance.now(),pd=(setting("Pads Dim Lit")+1)/4*0.35,pf=0.5+(setting("Pads Full Lit")+1)/4*0.5;
+  const flashT=ti=>now-(S.flash[ti]||0)<110;
+  if(S.tw){return i<Math.min(16,Math.ceil(S.twLen/16))?["#ffffff",pd]:["#000",0]}
+  if(S.interp){const pt=S.interp.pts[curStepIdx(i)];if(pt!=null)return["#ffffff",pf];}
+  switch(m){
+    case "track":{const tt=S.tracks[i];if(flashT(i)&&S.playing)return["#ffffff",pf];return[TCOLORS[tt.color],i===S.track?pf:pd]}
+    case "mute":{const tt=S.tracks[i];if(tt.solo)return["#ff3b30",pf];if(tt.muted)return["#000",0];if(flashT(i)&&S.playing)return["#ffffff",pf];return[TCOLORS[tt.color],pd*1.4]}
+    case "pattern":{const idx=S.page*16+i;if(t.queued===idx&&Math.floor(now/200)%2)return["#ffffff",pf];if(idx===t.cur)return["#34d058",pf];return t.pats[idx]?["#34d058",pd]:["#000",0]}
+    case "pset":{if(S.setQueued===i&&Math.floor(now/200)%2)return["#ffffff",pf];if(i===S.curSet)return["#34d058",pf];return S.sets[i]?["#34d058",pd]:["#000",0]}
+    case "scale":{const n=60+S.scaleRange*4+(3-Math.floor(i/4))*4+(i%4),r=((n-S.key)%12+12)%12;if(S.flash["pad"+i]&&now-S.flash["pad"+i]<150)return["#ffffff",pf];
+      if(S.noteRepeat&&((S.noteRepeat===1&&i<4)||(S.noteRepeat===2&&i>11)))return[i%2?"#34d058":"#ff8a1a",pd];
+      return r===0?["#ff3b30",pf]:SCALES[S.scale][1].includes(r)?["#ff3b30",pd]:["#000",0]}
+    case "chord":return(S.flash["pad"+i]&&now-S.flash["pad"+i]<150)?["#ff4fd8",pf]:["#ff4fd8",pd];
+    case "transpose":return S.transposePad===i?["#ff3b30",pf]:["#ff3b30",pd];
+    default:{ // trigger, cc, slide (+tie/active holds)
+      if(!p)return["#000",0];const si=curStepIdx(i),s=p.steps[si];
+      if(i+S.page*16>=p.pages*16)return["#000",0];
+      if(S.playing&&t.playIdx===si)return["#ffffff",pf];
+      if(S.clipFlash&&S.clipFlash.i===i&&now-S.clipFlash.t<300)return["#3b9cff",pf];
+      if(!s.act)return["#000",0];
+      if(m==="cc"){const col=["#3b6bff","#7cc8ff","#34d058","#b6f03c","#ffd400"][S.ccSel];return[col,s.ccOn?pf:pd]}
+      if(m==="slide")return s.slide?["#a855f7",pf]:["#ff8a1a",pd];
+      const col=s.tie?"#a855f7":"#ff8a1a";let a=s.on?pf:pd;if(s.slide&&Math.floor(now/300)%2)a*=.5;return[col,a];
+    }
+  }
+}
+function drawPads(){for(let i=0;i<16;i++){const [c,a]=padColor(i);setLamp("pad"+i,c,a);ctlEls["pad"+i].classList.toggle("latched",S.heldPads.has(i))}refreshAll()}
+
+/* ---------- display (two OLED windows) ---------- */
+function dispLines(){
+  const t=T(),p=pat(t,false);
+  if(S.popup){const q=S.popup;return[[q.l1,q.l2],[q.r1,q.r2]]}
+  if(S.menu)return menuLines();
+  if(S.tw)return[["TimeWarp",["1 bar","2 bars","3 bars","4 bars"][S.twBars||0]],["Tap Pad to warp.","rec "+Math.floor(S.twLen)+"/256"]];
+  if(S.heldPads.size&&(S.mode==="trigger")){const si=curStepIdx([...S.heldPads][0]),s=p&&p.steps[si];if(s){const n=s.notes[Math.min(S.noteSel,s.notes.length-1)];
+    return[[`#${String(si+1).padStart(2,"0")} ${s.notes.length>1?"Note"+(S.noteSel+1):"Note"}`,`D${s.div} C${s.count} O${n.o}`],[`${noteName(quantize(n.p))}  ${n.g.toFixed(3)}`,`Vel ${n.v}`]]}}
+  const beat="▮".repeat(S.beat+1)+"▯".repeat(3-S.beat);
+  const pages=p?p.pages:1,pg=range(0,pages-1,Number).map(k=>k===S.page?"■":"□").join("");
+  const modeName={track:"Track",mute:"TrackMute",pattern:"Pattern",pset:"Pattern Set",scale:"Scale",chord:"Chord",transpose:"Transpose",trigger:"Trigger",cc:"CC",slide:"CV SLIDE"}[S.mode];
+  let r2=modeName;
+  if(S.mode==="track")r2=["None","MIDI1","MIDI2","USB","CV/GATE1","CV/GATE2"][t.out>0?(t.out<5?1:0):0]+(t.out?" Ch."+t.out:"");
+  if(S.mode==="pattern")r2="Speed "+SPEEDS[p?p.speed:2];
+  if(S.mode==="scale")r2=["Normal Layout","Note Repeat(Top)","Note Repeat(Bot)"][S.noteRepeat];
+  if(S.mode==="chord")r2=CHORDSETS[S.chordSet]+" Trs."+(S.chordTrs>0?"+":"")+S.chordTrs;
+  if(S.mode==="cc"){const step=p&&p.steps[curStepIdx([...S.heldPads][0]??0)];r2=`CC${S.ccSel+1} #${String(t.cc[S.ccSel]).padStart(3,"0")}${S.ccEditNum?"*":""}`}
+  return[[S.bpm.toFixed(1)+" BPM",beat+(S.rec?" REC":"")+(S.arp?" ARP":"")],[`T${String(S.track+1).padStart(2,"0")} P${String(t.cur+1).padStart(2,"0")} ${pg}`,r2]];
+}
+function draw(){
+  const L=dispLines(),dim=0.55+0.15*setting("Display");
+  ["L","R"].forEach((s,k)=>{const g=document.getElementById("disp"+s);g.innerHTML="";const x=757+k*146;
+    (L[k]||[]).forEach((line,j)=>{if(line==null)return;const inv=typeof line==="object";const str=inv?line.s:line;
+      if(inv){el("rect",{x:x-2,y:176+j*22-13,width:124,height:17,fill:"#e8f4ff","fill-opacity":dim},g)}
+      const fs=String(str).length>16?10:13;const tt=el("text",{x,y:176+j*22,"font-size":fs,"font-family":"ui-monospace,Menlo,Consolas,monospace",fill:inv?"#000":"#e8f4ff","fill-opacity":inv?1:dim},g);
+      tt.textContent=String(str).slice(0,21)})});
+}
+
+/* ---------- menus ---------- */
+function flatGlobal(){const out=[];GLOBAL_MENU.forEach(([cat,items],ci)=>items.forEach(([l,o,d])=>out.push({cat,ci,l,o})));return out}
+function openMenu(kind,extra){
+  let items,title;
+  if(kind==="global"){items=flatGlobal();}
+  else if(kind==="track"){const t=T();title="Trk"+(S.track+1)+" Setting";
+    items=[{l:"Track Name",o:[t.name],get:()=>0,set:()=>{}},{l:"Mono/Poly",o:["Poly","Mono"],get:()=>t.mono?1:0,set:v=>t.mono=!!v},
+      {l:"Track Color",o:range(1,16,i=>"#"+String(i).padStart(2,"0")),get:()=>t.color,set:v=>t.color=v},
+      {l:"Track Delay",o:range(0,63,i=>i+" msec"),get:()=>t.delay,set:v=>t.delay=v},
+      {l:"Bank Select MSB",o:["None",...range(0,127,i=>String(i).padStart(3,"0"))],get:()=>t.msb,set:v=>t.msb=v},
+      {l:"Bank Select LSB",o:["None",...range(0,127,i=>String(i).padStart(3,"0"))],get:()=>t.lsb,set:v=>t.lsb=v},
+      {l:"Program Change",o:["None",...range(0,127,i=>String(i).padStart(3,"0"))],get:()=>t.pc,set:v=>t.pc=v}]}
+  else if(kind==="arp"){title="Arp Setting";items=[["Rate",["1/2","1/4","1/8D","1/8","1/8T","1/16","1/16T","1/32"]],["Style",["UP","DOWN","UP + DOWN","RANDOM"]],["Range",["1 Oct","2 Oct","3 Oct"]],["Gate Length",range(1,100,i=>i+"%")]]
+    .map(([l,o])=>({l,o,get:()=>S.arpSet[l],set:v=>S.arpSet[l]=v}))}
+  else if(kind==="quant"){title="QUANTIZE";items=[{l:"Quantize value",o:["OFF","1/32","1/16","1/8"],get:()=>S.quant,set:v=>S.quant=v}]}
+  else if(kind==="prob"){title="TRIG PROB";items=[{l:"Trigger Probability Rate",o:range(1,10,i=>i*10+"%"),get:()=>S.probRate/10-1,set:v=>S.probRate=(v+1)*10}]}
+  else if(kind==="fixed"){title="FIXED LENGTH";const o=range(1,64,i=>(i/4).toFixed(2)+" beat");items=[{l:"Fixed Length",o,get:()=>S.fixedLen/1-1,set:v=>S.fixedLen=v+1}]}
+  else if(kind==="harm"){const b=extra;title="Harmonizer "+b;items=[{l:"Chord",o:CHORDNAMES,get:()=>Math.max(0,CHORDNAMES.indexOf(S.harm[b-1])),set:v=>S.harm[b-1]=CHORDNAMES[v]}]}
+  else if(kind==="history"){title="History";items=S.history.length?S.history.map((h,i)=>({l:`H${String(i+1).padStart(3,"0")}:T${String(h.t+1).padStart(2,"0")} P${String(h.p+1).padStart(2,"0")}`,o:[h.op],get:()=>0,set:()=>{},act:()=>restore(i)})):[{l:"No history",o:["—"],get:()=>0,set:()=>{}}]}
+  S.popup=null;
+  S.menu={kind,title,items,sel:0,edit:items.length===1&&kind!=="history",val:null,extra};
+  if(S.menu.edit){S.menu.val=S.menu.orig=getVal(items[0])}
+  if(kind==="global"&&extra!=null){S.menu.sel=items.findIndex(x=>x.ci===extra)}
+  emit("menu:"+kind);draw();refreshAll();
+}
+function getVal(it){return it.get?it.get():S.settings[it.l]}
+function setVal(it,v){if(it.set)it.set(v);else S.settings[it.l]=v}
+function menuLines(){
+  const m=S.menu,it=m.items[m.sel];if(!it)return[["",""],["",""]];
+  if(m.confirm)return[[it.l,"OK?"],[{s:m.confirm===1?"OK":"Cancel"},m.confirm===1?"(press)":"(press)"]];
+  if(m.msg)return[[it.l,""],[m.msg,m.msg2||""]];
+  const top=m.kind==="global"?it.cat.replace(" Settings",""):(m.title||"");
+  if(it.o===ACT)return[[top,{s:it.l}],["▶ press",""]];
+  const cur=getVal(it);
+  if(m.edit){const v=m.val,was=m.items.length===1?m.orig:cur;return[[top,it.l],[it.o[was]+(v!==was?" →":""),{s:it.o[v]}]]}
+  return[[top,{s:it.l}],[it.o[cur],"("+(m.sel+1)+" of "+m.items.length+")"]];
+}
+function menuTurn(d){
+  const m=S.menu;if(m.confirm){m.confirm=m.confirm===1?2:1;draw();return}
+  if(m.msg)return;
+  if(m.edit){const it=m.items[m.sel];m.val=Math.max(0,Math.min(it.o.length-1,m.val+d));
+    if(m.items.length===1){setVal(it,m.val);applySideEffects(it)}draw();return}
+  m.sel=Math.max(0,Math.min(m.items.length-1,m.sel+d));draw();
+}
+function menuPress(){
+  const m=S.menu,it=m.items[m.sel];
+  if(m.msg){m.msg=null;draw();return}
+  if(m.confirm){if(m.confirm===1)doAction(it.l);m.confirm=0;draw();return}
+  if(it.act){it.act();closeMenu();return}
+  if(it.o===ACT){if(["System Info"].includes(it.l)){m.msg="Ver.1.13";m.msg2="Patterns :"+countPatterns()+"/1600";draw();return}m.confirm=1;draw();return}
+  if(!m.edit){m.edit=true;m.val=getVal(it);draw();return}
+  setVal(it,m.val);applySideEffects(it);emit("set:"+it.l);
+  if(m.items.length===1){closeMenu();return}
+  m.edit=false;draw();
+}
+function menuBack(){const m=S.menu;if(!m)return;if(m.confirm||m.msg){m.confirm=0;m.msg=null;draw();return}
+  if(m.edit&&m.items.length>1){m.edit=false;draw();return}closeMenu()}
+function closeMenu(){S.menu=null;emit("menu:close");draw();refreshAll()}
+function applySideEffects(it){refreshAll();drawPads()}
+function countPatterns(){return S.tracks.reduce((a,t)=>a+Object.keys(t.pats).length,0)}
+function doAction(l){
+  const m=S.menu;
+  if(l==="Create New"){const keep={settings:S.settings};demo();S.settings=keep.settings;S.tracks.forEach(t=>{t.pats={};t.name=t.name.startsWith("Track")?t.name:"Track "+String(S.tracks.indexOf(t)+1).padStart(2,"0")});S.project="<no name>";m.msg="Creating";m.msg2="New project";}
+  else if(l==="Restore Demo"){const st=S.settings;demo();S.settings=st;m.msg="Restore Demo";m.msg2="Progress 100%"}
+  else if(l==="Reset All Settings"){const fresh={};GLOBAL_MENU.forEach(([,items])=>items.forEach(([x,o,d])=>{if(o!==ACT)fresh[x]=d}));S.settings=fresh;m.msg="Reset All";m.msg2="Global Settings."}
+  else if(l==="Save"){m.msg="Saving";m.msg2="Progress 100%"}
+  else if(l==="Delete"){m.msg="Delete selected";m.msg2="project. (sim)"}
+  else{m.msg=l;m.msg2="(not simulated)"}
+  refreshAll();draw();
+}
+function restore(i){const h=S.history[i];const t=S.tracks[h.t];t.pats[h.p]=JSON.parse(h.data);S.track=h.t;t.cur=h.p;popup("History","H"+String(i+1).padStart(3,"0"),"Restored",h.op)}
+
+/* ---------- input handling ---------- */
+const MOM=new Set(["half","ghold","dbl","r4","r8","r16","r32","trip","dot","h1","h2","h3","h4","h5","h6","tie","active","copy","paste","track","mute","pattern","global"]);
+const LATCH_CLICK=new Set(["tie","active","copy","paste"]);
+let pressT=0,dragK=null,longTimer=null,longFired=false,tipTimer=null,tipOff=null;
+function bindAll(){
+  C.forEach(c=>{const g=ctlEls[c.id];
+    g.addEventListener("pointerdown",e=>{e.preventDefault();try{g.setPointerCapture(e.pointerId)}catch(_){}g.classList.remove("big");showInfo(c.id);longFired=false;
+      if(e.pointerType!=="mouse"){showTip(c.id,e);clearTimeout(tipTimer);tipTimer=setTimeout(hideTip,3000)}
+      if(e.button===2){toggleLatch(c);return}
+      if(c.t==="knob"&&!c.btn){dragK={c,y:e.clientY,acc:0,moved:false};return}
+      if(c.t==="slider"){dragK={c,x:e.clientX,slider:true};return}
+      longTimer=setTimeout(()=>{longFired=true;toggleLatch(c)},450);
+      if(c.t==="pad")return padDown(c.i,e);
+      if(LATCH_CLICK.has(c.id))return;
+      S.held.add(c.id);press(c.id);refreshAll();});
+    g.addEventListener("pointermove",e=>{if(!dragK||dragK.c!==c)return;if(e.pointerType!=="mouse")hideTip();
+      if(dragK.slider){const r=svg.getBoundingClientRect(),scale=1278/r.width;S.groove=Math.max(-100,Math.min(100,(e.clientX-dragK.x)*scale/0.62*1));
+        popup("Groove Bend",(S.groove<0?"Slow ":"Fast ")+Math.round(Math.abs(S.groove))+"%","","",500);if(S.rec&&S.playing)S.autoRec=true;refreshAll();return}
+      dragK.acc+=dragK.y-e.clientY;dragK.y=e.clientY;while(Math.abs(dragK.acc)>=8){const d=Math.sign(dragK.acc);dragK.acc-=d*8;dragK.moved=true;turn(c.id,d)}});
+    g.addEventListener("pointerup",e=>{clearTimeout(longTimer);
+      if(dragK&&dragK.c===c){if(dragK.slider){S.groove=0;refreshAll()}else if(!dragK.moved&&c.id==="rotary")press("rotary");dragK=null;return}
+      if(e.button===2||longFired)return;
+      if(c.t==="pad")return padUp(c.i);
+      if(LATCH_CLICK.has(c.id)){toggleLatch(c,true);return}
+      S.held.delete(c.id);release(c.id);refreshAll();});
+    g.addEventListener("contextmenu",e=>e.preventDefault());g.style.touchAction="none";
+    g.addEventListener("wheel",e=>{if(c.t==="knob"&&!c.btn){e.preventDefault();turn(c.id,e.deltaY<0?1:-1)}},{passive:false});
+    g.addEventListener("pointerenter",e=>{g.classList.add("hl");if(e.pointerType==="mouse")g.classList.add("big");if(e.pointerType==="mouse"&&!dragK)showTip(c.id,e)});g.addEventListener("pointerleave",e=>{g.classList.remove("hl","big");if(tipOff===c.id)tipOff=null;if(e.pointerType==="mouse")hideTip()});
+    g.addEventListener("dblclick",()=>{tipOff=c.id;hideTip()});
+    g.addEventListener("mousemove",e=>{if(dragK)hideTip();else moveTip(e)});
+    g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();e.stopPropagation();if(c.t==="pad"){padDown(c.i,e);padUp(c.i)}else{press(c.id);release(c.id)}}});
+    g.addEventListener("focus",()=>showInfo(c.id));
+  });
+}
+function toggleLatch(c,fromClick){
+  if(c.t==="pad"){S.heldPads.has(c.i)?S.heldPads.delete(c.i):S.heldPads.add(c.i);S.noteSel=0;emit("hold:pad");updatePartners();drawPads();draw();return}
+  if(c.t==="knob"&&!c.btn)return;
+  if(S.latched.has(c.id)){S.latched.delete(c.id);release(c.id)}else{S.latched.add(c.id);if(!fromClick||c.id!=="shift")press(c.id,true);emit("latch:"+c.id)}
+  refreshAll();
+}
+const isDelete=()=>isHeld("copy")&&isHeld("paste");
+function press(id,fromLatch){
+  emit("press:"+id);
+  const sh=shiftOn();
+  if(id==="shift"){if(!fromLatch){S.latched.has("shift")?S.latched.delete("shift"):S.latched.add("shift")}refreshAll();return}
+  const used=()=>{if(sh)useShift()};
+  if(S.menu&&!["rotary","back","global","shift"].includes(id)&&!(S.menu.kind==="harm"&&/^h\d/.test(id))){closeMenu()}
+  switch(id){
+    case "play":if(sh){used();S.tracks.forEach(t=>{t.phase=0;t.lastKey=null});S.gphase=0;S.lastBar=0;S.playing=true;S.paused=false;emit("play");break}
+      if(!S.playing){S.playing=true;S.paused=false;S.gphase=0;S.lastBar=0;S.tracks.forEach(t=>{t.phase=0;t.lastKey=null});emit("play")}else S.paused=!S.paused;break;
+    case "stop":S.playing=false;S.paused=false;S.tracks.forEach(t=>{t.playIdx=-1;t.lastKey=null});emit("stop");break;
+    case "rec":if(sh){used();openMenu("history");break}S.rec=!S.rec;break;
+    case "tap":if(sh){used();openMenu("quant");break}{const now=performance.now();if(now-pressT<1500){S.bpm=Math.max(30,Math.min(300,Math.round(60000/(now-pressT)*10)/10))}pressT=now;S.tapEdit=performance.now();popup("BPM",S.bpm.toFixed(1),"Tap / turn","selector",1500)}break;
+    case "global":if(S.menu&&S.menu.kind==="global")closeMenu();else openMenu("global");break;
+    case "back":if(S.menu)menuBack();else if(S.tw){S.tw=false}break;
+    case "rotary":if(S.menu)menuPress();else if(S.mode==="cc"){S.ccEditNum=!S.ccEditNum}else if(S.mode==="chord"){S.chordField=S.chordField?0:1;popup("Chord",S.chordField?"Trs. select":"Set select","","")}
+      else if(S.mode==="trigger"&&S.heldPads.size){const p=pat(),si=curStepIdx([...S.heldPads][0]),s=p.steps[si];if(S.noteSel>=s.notes.length){pushHist("Edit");s.notes.push({...s.notes[0]})}s.on=true;popup("Note"+(S.noteSel+1),"unmuted","","")}
+      break;
+    case "tw":S.tw=!S.tw;S.twBars=S.twBars||0;emit("tw");break;
+    case "arp":if(sh){used();openMenu("arp")}else S.arp=!S.arp;break;
+    case "trigprob":if(sh){used();openMenu("prob")}else{S.trigProb=!S.trigProb;popup("TRIG PROB",S.trigProb?"ON":"OFF","Rate",S.probRate+"%")}break;
+    case "fixed":if(sh){used();openMenu("fixed")}else S.fixed=!S.fixed;break;
+    case "rev":S.rev=!S.rev;break;
+    case "sb":S.sb=!S.sb;break;
+    case "dRight":case "dDown":case "dZig":case "dCw":case "dCcw":case "dSkip":S.dir=id;S.mirror=sh;used();popup("Direction",C.find(c=>c.id===id).label+(S.mirror?" (mirror)":""),"","");break;
+    case "half":case "dbl":if(sh){used();S.nudge=id;const b=S.bpm;S.bpm=Math.max(30,b+(id==="dbl"?5:-5));S.nudgeFrom=b;popup("Nudge",(id==="dbl"?"+":"−")+"5 BPM","","")}break;
+    case "r4":case "r8":case "r16":case "r32":case "trip":case "dot":if(sh){used();S.latched.add(id)}S.loop=null;break;
+    case "track":if(sh){used();openMenu("track");break}setMode("track");break;
+    case "mute":if(sh){used();S.tracks.forEach(t=>{t.muted=false;t.solo=false});popup("TrackMute","All cleared","","");break}setMode("mute");break;
+    case "pattern":if(S.tw){S.twSave=!S.twSave;popup("TimeWarp",S.twSave?"Pick pad":"","to save","(display only)");break}
+      if(sh){used();setMode("pset");break}setMode("pattern");break;
+    case "scale":if(sh){used();setMode("chord");break}setMode("scale");break;
+    case "transpose":setMode("transpose");break;
+    case "trigger":if(sh){used();setMode("cc");break}setMode("trigger");break;
+    case "tie":if(sh){used();setMode("slide");S.latched.delete("tie");S.held.delete("tie")}break;
+    case "active":if(sh){used();S.latched.delete("active");S.held.delete("active");randomTrig()}break;
+    case "left":case "right":arrow(id==="left"?-1:1,sh);used();break;
+    case "iPitch":case "iGate":case "iVel":{const k={iPitch:0,iGate:1,iVel:2}[id];if(sh){used();randomize(k);break}
+      if(S.interp&&S.interp.k===k){finishInterp()}else{S.interp={k,pts:{}};if(S.mode!=="cc")setMode("trigger",true);popup("Interpolation",["PITCH","GATE","VELOCITY"][k],"hold pads +","turn knob")}break}
+    default:if(/^h\d$/.test(id)){const b=+id[1];if(sh){used();openMenu("harm",b);break}
+      if(S.heldPads.size&&["trigger","cc","slide"].includes(S.mode)){const p=pat();pushHist("Edit");S.heldPads.forEach(i=>{const s=p.steps[curStepIdx(i)];s.ch=s.ch&&s.chName===S.harm[b-1]?null:CHORDS[S.harm[b-1]];s.chName=S.harm[b-1]});popup("Harmonizer "+b,S.harm[b-1],"set on step","")}
+      else{S.harmHold=b;popup("Harmonizer "+b,S.harm[b-1],"","",600)}}
+  }
+  refreshAll();drawPads();draw();
+}
+function release(id){
+  if(/^h\d$/.test(id)&&S.harmHold===+id[1]&&!S.latched.has(id))S.harmHold=null;
+  if((id==="half"||id==="dbl")&&S.nudge===id){S.bpm=S.nudgeFrom;S.nudge=null}
+  if(["r4","r8","r16","r32","trip","dot"].includes(id))S.loop=null;
+  if(id==="shift")S.shift=false;
+  refreshAll();
+}
+function setMode(m,keep){S.mode=m;S.popup=null;if(!keep)S.interp=null;if(!["trigger","cc","slide","pattern"].includes(m))S.page=0;if(m==="pattern")S.page=Math.floor(T().cur/16);emit("mode:"+m);drawPads();draw()}
+function arrow(d,sh){
+  const p=pat();
+  if(sh){pushHist("Edit");p.pages=Math.max(1,Math.min(4,p.pages+d));S.page=Math.min(S.page,p.pages-1);popup("Page Length",p.pages+(p.pages>1?" pages":" page"),(p.pages*16)+" steps","");emit("pages");return}
+  if(S.heldPads.size&&S.mode==="trigger"){pushHist("Edit");S.heldPads.forEach(i=>p.steps[curStepIdx(i)].notes.forEach(n=>n.o=Math.max(0,Math.min(5,n.o+d))));const n=p.steps[curStepIdx([...S.heldPads][0])].notes[0];popup("Offset",n.o+"/6 step","","");return}
+  if(S.mode==="scale"){S.scaleRange=Math.max(-12,Math.min(12,S.scaleRange+d));popup("Range",noteName(60+S.scaleRange*4)+"-"+noteName(75+S.scaleRange*4),"","");return}
+  if(S.mode==="chord"){S.chordTrs=Math.max(-12,Math.min(12,S.chordTrs+d));popup("Chord","Trs. "+S.chordTrs,"","");return}
+  if(S.mode==="pattern"){S.page=(S.page+d+4)%4;return}
+  S.page=Math.max(0,Math.min(p.pages-1,S.page+d));
+}
+function padDown(i,e){
+  const t=T(),sh=shiftOn();
+  emit("pad:"+i);
+  if(isHeld("global")){S.held.delete("global");S.latched.delete("global");const ci=i;if(ci<GLOBAL_MENU.length)openMenu("global",ci);return}
+  if(S.tw){if(S.twSave){popup("TimeWarp","Saved to","P"+(S.page*16+i+1),"(sim)");S.twSave=false}else popup("TimeWarp","Preview bar "+(i+1),"","");return}
+  if(S.interp&&!S.heldPads.size){const si=curStepIdx(i);if(S.interp.pts[si]!=null){delete S.interp.pts[si];drawPads();return}}
+  if(isDelete()){deletePad(i);return}
+  if(isHeld("copy")){copyPad(i);return}
+  if(isHeld("paste")){pastePad(i);return}
+  const m=S.mode;
+  if(m==="track"){S.track=i;popup("Track",String(i+1).padStart(2,"0")+" "+S.tracks[i].name,"","",900)}
+  else if(m==="mute"){const x=S.tracks[i];if(sh){x.solo=!x.solo;useShift()}else if(!x.solo)x.muted=!x.muted}
+  else if(m==="pattern"){const idx=S.page*16+i;if(S.playing&&!sh){t.queued=idx}else{t.cur=idx;t.lastKey=null;if(sh)useShift()}if(!t.pats[idx])t.pats[idx]=emptyPattern();emit("patsel")}
+  else if(m==="pset"){if(S.sets[i]){if(S.playing)S.setQueued=i;else applySet(i);popup("Pattern Set","Set No. "+(i+1),"loaded","")}else{S.sets[i]=S.tracks.map(x=>({p:x.cur,m:x.muted}));S.curSet=i;popup("Pattern Set","Set No. "+(i+1),"saved","");emit("psave")}}
+  else if(m==="scale"){const n=60+S.scaleRange*4+(3-Math.floor(i/4))*4+(i%4);S.flash["pad"+i]=performance.now();if(sh&&!S.playing){useShift();press("play")}
+    const q=quantize(n),chord=S.harmHold?CHORDS[S.harm[S.harmHold-1]]:[0];chord.forEach(iv=>blip(quantize(q+iv),.4,100));popup("Scale",noteName(q),SCALES[S.scale][0],NOTE[S.key],600);recordNote(q)}
+  else if(m==="chord"){const sc=SCALES[S.scale][1],deg=i,root=48+S.key+S.chordTrs+12*Math.floor(deg/sc.length)+sc[deg%sc.length];const ext=[0,2,4,6].slice(0,3+(S.chordSet%3===1?1:0));
+    const notes=ext.map(k=>{const d=deg+k;return 48+S.key+S.chordTrs+12*Math.floor(d/sc.length)+sc[d%sc.length]});S.flash["pad"+i]=performance.now();notes.forEach(n=>blip(n,.6,90));popup(CHORDSETS[S.chordSet],noteName(root),notes.map(noteName).join(" ").slice(0,17),"",700)}
+  else if(m==="transpose"){S.transposeHold=TRANSPOSE_PADS[i];S.transposePad=i;popup("Transpose",(S.transposeHold>0?"+":"")+S.transposeHold,"","",700)}
+  else{ // trigger / cc / slide
+    const p=pat(),si=curStepIdx(i);if(si>=p.pages*16)return;const s=p.steps[si];
+    if(sh&&S.playing){t.phase=startPhaseOf(p,si);t.lastKey=null;useShift();popup("Step Jump","#"+(si+1),"","");return}
+    pushHist("Edit");
+    if(isHeld("tie")){s.tie=!s.tie;emit("tie")}
+    else if(isHeld("active")){s.act=!s.act;emit("active")}
+    else if(m==="slide")s.slide=!s.slide;
+    else if(m==="cc")s.ccOn=!s.ccOn;
+    else{s.on=!s.on;emit("trig");if(s.on&&setting("Step Preview")&&!S.playing)blip(quantize(s.notes[0].p),.2,s.notes[0].v)}
+  }
+  drawPads();draw();
+}
+function padUp(i){if(S.mode==="transpose"&&S.transposePad===i){S.transposeHold=0;S.transposePad=null}drawPads();draw()}
+function startPhaseOf(p,si){const seq=sequence(p);let t=0;for(const x of seq){if(x===si)return t;t+=p.steps[x].count}return 0}
+function recordNote(n){if(!(S.rec&&S.playing))return;const t=T(),p=pat();if(t.playIdx<0)return;const s=p.steps[t.playIdx];pushHist("Edit");s.on=true;s.notes=[{p:n,g:1,v:100,o:0}];emit("recnote")}
+function copyPad(i){const m=S.mode,t=T();S.clipFlash={i,t:performance.now()};
+  if(m==="pattern"){const idx=S.page*16+i;if(t.pats[idx])S.clip={type:"pattern",data:JSON.stringify(t.pats[idx])}}
+  else if(m==="pset"){if(S.sets[i])S.clip={type:"set",data:JSON.stringify(S.sets[i])}}
+  else if(["trigger","cc"].includes(m)){S.clip={type:"step",data:JSON.stringify(pat().steps[curStepIdx(i)])}}
+  popup("Copy",S.clip?S.clip.type:"—","","");emit("copy");drawPads()}
+function pastePad(i){const m=S.mode,t=T(),c=S.clip;if(!c)return;S.clipFlash={i,t:performance.now()};
+  if(m==="pattern"&&c.type==="pattern"){pushHist("Paste");t.pats[S.page*16+i]=JSON.parse(c.data)}
+  else if(m==="pset"&&c.type==="set"){S.sets[i]=JSON.parse(c.data)}
+  else if(["trigger","cc"].includes(m)&&c.type==="step"){pushHist("Paste");pat().steps[curStepIdx(i)]=JSON.parse(c.data)}
+  popup("Paste",c.type,"","");emit("paste");drawPads()}
+function deletePad(i){const m=S.mode,t=T();
+  if(m==="pattern"){const idx=S.page*16+i;pushHist("Delete");delete t.pats[idx];if(t.cur===idx)t.pats[idx]=emptyPattern()}
+  else if(m==="pset"){S.sets[i]=null}
+  else if(["trigger","cc"].includes(m)){pushHist("Delete");pat().steps[curStepIdx(i)]=emptyStep()}
+  popup("Delete Mode","pad "+(i+1),"","");emit("delete");drawPads()}
+function randomize(k){const p=pat(),st=S.settings;pushHist("Random");
+  const L=p.pages*16;for(let i=0;i<L;i++){const s=p.steps[i];
+    if(S.mode==="cc"){s.cc[k]=st["CC Min"]+Math.floor(Math.random()*(st["CC Max"]-st["CC Min"]+1));continue}
+    s.notes.forEach(n=>{if(k===0){const lo=st["Pitch Min"],hi=st["Pitch Max"];n.p=st["Pitch Type"]===0&&i>0?Math.max(lo,Math.min(hi,p.steps[i-1].notes[0].p+[-5,-3,-2,0,2,3,4,7][Math.floor(Math.random()*8)])):quantize(lo+Math.floor(Math.random()*(hi-lo+1)))}
+      if(k===1){const g=GATES.filter(g=>g<=16);n.g=g[st["Gate Min"]+Math.floor(Math.random()*(st["Gate Max"]-st["Gate Min"]+1))]}
+      if(k===2)n.v=st["Velocity Min"]+Math.floor(Math.random()*(st["Velocity Max"]-st["Velocity Min"]+1))})}
+  popup("Randomizer",["PITCH","GATE","VELOCITY"][k],["Melodic","Normal"][st["Pitch Type"]],"",1000);emit("random");drawPads()}
+function randomTrig(){const p=pat(),L=p.pages*16;pushHist("Random");
+  if(S.settings["Trigger Type"]===0){const k=2+Math.floor(Math.random()*(L/2)),rot=Math.floor(Math.random()*L);for(let i=0;i<L;i++){p.steps[(i+rot)%L].on=Math.floor((i+1)*k/L)!==Math.floor(i*k/L)}}
+  else for(let i=0;i<L;i++)p.steps[i].on=Math.random()<.5;
+  popup("TRIG RANDOM",["Euclid Based","Normal"][S.settings["Trigger Type"]],"","",1000);emit("random");drawPads()}
+function finishInterp(){const it=S.interp,p=pat(),keys=Object.keys(it.pts).map(Number).sort((a,b)=>a-b);
+  if(keys.length>=2){pushHist("Edit");for(let j=0;j<keys.length-1;j++){const a=keys[j],b=keys[j+1],va=it.pts[a],vb=it.pts[b];
+    for(let s=a;s<=b;s++){const v=va+(vb-va)*(s-a)/(b-a),st=p.steps[s];
+      if(S.mode==="cc")st.cc[it.k]=Math.round(v);else st.notes.forEach(n=>{if(it.k===0)n.p=Math.round(v);if(it.k===1)n.g=GATES[Math.round(v)];if(it.k===2)n.v=Math.round(v);n.o=0})}}}
+  popup("Interpolation",keys.length>=2?"applied":"need 2 points",keys.length+" points","");S.interp=null;emit("interp");drawPads()}
+
+/* knobs and selector */
+function turn(id,d){
+  const sh=shiftOn();emit("knob:"+id);
+  const c=C.find(x=>x.id===id);c._rot=((c._rot||0)+d*18)%360;
+  if(id==="rotary")return rotary(d,sh);
+  if(id==="shape"){const b=S.shape;S.shape=(S.shape+d+6)%6;popup("Shape",SHAPES[b],"",SHAPES[S.shape])}
+  else if(id==="modlen"){const b=S.modLen;S.modLen=Math.max(2,Math.min(64,S.modLen+d));popup("Mod. Length",b+" step","",S.modLen+" step")}
+  else if(id==="depth"){const b=S.depth;S.depth=Math.max(-64,Math.min(63,S.depth+d));popup("Depth",String(b),"",String(S.depth))}
+  else if(id==="scaleK"){if(sh){useShift();const b=S.key;S.key=(S.key+d+12)%12;popup("Key",NOTE[b],"",NOTE[S.key])}else{const b=S.scale;S.scale=Math.max(0,Math.min(SCALES.length-1,S.scale+d));popup("Scale",SCALES[b][0],"",SCALES[S.scale][0])}emit("scale")}
+  else if(id==="swing"){const b=S.swing;S.swing=Math.max(0,Math.min(100,S.swing+d*2));popup("Swing",b+" %","",S.swing+" %")}
+  else if(/^k\d$/.test(id))stepKnob(+id[1]-1,d,sh);
+  refreshAll();drawPads();draw();
+}
+function rotary(d,sh){
+  if(S.menu)return menuTurn(d);
+  const t=T(),p=pat();
+  if(S.tw){S.twBars=Math.max(0,Math.min(3,(S.twBars||0)+d));draw();return}
+  if(S.tapEdit&&performance.now()-S.tapEdit<2500){if(sh)useShift();S.bpm=Math.max(30,Math.min(300,+(S.bpm+(sh?d*.1:d)).toFixed(1)));S.tapEdit=performance.now();popup("BPM",S.bpm.toFixed(1),"","",1500);return}
+  if(S.heldPads.size&&S.mode==="trigger"){const s=p.steps[curStepIdx([...S.heldPads][0])];S.noteSel=Math.max(0,Math.min(7,S.noteSel+d));popup("Note"+(S.noteSel+1),S.noteSel<s.notes.length?noteName(quantize(s.notes[S.noteSel].p)):"(empty)","press = add","");return}
+  switch(S.mode){
+    case "track":{t.out=Math.max(0,Math.min(16,t.out+d));popup("Output",t.out?"MIDI1 Ch."+t.out:"None","","");break}
+    case "pattern":{const b=p.speed;p.speed=Math.max(0,Math.min(4,p.speed+d));popup("Speed",SPEEDS[b],"",SPEEDS[p.speed]);emit("speed");break}
+    case "scale":S.noteRepeat=(S.noteRepeat+d+3)%3;break;
+    case "chord":if(S.chordField)S.chordTrs=Math.max(-12,Math.min(12,S.chordTrs+d));else S.chordSet=(S.chordSet+d+18)%18;break;
+    case "cc":if(S.ccEditNum)t.cc[S.ccSel]=Math.max(0,Math.min(127,t.cc[S.ccSel]+d));else S.ccSel=(S.ccSel+d+5)%5;break;
+    default:{const b=S.bpm;S.bpm=Math.max(30,Math.min(300,S.bpm+d));popup("BPM",b.toFixed(1),"",S.bpm.toFixed(1),900)}
+  }
+  draw();drawPads();
+}
+function stepKnob(k,d,sh){
+  const p=pat(),t=T();
+  if(k===4&&sh){useShift();pushHist("Edit");const L=p.pages*16,arr=p.steps.slice(0,L);const r=d>0?arr.slice(-1).concat(arr.slice(0,-1)):arr.slice(1).concat(arr.slice(0,1));for(let i=0;i<L;i++)p.steps[i]=r[i];popup("Step Shift",d>0?"→ 1 step":"← 1 step","","");return}
+  const targets=S.heldPads.size?[...S.heldPads].map(curStepIdx):range(0,p.pages*16-1,Number);
+  if(S.interp&&k<3){if(!S.heldPads.size){popup("Interpolation","hold a pad","first","");return}
+    const si=targets[0],s=p.steps[si];let v=S.interp.pts[si];
+    if(v==null)v=S.mode==="cc"?s.cc[k]:k===0?s.notes[0].p:k===1?Math.max(0,GATES.indexOf(s.notes[0].g)):s.notes[0].v;
+    v=Math.max(0,Math.min(k===1?GATES.length-1:127,v+d));targets.forEach(x=>S.interp.pts[x]=v);
+    popup("Point #"+(si+1),["PITCH","GATE","VELOCITY"][k],k===0?noteName(v):k===1?GATES[v]+" step":String(v),"");return}
+  if(S.mode==="cc"){S.ccSel=k;targets.forEach(si=>{const s=p.steps[si];s.cc[k]=Math.max(0,Math.min(127,s.cc[k]+d));if(S.heldPads.size)s.ccOn=true});
+    popup("CC"+(k+1)+" #"+String(t.cc[k]).padStart(3,"0"),S.heldPads.size?"step "+(targets[0]+1):"all steps","Value",String(p.steps[targets[0]].cc[k]));return}
+  if(!["trigger","slide"].includes(S.mode))setMode("trigger",true);
+  pushHist("Edit");
+  const ns=si=>{const s=p.steps[si];return S.heldPads.size&&S.noteSel<s.notes.length?[s.notes[S.noteSel]]:s.notes};
+  targets.forEach(si=>{const s=p.steps[si];
+    if(k===0)ns(si).forEach(n=>n.p=Math.max(0,Math.min(127,n.p+d)));
+    if(k===1)ns(si).forEach(n=>{let gi=GATES.indexOf(n.g);if(gi<0)gi=7;n.g=GATES[Math.max(0,Math.min(GATES.length-1,gi+d))]});
+    if(k===2)ns(si).forEach(n=>n.v=Math.max(0,Math.min(127,n.v+d*2)));
+    if(k===3)s.count=Math.max(1,Math.min(4,s.count+d));
+    if(k===4)s.div=Math.max(1,Math.min(4,s.div+d));});
+  const s=p.steps[targets[0]],n=ns(targets[0])[0];
+  const lbl=["PITCH","GATE","VELOCITY","COUNT","DIVIDE"][k],val=[noteName(quantize(n.p)),n.g.toFixed(3)+" step",String(n.v),String(s.count),String(s.div)][k];
+  popup(lbl,S.heldPads.size?"#"+(targets[0]+1):"All steps","",val);emit("edit:"+k);
+}
+
+/* keyboard */
+document.addEventListener("keydown",e=>{if(e.target.closest&&e.target.closest("select,button"))return;
+  if(e.key==="Shift"){S.shiftKey=true;refreshAll();return}
+  if(e.key===" "&&!(e.target.closest&&e.target.closest(".ctl"))){e.preventDefault();press("play");return}
+  if(e.key==="ArrowRight"){e.preventDefault();turn("rotary",1)}if(e.key==="ArrowLeft"){e.preventDefault();turn("rotary",-1)}
+  if(e.key==="Enter"&&!(e.target.closest&&e.target.closest(".ctl")))press("rotary");
+  if(e.key==="Escape"||e.key==="Backspace"){e.preventDefault();press("back")}
+});
+document.addEventListener("keyup",e=>{if(e.key==="Shift"){S.shiftKey=false;refreshAll()}});
+
+/* ---------- info panel ---------- */
+const ctlName=id=>/^pad/.test(id)?"pad "+(+id.slice(3)+1):INFO[id][0].replace(/ (button|knob|slider|buttons 1–6)$/,"");
+const targetLabel=a=>a===PADS?"pad":a===KNOBS?"PITCH…DIVIDE knobs":a===LOOPS?"loop button":a===HARMS?"HARMONIZER 1–6":a.map(ctlName).join(" / ");
+function activeMods(){const m=[],h=isHeld;if(shiftOn())m.push("shift");
+  if(h("copy")&&h("paste"))m.push("del");else{if(h("copy"))m.push("copy");if(h("paste"))m.push("paste")}
+  ["global","tie","active","track","mute","pattern"].forEach(k=>{if(h(k))m.push(k)});
+  if(S.heldPads.size)m.push("pad");if(LOOPS.some(h))m.push("loop");if(h("trip")||h("dot"))m.push("tripdot");return m}
+function updatePartners(){const mods=activeMods(),on=new Set();COMBOS.forEach(c=>{if(mods.includes(c[0]))c[1].forEach(x=>on.add(x))});
+  C.forEach(c=>{const g=ctlEls[c.id];if(g)g.classList.toggle("partner",on.has(c.id)&&!(c.t==="pad"&&S.heldPads.has(c.i)))})}
+function comboTip(id){const mods=activeMods();
+  return COMBOS.filter(c=>mods.includes(c[0])&&c[1].includes(id)).map(c=>`<div class="cmb"><em>${MODS[c[0]][0]} + ${ctlName(id)}</em><br>${c[0]==="shift"&&/^pad/.test(id)?(SHIFTPAD[S.mode]||"No SHIFT function in this pad mode."):c[2]}${c[4]===false?" <i>(not simulated here)</i>":""}</div>`).join("")}
+const isStarter=id=>Object.values(MODS).some(m=>m[1].includes(id));
+function renderCombos(){const q=$("#comboQ").value.trim().toLowerCase();let html="";
+  Object.keys(MODS).forEach(k=>{const rows=COMBOS.map((c,i)=>[c,i]).filter(([c])=>c[0]===k&&(!q||(MODS[k][0]+" "+targetLabel(c[1])+" "+c[2]).toLowerCase().includes(q)));
+    if(!rows.length)return;html+=`<h3>${MODS[k][0]} +</h3><ul>`+rows.map(([c,i])=>`<li data-i="${i}"><span class="ct">${targetLabel(c[1])}</span><span class="cd">${c[2]} <span class="pg">${c[3]}</span></span>${c[4]===false?"<i>not simulated</i>":`<button class="cplay" data-i="${i}">Show</button>`}</li>`).join("")+"</ul>"});
+  $("#comboList").innerHTML=html||'<p class="pg">No matches.</p>'}
+function comboHl(i,on){if(i==null)return;const [k,tg]=COMBOS[i];[...(k==="pad"?["pad0"]:MODS[k][1]),...tg].forEach(id=>ctlEls[id]&&ctlEls[id].classList.toggle("comboHl",on))}
+function demoCombo(i){const [k,tg]=COMBOS[i],t=tg.includes("pad2")?"pad2":tg[0],c=C.find(x=>x.id===t);
+  const mods=k==="pad"?["pad0"]:k==="loop"?["r8"]:k==="tripdot"?["trip"]:MODS[k][1];
+  if(["pad","tie","active"].includes(k)&&!["trigger","cc","slide"].includes(S.mode))setMode("trigger");
+  if(["copy","paste","del"].includes(k)&&!["trigger","cc","pattern","pset"].includes(S.mode))setMode("trigger");
+  if(k==="loop"||k==="tripdot")S.playing||press("play");
+  const before=new Set(S.latched),flash=[...mods,t];ensureVisible(mods[0],t);flash.forEach(id=>ctlEls[id].classList.add("comboDemo"));
+  if(k==="shift")S.latched.add("shift");else if(k==="pad"){S.heldPads.add(0);S.noteSel=0}else mods.forEach(id=>{S.held.add(id);if(!LATCH_CLICK.has(id))press(id)});
+  refreshAll();drawPads();draw();showInfo(t);
+  setTimeout(()=>{if(c.t==="pad")padDown(c.i);else if(c.t==="knob"&&!c.btn)turn(t,1);else press(t)},450);
+  setTimeout(()=>{if(c.t==="pad")padUp(c.i);else if(!(c.t==="knob"&&!c.btn))release(t);
+    if(k==="shift")useShift();else if(k==="pad")S.heldPads.delete(0);else mods.forEach(id=>{S.held.delete(id);release(id)});
+    flash.forEach(id=>ctlEls[id]&&ctlEls[id].classList.remove("comboDemo"));[...S.latched].forEach(id=>{if(!before.has(id)){S.latched.delete(id);release(id)}});refreshAll();drawPads();draw()},1700)}
+const VIEWS={full:"36 56 1278 766",controls:"44 112 552 692",pads:"590 112 716 692"};let view="full";
+function setView(v){view=v;svg.setAttribute("viewBox",VIEWS[v]);document.querySelectorAll(".viewbar button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===v))}
+function inView(id,v){const c=C.find(x=>x.id===id);if(v==="full"||!c)return true;const [x,y,w,h]=VIEWS[v].split(" ").map(Number),cx=c.x+(c.w||0)/2,cy=c.y+(c.h||0)/2;return cx>=x&&cx<=x+w&&cy>=y&&cy<=y+h}
+function ensureVisible(...ids){if(!ids.every(id=>inView(id,view)))setView(["pads","controls"].find(v=>ids.every(id=>inView(id,v)))||"full")}
+function drawComboMarks(on){const g=document.getElementById("comboLayer");if(!g)return;g.innerHTML="";if(!on)return;
+  new Set(Object.values(MODS).flatMap(m=>m[1]).filter(id=>!/^pad/.test(id))).forEach(id=>{const c=C.find(x=>x.id===id);if(!c)return;
+    const x=c.t==="knob"?c.x-c.r:c.x,y=c.t==="knob"?c.y-c.r:c.y;el("circle",{class:"comboDot",cx:x,cy:y,r:6.5},g);txt("+",x,y+3.6,11,"#001",null,g)})}
+const firstSentence=t=>(t.match(/^.*?[.!?](\s|$)/)||[t])[0].trim();
+function showTip(id,e){if(id===tipOff)return;
+  const inf=INFO[/^pad/.test(id)?"pad":id];if(!inf)return;const tip=$("#tip");
+  const n=+id.slice(3)+1,pm={track:`Select track ${n}.`,mute:`Mute / unmute track ${n}.`,pattern:`Select pattern ${n} for the current track.`,pset:`Recall or save pattern set ${n}.`,scale:"Play a note in the current scale.",chord:"Play a chord from the current chord set.",transpose:"Transpose the pattern live.",trigger:`Toggle step ${n} on or off. Right-click to hold it and edit with the knobs.`,cc:`Select step ${n} to edit its CC values.`,slide:`Toggle CV slide on step ${n}.`};
+  const body=/^pad/.test(id)?`<b>Pad ${n}</b>${pm[S.mode]||firstSentence(inf[1])}`:`<b>${inf[0]}</b>${firstSentence(inf[1])}`;
+  const starter=isStarter(id)&&!activeMods().length?`<div class="s"><em style="color:var(--combo)">Combos:</em> ${/^pad/.test(id)?"right-click to hold this pad":"right-click to latch"}; partner controls light up.</div>`:"";
+  const ct=comboTip(id);
+  tip.innerHTML=ct?ct:`${body}${inf[2]&&inf[2]!=="—"?`<div class="s"><em>SHIFT:</em> ${firstSentence(inf[2])}</div>`:""}${starter}`;
+  tip.hidden=false;moveTip(e)}
+function moveTip(e){const tip=$("#tip");if(tip.hidden)return;
+  const w=tip.offsetWidth,h=tip.offsetHeight;let x=e.clientX+14,y=e.clientY+16;if(e.pointerType&&e.pointerType!=="mouse"){x=e.clientX-w/2;y=e.clientY-h-36;if(y<8)y=e.clientY+36}
+  if(x+w>innerWidth-8)x=innerWidth-w-8;if(y+h>innerHeight-8)y=e.clientY-h-12;
+  tip.style.left=Math.max(8,x)+"px";tip.style.top=Math.max(8,y)+"px"}
+function hideTip(){$("#tip").hidden=true}
+function showInfo(id){
+  const key=/^pad/.test(id)?"pad":id,inf=INFO[key];if(!inf)return;
+  const w=WISH.filter(x=>x[0].includes(id));
+  $("#info").innerHTML=`<h2>${inf[0]}</h2><p>${inf[1]}</p>${inf[2]&&inf[2]!=="—"?`<h3>With SHIFT</h3><p>${inf[2]}</p>`:""}
+   <p class="pg">Operating Instructions ${inf[3]}</p>${FW[id]?`<div class="fw"><b>Firmware note.</b> ${FW[id]}</div>`:""}
+   ${w.map(x=>`<div class="wishbox"><b>Owner wish:</b> ${x[1]}. ${x[2]} <i>Not in firmware 1.13.</i></div>`).join("")}`;
+}
+function introInfo(){$("#info").innerHTML=`<h2>Start here</h2><p>Press <b>▶</b> to play the demo project (4 tracks). Hover or click any control to read what the manual says about it. The screen above the pads shows exactly what the real unit's OLED would.</p>
+ <h3>Pad modes</h3><p>The buttons left of the pads choose what the pads do: pick a track, mute, pick patterns, play scales, transpose, or program steps (TRIGGER). Labels under a button are its SHIFT function.</p>
+ <h3>Holding things</h3><p>The real unit is all hold-and-press. Here, <b>SHIFT</b> latches for one action (or hold your keyboard Shift). <b>COPY, PASTE, TIE, ACTIVE</b> toggle on click. <b>Right-click or long-press a pad</b> to hold it, then turn a knob to edit that step. Performance buttons (1/2X, 2X, loops, Harmonizer) work while the mouse is down; right-click latches them.</p>
+ <h3>Try</h3><ul class="tight"><li>TRK MUTE → click pads to mute tracks.</li><li>Turn SCALE, then SHIFT+SCALE for the key.</li><li>Hold 1/8 while playing, add TRIPLET.</li><li>Pick a guided tour from the menu above.</li></ul>`}
+
+/* ---------- example projects ---------- */
+// seq items: 0 = rest, midi, [chord], or {p,g,v}; len = active steps (the rest are set inactive)
+function P(seq,{g=.5,v=100,len,pages}={}){const p=emptyPattern();p.pages=pages||Math.max(1,Math.ceil(seq.length/16));
+  seq.forEach((x,i)=>{if(!x)return;const st=p.steps[i];st.on=true;st.notes=(Array.isArray(x)?x:[x]).map(n=>typeof n==="object"?{p:n.p,g:n.g??g,v:n.v??v,o:0}:{p:n,g,v,o:0})});
+  if(len)for(let i=len;i<p.pages*16;i++)p.steps[i].act=false;return p}
+const X=(n,str,g=.25)=>P([...str].map(c=>c==="x"?n:c==="X"?{p:n,v:127}:c==="o"?{p:n,v:62}:0),{g});
+const eu=(k,n,note,rot=0)=>Array.from({length:n},(_,i)=>{const j=(i+rot)%n;return Math.floor((j+1)*k/n)!==Math.floor(j*k/n)?note:0});
+const at=(len,o)=>Array.from({length:len},(_,i)=>o[i]||0);
+const EXAMPLES=[
+ {name:"House: mutes and pattern sets",set:{bpm:124,scale:6,key:9},mode:"mute",start:0,
+  tracks:[["Kick","drums",X(36,"x...x...x...x..."),X(36,"x...x...x..xx.x.")],["Clap","drums",X(39,"....x.......x...")],
+   ["Hats","drums",X(46,"..x...x...x...x."),X(42,"oxoxoxoxoxoxoxxx",.15)],["Bass","bass",P([0,0,45,0,0,0,45,0,0,0,48,0,0,45,43,0],{g:.35})],
+   ["Stabs","pad",P(at(16,{2:[57,60,64],10:[55,59,62]}),{g:1.5,v:85})],["Lead","pluck",P([69,0,72,0,76,0,72,74,0,69,0,67,0,69,72,0],{v:90})]],
+  sets:[[[0,0],[0,1],[0,0],[0,0],[0,1],[0,1]],[[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],[[1,0],[0,0],[1,0],[0,1],[0,0],[0,0]]],
+  hint:"<p>Press <b>▶</b>. TRK MUTE is on, so pads 1–6 mute and unmute Kick, Clap, Hats, Bass, Stabs and Lead.</p><h3>Pattern sets</h3><p>Press SHIFT, then PATTERN, for Pattern Set mode. Pads 1–3 hold an intro, the full groove and a breakdown with a kick fill (pattern 2 on Kick and Hats). Changes wait for the next bar.</p>"},
+ {name:"Techno: Euclidean rhythms",set:{bpm:132,scale:3,key:4},mode:"trigger",track:2,
+  tracks:[["Kick","drums",X(36,"x...x...x...x...")],["Rim","drums",P(eu(5,16,37,2),{g:.2,v:90})],["Hats","drums",P(eu(11,16,42),{g:.15,v:70})],
+   ["Open hat","drums",X(46,"..o...o...o...o.")],["Bass","bass",P([40,40,52,40,41,40,52,40,40,40,52,40,43,40,52,41],{g:.3,v:95})],
+   ["Lead","pluck",P([64,0,67,0,71,64,0],{len:7,g:.4,v:85})]],
+  hint:"<p>Press <b>▶</b>. The pads show the Hats track (TRIGGER mode), an 11-in-16 Euclidean pattern. Rim is 5-in-16, and Lead is 7 steps long, so it drifts against the bar.</p><h3>Try</h3><ul class=\"tight\"><li>SHIFT, then ACTIVE (TRIG RANDOM) deals a new Euclidean pattern on each press.</li><li>TRIG PROB thins out the triggers (in this simulation it affects every track).</li><li>Turn SCALE: everything except the drums follows.</li></ul>"},
+ {name:"Polymeter and running direction",set:{bpm:112,scale:2,key:2},mode:"trigger",track:3,
+  tracks:[["Kick","drums",X(36,"x.....x...x.....")],["Snare","drums",X(38,"....x.......x...")],["Hats","drums",P(eu(5,12,42),{len:12,g:.2,v:80})],
+   ["Bass","bass",P([38,0,0,50,0,38,0,45,0,0],{len:10,g:.6})],["Lead","pluck",P([62,65,69,72,74,72,69],{len:7,g:.4,v:85})],
+   ["Pad","pad",P(at(32,{0:[50,53,57,60],16:[48,52,55,59]}),{g:15,v:75})]],
+  hint:"<p>Press <b>▶</b>. The tracks are 16, 12, 10 and 7 active steps long, so they line up differently every bar. The pads show Bass: unlit steps 11–16 are inactive.</p><h3>Try</h3><ul class=\"tight\"><li>Hold ACTIVE and press steps to change a track's length.</li><li>Press ↓, the spirals, REV or SWITCH BACK (here they apply to every track).</li></ul>"},
+ {name:"Swing and speed modulation",set:{bpm:88,scale:9,key:5,swing:40,depth:24,shape:2,modLen:16},mode:"track",
+  tracks:[["Kick","drums",X(36,"x.....x..x......")],["Snare","drums",X(38,"....x.......x...")],["Hats","drums",X(42,"x.o.x.o.x.o.x.oo")],
+   ["Bass","bass",P([41,0,0,0,0,0,48,0,0,46,0,0,44,0,0,0],{g:1.5,v:105})],["Keys","pad",P(at(16,{0:[53,56,60,63],8:[51,56,58,63]}),{g:7,v:80})]],
+  hint:"<p>Press <b>▶</b>. SWING is at 40 % and DEPTH is on, so playback speeds up and slows down over a 16-step cycle.</p><h3>Try</h3><ul class=\"tight\"><li>Turn DEPTH to 0 to hear it straight, then try SHAPE and MOD LENGTH.</li><li>Turn SWING.</li><li>Drag the GROOVE BEND slider to rush or drag the current track.</li></ul>"},
+ {name:"Chords and the Harmonizer",set:{bpm:96,scale:1,key:0},mode:"track",track:5,
+  tracks:[["Kick","drums",X(36,"x.......x..x....")],["Snare","drums",X(38,"....x.......x...")],["Hats","drums",X(42,"x.o.x.o.x.o.x.o.")],
+   ["Bass","bass",P([36,33,41,43].flatMap(r=>[r,0,0,r+12,0,0,r,0,r,0,0,r+12,0,r,0,0]),{g:.5})],
+   ["Keys","pad",(()=>{const p=P(at(64,{0:60,16:57,32:53,48:55}),{g:15,v:80});[["M7",0],["m7",16],["M7",32],["7",48]].forEach(([c,i])=>{p.steps[i].ch=CHORDS[c];p.steps[i].chName=c});return p})()],
+   ["Lead","lead",P([72,0,0,76,0,74,72,0,79,0,77,76,0,74,0,0],{g:.9,v:90})]],
+  hint:"<p>Press <b>▶</b>. The Keys track plays single notes with chords stored on its steps (hold a step and press a HARMONIZER button to store one).</p><h3>Try</h3><ul class=\"tight\"><li>Hold HARMONIZER 1–6 while it plays: every melodic note becomes that chord.</li><li>Turn SCALE to re-colour the whole progression.</li><li>SHIFT+HARMONIZER changes a button's chord type.</li></ul>"}
+];
+function loadExample(i){const ex=EXAMPLES[i],tr=newTracks();
+  ex.tracks.forEach(([name,inst,...pats],k)=>{tr[k].name=name;tr[k].inst=inst;pats.forEach((p,j)=>tr[k].pats[j]=p)});
+  baseState(tr);Object.assign(S,ex.set);S.project=ex.name;S.track=ex.track||0;
+  (ex.sets||[]).forEach((st,k)=>S.sets[k]=S.tracks.map((x,ti)=>({p:st[ti]?st[ti][0]:0,m:!!(st[ti]&&st[ti][1])})));
+  if(ex.start!=null)applySet(ex.start);
+  tour=null;renderTour();build();setMode(ex.mode);
+  $("#info").innerHTML=`<h2>${ex.name}</h2>${ex.hint}`;
+  if(!sound)$("#soundBtn").click()}
+
+/* ---------- guided tours ---------- */
+const TOURS=[
+ ["Play the demo and mute tracks",[["play","Press ▶ PLAY to start the demo project.","play"],["mute","Press TRK MUTE: the pads now stand for the 16 tracks.","mode:mute"],["pad1","Click pad 2 (Bass) to mute it, click again to bring it back.","pad:1"],["shift","Press SHIFT (it latches for one action)…","press:shift"],["pad2","…then press pad 3: that track is soloed (red). SHIFT+TRK MUTE clears all.","pad:2"],["stop","Press ■ to stop.","stop"]]],
+ ["Program steps",[["track","Press TRACK and choose pad 5 (an empty track).","mode:track"],["pad4","Click pad 5 to make Track 05 current.","pad:4"],["trigger","Press TRIGGER: pads are now steps.","mode:trigger"],["pad0","Click pads to switch steps on (bright orange). Try pad 1.","trig"],["k1","Turn PITCH / CC 1 (wheel or drag). With no pad held it changes every step.","knob:k1"],["pad2","Right-click (or long-press) pad 3 to hold just that step.","hold:pad"],["k2","Now turn GATE / CC 2: only the held step changes. The screen shows its values.","knob:k2"],["play","Play to hear it (turn on Sound in the toolbar).","play"]]],
+ ["Patterns and pattern sets",[["pattern","Press PATTERN. Lit pads hold patterns; pick an empty one to start a new pattern.","mode:pattern"],["pad1","Click pad 2: Track 01 now uses pattern 2 (empty).","patsel"],["shift","Press SHIFT…","press:shift"],["pattern","…then PATTERN to enter Pattern Set mode (button flashes).","mode:pset"],["pad0","Click an unlit pad to save the current combination of patterns and mutes as a set.","psave"],["play","While playing, clicking a saved set switches at the next bar.","play"]]],
+ ["Scale and key",[["scaleK","Turn the SCALE knob: the pattern pitches follow the scale.","scale"],["scale","Press SCALE to see the scale on the pads (keynote bright).","mode:scale"],["shift","Press SHIFT, then turn the SCALE knob to change the key.","press:shift"],["scaleK","Turn SCALE with SHIFT latched.","knob:scaleK"]]],
+ ["Running direction",[["play","Start playback.","play"],["track","Press TRIGGER or stay in TRACK mode; switch to TRIGGER to watch the playhead.","press:trigger"],["dDown","Press ↓: steps now run column by column.","press:dDown"],["dCw","Try the clockwise spiral.","press:dCw"],["rev","REV reverses whatever direction is selected.","press:rev"],["sb","SWITCH BACK bounces between first and last step.","press:sb"]]],
+ ["Live performance",[["play","Start playback.","play"],["r8","Hold 1/8 (mouse down) to loop 2 steps; release to jump back in.","press:r8"],["trip","Right-click 1/8 to latch it, then hold TRIPLET for a 4/3-step loop.","press:trip"],["dbl","Hold 2X for double speed on the current track.","press:dbl"],["trigprob","Press TRIG PROB: each trigger now plays with 50 % probability.","press:trigprob"],["depth","Turn DEPTH for Speed Modulation (SHAPE and MOD LENGTH shape it).","knob:depth"]]],
+ ["GLOBAL settings",[["global","Press GLOBAL.","menu:global"],["rotary","Turn the selector (wheel over it, or ←/→) to scroll through the settings.","knob:rotary"],["rotary","Click the selector (or Enter) to edit a value, turn, click again to confirm.","press:rotary"],["back","BACK cancels or goes up a level; GLOBAL closes the menu.","press:back"]]]
+];
+let tour=null;
+function startTour(i){tour={i,k:0};renderTour()}
+function renderTour(){
+  document.querySelectorAll(".tourTarget").forEach(e=>e.classList.remove("tourTarget"));
+  const box=$("#tourBox");if(!tour){box.hidden=true;return}
+  const [name,steps]=TOURS[tour.i];box.hidden=false;
+  if(tour.k>=steps.length){box.innerHTML=`<h2>${name}</h2><p class="done">Done.</p><div class="nav"><button id="tClose">Close</button></div>`;$("#tClose").onclick=()=>{tour=null;renderTour();$("#tourSel").value=""};return}
+  const [target,text]=steps[tour.k];ensureVisible(target);ctlEls[target]&&ctlEls[target].classList.add("tourTarget");showInfo(target);
+  box.innerHTML=`<h2>${name}</h2><p class="pg">Step ${tour.k+1} of ${steps.length}</p><p class="step">${text}</p><div class="nav"><button id="tPrev">Back</button><button id="tNext">Skip</button><button id="tClose">Close</button></div>`;
+  $("#tPrev").onclick=()=>{tour.k=Math.max(0,tour.k-1);renderTour()};$("#tNext").onclick=()=>{tour.k++;renderTour()};$("#tClose").onclick=()=>{tour=null;renderTour();$("#tourSel").value=""};
+}
+function emit(ev){if(!tour)return;const st=TOURS[tour.i][1][tour.k];if(st&&st[2]===ev){tour.k++;setTimeout(renderTour,250)}}
+
+/* ---------- wish-list layer ---------- */
+function drawWish(on){const g=document.getElementById("wishLayer");g.innerHTML="";if(!on)return;
+  const ids=new Set(WISH.flatMap(w=>w[0]));ids.forEach(id=>{const c=C.find(x=>x.id===id);if(!c)return;
+    const x=c.t==="knob"?c.x+c.r:c.x+c.w,y=c.t==="knob"?c.y-c.r:c.y;el("circle",{class:"wishDot",cx:x,cy:y,r:7},g);txt("!",x,y+4,10,"#000",null,g)})}
+
+/* ---------- boot ---------- */
+EXAMPLES.forEach((x,i)=>{const o=document.createElement("option");o.value=i;o.textContent=x.name;$("#exSel").appendChild(o)});
+$("#exSel").onchange=e=>{if(e.target.value!==""){loadExample(+e.target.value);e.target.value=""}};
+TOURS.forEach((t,i)=>{const o=document.createElement("option");o.value=i;o.textContent=t[0];$("#tourSel").appendChild(o)});
+$("#tourSel").onchange=e=>{if(e.target.value!=="")startTour(+e.target.value)};
+$("#soundBtn").onclick=e=>{sound=!sound;e.currentTarget.setAttribute("aria-pressed",sound);if(sound)ensureAC().resume()};
+$("#wishBtn").onclick=e=>{const on=e.currentTarget.getAttribute("aria-pressed")!=="true";e.currentTarget.setAttribute("aria-pressed",on);drawWish(on);
+  if(on)$("#info").innerHTML=`<h2>Owner wish list</h2><p>Amber markers show where owners asked for features that firmware 1.13 doesn't have. Click a marked control for details.</p><ul class="tight">${WISH.map(w=>`<li><b>${w[1]}</b>: ${w[2]}</li>`).join("")}</ul>`};
+document.querySelectorAll(".viewbar button").forEach(b=>b.onclick=()=>setView(b.dataset.v));
+{const mq=matchMedia("(max-width:640px)");setView(mq.matches?"pads":"full");mq.addEventListener("change",e=>setView(e.matches?"pads":"full"))}
+$("#comboBtn").onclick=e=>{const on=e.currentTarget.getAttribute("aria-pressed")!=="true";e.currentTarget.setAttribute("aria-pressed",on);drawComboMarks(on)};
+$("#comboQ").oninput=renderCombos;
+$("#comboList").addEventListener("mouseover",e=>{const li=e.target.closest("li");if(li&&li!==curRow){comboHl(curRow&&+curRow.dataset.i,false);curRow=li;comboHl(+li.dataset.i,true)}});
+$("#comboList").addEventListener("mouseleave",()=>{if(curRow)comboHl(+curRow.dataset.i,false);curRow=null});
+$("#comboList").addEventListener("click",e=>{const b=e.target.closest(".cplay");if(b)demoCombo(+b.dataset.i)});
+let curRow=null;renderCombos();
+$("#resetBtn").onclick=()=>{demo();build();introInfo()};
+demo();build();introInfo();draw();requestAnimationFrame(tick);
+</script>
+<div id="tip" hidden></div>
+</body>
+</html>

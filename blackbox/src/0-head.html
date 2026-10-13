@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blackbox Interactive Manual</title>
+<style>
+:root{
+  --bg:#f4f3ef; --fg:#1d1d1f; --muted:#5b5b60; --card:#ffffff; --line:#d9d7d0; --accent:#c026d3; --accent-fg:#fff;
+  --mod:#d97706; --ok:#15803d; --blue:#0284c7;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141416; --fg:#ececef; --muted:#a1a1aa; --card:#1e1e22; --line:#33333a; --accent:#e879f9; --accent-fg:#111;
+    --mod:#fbbf24; --ok:#4ade80; --blue:#38bdf8;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141416; --fg:#ececef; --muted:#a1a1aa; --card:#1e1e22; --line:#33333a; --accent:#e879f9; --accent-fg:#111;
+  --mod:#fbbf24; --ok:#4ade80; --blue:#38bdf8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:14px 16px 8px;max-width:1500px;margin:0 auto}
+h1{font-size:20px;margin:0}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:1500px;margin:0 auto;padding:6px 16px}
+.bar button,.bar select,.bar label.btn{font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+.bar button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+#modBtn[aria-pressed="true"]{background:var(--mod);border-color:var(--mod);color:#111}
+.bar .hint{color:var(--muted);font-size:12px;margin-left:auto}
+.hint .touch{display:none}
+@media (pointer:coarse){.hint .desk{display:none}.hint .touch{display:inline}}
+main{max-width:1500px;margin:0 auto;padding:4px 16px 40px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){main{grid-template-columns:minmax(0,1fr)}.bar .hint{margin-left:0}
+  #tourBox:not([hidden]){position:fixed;left:8px;right:8px;bottom:8px;z-index:15;max-height:38vh;overflow:auto;box-shadow:0 6px 24px rgba(0,0,0,.3)}
+  main{padding-bottom:40vh}}
+#devCol{position:sticky;top:8px}
+@media (max-width:900px){#devCol{position:static}}
+/* wide screens: the device stays put, only the right column scrolls */
+@media (min-width:901px){html,body{height:100%;overflow:hidden}body{display:flex;flex-direction:column}
+  main{flex:1;min-height:0;width:100%;box-sizing:border-box;grid-template-rows:100%;padding-bottom:12px}
+  #devCol{position:static;overflow:auto;height:100%}#sideCol{overflow-y:auto;height:100%;padding-right:4px}}
+#device{width:100%;height:auto;display:block;touch-action:pan-y pinch-zoom;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#screen{width:100%;height:100%;display:block;touch-action:none;image-rendering:auto;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.card h2{font-size:16px;margin:0 0 6px}
+.card h3{font-size:13px;margin:12px 0 4px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.card p{margin:6px 0}
+.pg{font-size:12px;color:var(--muted)}
+.crumb{font-size:12px;color:var(--muted);margin-bottom:4px}
+.crumb b{color:var(--accent)}
+.modbox{border-left:3px solid var(--mod);padding:4px 10px;margin:8px 0;font-size:13px}
+.modbox b{color:var(--mod)}
+kbd{font:12px ui-monospace,monospace;border:1px solid var(--line);border-radius:4px;padding:0 4px}
+ul.tight{margin:4px 0;padding-left:18px}
+ul.tight li{margin:2px 0}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+.kmap{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+.kmap div{border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:12.5px;line-height:1.35}
+.kmap div b{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.kmap .wide{grid-column:1/3}
+#tourBox .step{font-size:14px}
+#tourBox .nav{display:flex;gap:8px;margin-top:8px}
+#tourBox button,.chap button,.card button.sm{font:inherit;font-size:12px;padding:3px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+#tourBox .done{color:var(--ok)}
+.chap{list-style:none;margin:0;padding:0;max-height:380px;overflow:auto}
+.chap li{display:flex;gap:8px;align-items:baseline;padding:4px 6px;border-radius:6px;font-size:13px}
+.chap li:hover{background:var(--bg)}
+.chap li span{flex:1}
+.chap li i{font-size:11px;color:var(--muted);white-space:nowrap;font-style:normal}
+table.t{border-collapse:collapse;font-size:12.5px;width:100%;margin:6px 0}
+table.t td,table.t th{border-bottom:1px solid var(--line);padding:3px 6px;text-align:left;vertical-align:top}
+table.t th{color:var(--muted);font-weight:600}
+/* device */
+.ctl{cursor:pointer}
+.ctl:focus{outline:none}
+.ctl .face{transition:stroke .1s}
+.hl .face{stroke:#e879f9!important;stroke-width:3!important}
+.latched .face{stroke:#facc15!important;stroke-width:3!important;stroke-dasharray:6 3}
+.tourTarget .face{stroke:#22d3ee!important;stroke-width:4!important;animation:pulse 1s infinite}
+@keyframes pulse{50%{stroke-opacity:.25}}
+@media (prefers-reduced-motion:reduce){.tourTarget .face{animation:none}}
+.klab{font:600 12px system-ui,sans-serif;fill:#e879f9;pointer-events:none}
+.modDot{fill:#fbbf24;stroke:#000;stroke-width:1;pointer-events:none}
+#tip{position:fixed;z-index:20;max-width:300px;padding:8px 10px;border-radius:8px;background:var(--card);color:var(--fg);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.18);font-size:12.5px;line-height:1.4;pointer-events:none}
+#tip b{display:block;font-size:13px;margin-bottom:2px}
+#tip .s{color:var(--muted);margin-top:4px}
+#tip .s em{color:var(--accent);font-style:normal;font-weight:600}
+#tip .m{color:var(--mod);margin-top:4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Blackbox interactive manual</h1>
+  <p class="sub">Unofficial, playable recreation of the 1010music Blackbox (firmware 3.0), built from the Blackbox 3.0 User Manual, with an optional layer for the community <b>blackbox-mod 3.1.n</b>. All sounds are synthesized in your browser; no 1010music samples, firmware or artwork are used. Not affiliated with 1010music.</p>
+</header>
+<div class="bar">
+  <select id="exSel" aria-label="Load a preset"><option value="">Load preset…</option></select>
+  <select id="tourSel" aria-label="Guided tours"><option value="">Guided tours…</option></select>
+  <button id="soundBtn" aria-pressed="true">Sound</button>
+  <button id="modBtn" aria-pressed="false" title="Turn on the features added by blackbox-mod 3.1.n">blackbox-mod layer</button>
+  <label class="btn" for="wavIn" title="Add your own WAV/MP3 files to the \User folder">Import samples<input id="wavIn" type="file" accept="audio/*" multiple hidden></label>
+  <button id="midiBtn" aria-pressed="false" title="Use a connected MIDI controller (Web MIDI)">MIDI</button>
+  <button id="resetBtn">Reset</button>
+  <span class="hint"><span class="touch">Tap = press · long-press = hold · drag a knob up/down = turn · tap anything for its explanation</span><span class="desk">Hover anything for help · right-click = hold a button · wheel or drag a knob to turn · <kbd>1</kbd>–<kbd>8</kbd> nav buttons · <kbd>Space</kbd> PLAY · <kbd>.</kbd> STOP · <kbd>R</kbd> REC · <kbd>I</kbd> INFO · <kbd>Esc</kbd> BACK</span></span>
+</div>
+<main>
+  <div id="devCol"><svg id="device" viewBox="0 0 700 560" role="application" aria-label="Blackbox front panel"></svg></div>
+  <div id="sideCol">
+    <div class="card" id="tourBox" hidden></div>
+    <section class="card" id="info" aria-live="polite"></section>
+    <div class="card" id="modCard" hidden></div>
+    <div class="card">
+      <h2>The manual, chapter by chapter</h2>
+      <p class="pg">Show jumps the simulation to that part of the Blackbox and explains it here.</p>
+      <ul class="chap" id="chapList"></ul>
+    </div>
+    <div class="card">
+      <h2>About this simulation</h2>
+      <p>Pads (Sample, Multi-sample, Clip, Slicer, Granular), ADSR, filter, LFO and modulation, the 16×4 sequencer with piano roll, probability and velocity, Song scenes with Keep and Grab, both effects, the 4-band EQ, mixer and mutes, presets and the Tools pages all work. You can record from your microphone or resample the output, and import your own samples.</p>
+      <details><summary>Simplified or not simulated</summary>
+        <ul class="tight">
+          <li>One stereo output; Out 1/2/3 are mixed together. The rear jacks, CV and analog clock are labels only.</li>
+          <li>Sounds are synthesized stand-ins for the factory library; folder names are invented.</li>
+          <li>Slicer Sync, MID file import, New Multi (automated multi-sample recording), Pack, Clean and SD Mode only show their screens or a message.</li>
+          <li>Presets you save live in this browser (localStorage); recorded and imported audio lasts for the session only.</li>
+          <li>Pinch-zoom on the waveform and piano roll is the mouse wheel here.</li>
+          <li>Mod layer: Munchi granular delay falls back to the stock delay; Fidelity machine modes are approximations.</li>
+        </ul>
+      </details>
+      <p class="pg">Sources: Blackbox 3.0 User Manual (May 4 2023); blackbox-mod README (github.com/j3threejay/blackbox-mod). Page numbers refer to the manual.</p>
+    </div>
+  </div>
+</main>
+<div id="tip" hidden></div>
+<script>
+"use strict";

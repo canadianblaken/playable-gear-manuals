@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Playable Gear Manuals</title>
+<style>
+:root{--bg:#f4f3ef;--fg:#1d1d1f;--muted:#5b5b60;--card:#fff;--line:#d9d7d0;--accent:#c99a06;--accent-fg:#111}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141416;--fg:#ececef;--muted:#a1a1aa;--card:#1e1e22;--line:#33333a;--accent:#ffd84a}}
+:root[data-theme="dark"]{--bg:#141416;--fg:#ececef;--muted:#a1a1aa;--card:#1e1e22;--line:#33333a;--accent:#ffd84a}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+nav{display:flex;gap:6px;padding:8px 16px 0;border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{font:inherit;padding:7px 14px;border:1px solid var(--line);border-bottom:none;border-radius:8px 8px 0 0;background:var(--card);color:var(--muted);cursor:pointer;white-space:nowrap}
+nav button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+nav label{display:flex;align-items:center;gap:5px;padding:0 10px 0 2px;color:var(--muted);font-size:13px;white-space:nowrap;cursor:pointer}
+nav label:has(:checked){color:var(--fg)}
+nav input{accent-color:#f59e0b;margin:0}
+iframe{flex:1;width:100%;border:0;display:block;background:var(--bg)}
+iframe[hidden]{display:none}
+</style>
+</head>
+<body>
+<nav role="tablist" aria-label="Instrument">
