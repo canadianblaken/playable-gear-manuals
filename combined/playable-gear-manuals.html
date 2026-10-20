@@ -4136,12 +4136,11 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
 .filebtn{display:inline-block}
 .feat .row.small{font-size:12.5px}
 .feat [hidden]{display:none!important}
-#devWide{margin-top:14px}#devWide .feat{font-size:13.5px}#devWide .card{margin-bottom:0}
+#devWide{margin-top:14px}#devWide .feat,#paneDevNote .feat{font-size:13.5px}#devWide .card{margin-bottom:0}
 .featNav{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}
 .featNav button{font:inherit;font-size:12.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
 .featNav button.hi{border-color:var(--accent);color:var(--accent);font-weight:600}
 .feat.key{border-color:var(--accent);border-width:2px}
-#paneDevNote .featNav{flex-direction:column;align-items:flex-start}
 .edGrid{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:6px 0}
 @media (max-width:700px){.edGrid{grid-template-columns:repeat(8,minmax(0,1fr))}}
 .edCell{font:inherit;font-size:10px;line-height:1.2;padding:2px 3px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--fg);min-height:32px;display:flex;flex-direction:column;align-items:flex-start;overflow:hidden;cursor:pointer;text-align:left}
@@ -5615,9 +5614,11 @@ async function devScan(){const s=$(&quot;#devPort&quot;);s.innerHTML='<option va
  for(const o of outs){const i=ins.find(x=>x.name===o.name)||ins.find(x=>/keystep/i.test(x.name))||ins[0];if(!i)continue;const opt=new Option(`${o.name} (out) ⇄ ${i.name} (in)`,o.id+&quot;|&quot;+i.id);s.add(opt);if(/keystep/i.test(o.name))s.value=opt.value}
  devLog(`${outs.length} MIDI output(s) found`)}
 /* Device tools open under the keyboard (#devWide, the wide left column); the right column keeps a jump list */
+/* tools shown in the right-column box with the instructions instead of under the keyboard */
+const FEATURE_SIDE=new Set([&quot;midifile&quot;]);
 const FEATURE_ORDER=[&quot;projects&quot;,&quot;midifile&quot;,&quot;editor&quot;,&quot;library&quot;,&quot;backup&quot;,&quot;setlist&quot;,&quot;trackkey&quot;,&quot;names&quot;,&quot;globals&quot;],FEATURE_KEY=new Set([&quot;midifile&quot;]);
 const FEATURE_SHORT={projects:&quot;Projects&quot;,midifile:&quot;MIDI file import / export&quot;,editor:&quot;Step editor&quot;,library:&quot;Library&quot;,backup:&quot;Backup&quot;,setlist:&quot;Set list&quot;,trackkey:&quot;Chord &amp; key&quot;,names:&quot;Names&quot;,globals:&quot;Global settings&quot;};
-function featJump(id){const box=$(&quot;#feat-&quot;+id);if(!box)return;const c=$(&quot;#devCol&quot;);if(c&amp;&amp;c.contains(box)&amp;&amp;c.scrollTo)c.scrollTo({top:Math.max(0,box.offsetTop-c.offsetTop-8),behavior:&quot;smooth&quot;});else box.scrollIntoView({behavior:&quot;smooth&quot;})}
+function featJump(id){const box=$(&quot;#feat-&quot;+id);if(!box)return;const c=$(&quot;#devCol&quot;).contains(box)?$(&quot;#devCol&quot;):$(&quot;#sideCol&quot;);if(c&amp;&amp;c.contains(box)&amp;&amp;c.scrollTo)c.scrollTo({top:Math.max(0,box.offsetTop-c.offsetTop-8),behavior:&quot;smooth&quot;});else box.scrollIntoView({behavior:&quot;smooth&quot;})}
 function featNav(){const nav=document.createElement(&quot;div&quot;);nav.className=&quot;featNav&quot;;nav.setAttribute(&quot;role&quot;,&quot;navigation&quot;);nav.setAttribute(&quot;aria-label&quot;,&quot;Device tools&quot;);
  for(const f of FEATURES){const b=document.createElement(&quot;button&quot;);b.type=&quot;button&quot;;b.textContent=FEATURE_SHORT[f.id]||f.title.split(&quot;:&quot;)[0];if(FEATURE_KEY.has(f.id))b.className=&quot;hi&quot;;b.onclick=()=>featJump(f.id);nav.appendChild(b)}return nav}
 function renderDevice(){const pane=$(&quot;#paneDev&quot;);if(pane.dataset.built)return;pane.dataset.built=1;
@@ -5628,9 +5629,10 @@ function renderDevice(){const pane=$(&quot;#paneDev&quot;);if(pane.dataset.built
   <div class=&quot;row&quot;><label><input type=&quot;checkbox&quot; id=&quot;simNames&quot; checked> simulation runs the project-names firmware</label></div></div>
   <div data-a=&quot;nav&quot;></div><div id=&quot;featList&quot;></div><h3>Log</h3><div id=&quot;devLog&quot;></div></div>`;
  pane.querySelector(&quot;[data-a=nav]&quot;).appendChild(featNav());
- const note=$(&quot;#paneDevNote&quot;);note.innerHTML=`<h2>Device tools</h2><p class=&quot;pg&quot;>The tools are open under the keyboard, where there is room to edit. Jump to one:</p>`;note.appendChild(featNav());
+ const note=$(&quot;#paneDevNote&quot;);note.innerHTML=`<h2>Device tools</h2><p class=&quot;pg&quot;>MIDI file import and export are right here. The other tools are open under the keyboard, where there is room to edit.</p>`;
  $(&quot;#devScanBtn&quot;).onclick=devScan;$(&quot;#devStopBtn&quot;).onclick=()=>{if(DEV.busy){DEV.stop=true;devLog(&quot;Stopping…&quot;)}};$(&quot;#devConnBtn&quot;).onclick=()=>devConnect().catch(e=>devLog(&quot;Error: &quot;+e.message,&quot;bad&quot;));$(&quot;#simNames&quot;).onchange=e=>{SIMDEV.namesFw=e.target.checked};
- const list=$(&quot;#featList&quot;);for(const f of FEATURES){const box=document.createElement(&quot;div&quot;);box.className=&quot;feat&quot;+(FEATURE_KEY.has(f.id)?&quot; key&quot;:&quot;&quot;);box.id=&quot;feat-&quot;+f.id;box.innerHTML=`<h3>${f.title}</h3><div class=&quot;meta&quot;><b>Verified</b> ${f.verified}${f.needs?` <span class=&quot;need&quot;>Needs ${f.needs}</span>`:&quot;&quot;}</div><p class=&quot;pg&quot;>${f.about}</p><div class=&quot;body&quot;></div>`;list.appendChild(box);f.render(box.querySelector(&quot;.body&quot;))}}
+ const list=$(&quot;#featList&quot;);for(const f of FEATURES){const box=document.createElement(&quot;div&quot;);box.className=&quot;feat&quot;+(FEATURE_KEY.has(f.id)?&quot; key&quot;:&quot;&quot;);box.id=&quot;feat-&quot;+f.id;box.innerHTML=`<h3>${f.title}</h3><div class=&quot;meta&quot;><b>Verified</b> ${f.verified}${f.needs?` <span class=&quot;need&quot;>Needs ${f.needs}</span>`:&quot;&quot;}</div><p class=&quot;pg&quot;>${f.about}</p><div class=&quot;body&quot;></div>`;(FEATURE_SIDE.has(f.id)?note:list).appendChild(box);f.render(box.querySelector(&quot;.body&quot;))}
+ const jp=document.createElement(&quot;p&quot;);jp.className=&quot;pg&quot;;jp.textContent=&quot;Jump to a tool under the keyboard:&quot;;note.append(jp,featNav())}
 /* ================= Project editor: steps, notes, pattern settings and scenes of a project file =================
    Works on the project loaded in the Projects tool (DEV.project, a file from readProject) and sends nothing itself:
    Send in the Projects tool writes the edited file. Layout from the firmware setter 0800d3c0 and MCC's recall plan:

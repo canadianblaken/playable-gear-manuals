@@ -115,7 +115,7 @@ ok("plan without spilling keeps 64 steps and reports the rest",(()=>{const pl=mf
 ok("over-dense step is reported",mfPlan(mfPlace(mparts[2],mfx),1,1).over.some(o=>/17 notes/.test(o)));
 /* through the interface: warning for the long part, choose to add to other patterns, confirm leaving extras out */
 reset();saveProject();DEV.showProject(await readProject(L,1),"test");
-const mfBox=[...document.querySelectorAll("#featList .feat")].find(b=>/MIDI file import/.test(b.textContent)),mq=a=>mfBox.querySelector(`[data-a=${a}]`);
+const mfBox=$("#feat-midifile"),mq=a=>mfBox.querySelector(`[data-a=${a}]`);
 await mq("f").onchange({target:{files:[new File([mid],"test.mid")]}});
 const sels=mq("parts").querySelectorAll("tbody select");ok("parts listed with track choices",sels.length===6&&sels[0].value==="1"&&sels[2].value==="2"&&sels[4].value==="3");
 mq("imp").click();ok("too-long part asks: only 64 steps fit, add the rest to other patterns?",/only 64 steps fit in pattern 1 of track 2\. Would you like to add the rest to other patterns\?/.test(mq("warn").textContent),mq("warn").textContent);
@@ -123,6 +123,7 @@ mq("imp").click();ok("too-long part asks: only 64 steps fit, add the rest to oth
 ok("then the 17-note chord asks before leaving notes out",/Too many notes/.test(mq("warn").textContent),mq("warn").textContent);
 [...mq("warn").querySelectorAll("button")].find(b=>/leaving extras out/.test(b.textContent)).click();
 const ip=DEV.project,b1=edReadPattern(ip,0x7C,1),b2=edReadPattern(ip,0x7C,2),pad=edReadPattern(ip,0x7D,1),s1x=edReadScene(ip,1);
+ok("MIDI tool sits in the right-column instructions box",$("#paneDevNote").contains(mfBox));
 ok("imported: bass over patterns 1 (64 steps) and 2 (48), chained in scene 1",b1.len===64&&b2.len===48&&b1.steps[0].notes[0].pitch===36&&b2.steps[0].notes[0].pitch===40&&s1x.chains[1].join()==="0,1"&&s1x.valid,{l1:b1.len,l2:b2.len,ch:s1x.chains[1]});
 ok("imported: chord trimmed to 16, lead in track 1, tempo 100",pad.steps[0].notes.length===16&&edReadPattern(ip,0x7B,1).steps[2].notes[0].shift===74&&mfGetTempo(ip)===100&&/1 note\(s\) over the limits left out/.test(mq("msg").textContent),mq("msg").textContent);
 /* export and read back */

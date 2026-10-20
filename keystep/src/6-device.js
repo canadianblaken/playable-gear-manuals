@@ -351,9 +351,11 @@ async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">
  for(const o of outs){const i=ins.find(x=>x.name===o.name)||ins.find(x=>/keystep/i.test(x.name))||ins[0];if(!i)continue;const opt=new Option(`${o.name} (out) ⇄ ${i.name} (in)`,o.id+"|"+i.id);s.add(opt);if(/keystep/i.test(o.name))s.value=opt.value}
  devLog(`${outs.length} MIDI output(s) found`)}
 /* Device tools open under the keyboard (#devWide, the wide left column); the right column keeps a jump list */
+/* tools shown in the right-column box with the instructions instead of under the keyboard */
+const FEATURE_SIDE=new Set(["midifile"]);
 const FEATURE_ORDER=["projects","midifile","editor","library","backup","setlist","trackkey","names","globals"],FEATURE_KEY=new Set(["midifile"]);
 const FEATURE_SHORT={projects:"Projects",midifile:"MIDI file import / export",editor:"Step editor",library:"Library",backup:"Backup",setlist:"Set list",trackkey:"Chord & key",names:"Names",globals:"Global settings"};
-function featJump(id){const box=$("#feat-"+id);if(!box)return;const c=$("#devCol");if(c&&c.contains(box)&&c.scrollTo)c.scrollTo({top:Math.max(0,box.offsetTop-c.offsetTop-8),behavior:"smooth"});else box.scrollIntoView({behavior:"smooth"})}
+function featJump(id){const box=$("#feat-"+id);if(!box)return;const c=$("#devCol").contains(box)?$("#devCol"):$("#sideCol");if(c&&c.contains(box)&&c.scrollTo)c.scrollTo({top:Math.max(0,box.offsetTop-c.offsetTop-8),behavior:"smooth"});else box.scrollIntoView({behavior:"smooth"})}
 function featNav(){const nav=document.createElement("div");nav.className="featNav";nav.setAttribute("role","navigation");nav.setAttribute("aria-label","Device tools");
  for(const f of FEATURES){const b=document.createElement("button");b.type="button";b.textContent=FEATURE_SHORT[f.id]||f.title.split(":")[0];if(FEATURE_KEY.has(f.id))b.className="hi";b.onclick=()=>featJump(f.id);nav.appendChild(b)}return nav}
 function renderDevice(){const pane=$("#paneDev");if(pane.dataset.built)return;pane.dataset.built=1;
@@ -364,6 +366,7 @@ function renderDevice(){const pane=$("#paneDev");if(pane.dataset.built)return;pa
   <div class="row"><label><input type="checkbox" id="simNames" checked> simulation runs the project-names firmware</label></div></div>
   <div data-a="nav"></div><div id="featList"></div><h3>Log</h3><div id="devLog"></div></div>`;
  pane.querySelector("[data-a=nav]").appendChild(featNav());
- const note=$("#paneDevNote");note.innerHTML=`<h2>Device tools</h2><p class="pg">The tools are open under the keyboard, where there is room to edit. Jump to one:</p>`;note.appendChild(featNav());
+ const note=$("#paneDevNote");note.innerHTML=`<h2>Device tools</h2><p class="pg">MIDI file import and export are right here. The other tools are open under the keyboard, where there is room to edit.</p>`;
  $("#devScanBtn").onclick=devScan;$("#devStopBtn").onclick=()=>{if(DEV.busy){DEV.stop=true;devLog("Stopping…")}};$("#devConnBtn").onclick=()=>devConnect().catch(e=>devLog("Error: "+e.message,"bad"));$("#simNames").onchange=e=>{SIMDEV.namesFw=e.target.checked};
- const list=$("#featList");for(const f of FEATURES){const box=document.createElement("div");box.className="feat"+(FEATURE_KEY.has(f.id)?" key":"");box.id="feat-"+f.id;box.innerHTML=`<h3>${f.title}</h3><div class="meta"><b>Verified</b> ${f.verified}${f.needs?` <span class="need">Needs ${f.needs}</span>`:""}</div><p class="pg">${f.about}</p><div class="body"></div>`;list.appendChild(box);f.render(box.querySelector(".body"))}}
+ const list=$("#featList");for(const f of FEATURES){const box=document.createElement("div");box.className="feat"+(FEATURE_KEY.has(f.id)?" key":"");box.id="feat-"+f.id;box.innerHTML=`<h3>${f.title}</h3><div class="meta"><b>Verified</b> ${f.verified}${f.needs?` <span class="need">Needs ${f.needs}</span>`:""}</div><p class="pg">${f.about}</p><div class="body"></div>`;(FEATURE_SIDE.has(f.id)?note:list).appendChild(box);f.render(box.querySelector(".body"))}
+ const jp=document.createElement("p");jp.className="pg";jp.textContent="Jump to a tool under the keyboard:";note.append(jp,featNav())}
