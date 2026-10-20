@@ -41,11 +41,14 @@ class WebMidiLink extends Link{
 class SimLink extends Link{constructor(){super();this.sim=true}
  async send(bytes,o={}){if(!this.quiet)devLog("→ "+hex(bytes),"tx");const out=SIMDEV.handle(bytes);if(!this.quiet){out.forEach(r=>devLog("← "+hex(r),"tx"));dirty()}if(o.commit){await sleep(150);dirty()}return out}}
 /* the stored chord bytes: root, then signed offsets as 8-bit bytes (a note below the root is 0xF7..0xFF) */
-const chordRaw=tr=>{const c=tr.chord;return c.root==null?Array(16).fill(0x7F):[c.root,...c.off.map(o=>o&255),...Array(15-c.off.length).fill(0x7F)]};
+/* no chord reads 0x7F then zeros, as on the hardware */
+const chordRaw=tr=>{const c=tr.chord;return c.root==null?[0x7F,...Array(15).fill(0)]:[c.root,...c.off.map(o=>o&255),...Array(15-c.off.length).fill(0x7F)]};
 
 /* ---------- the simulated device: answers the same frames from the panel's state ---------- */
 /* what a fresh pattern reads on the hardware (backup of 2026-10-20): empty note slots are 0x7F in all six fields;
    step pass mask 0x31 is 15 (plays on all four passes); pattern defaults: swing 25 (= 0), step count 15 (= 16 steps), bits 20, mode 26, pitch 60, gate 7, velocity 100, time shift 49 (= 0), randomness 100 */
+/* project-item values: index 1 keeps the plain key (older files), other indexes are their own values */
+const pjKey=(param,ix)=>ix[0]===1&&ix.length===1?param:param+"/"+ix.join(",");
 const SIM_SLOT_PARAMS=[0x32,0x6D,0x6E,0x6F,0x70,0x71],SIM_STEP_DEFAULTS={0x31:15},SIM_PAT_DEFAULTS={0x61:25,0x62:15,0x63:20,0x64:26,0x6D:60,0x6E:7,0x6F:100,0x70:49,0x71:100};
 const SIMDEV={namesFw:true,sess:null,
  handle(b){const out=[];
@@ -70,7 +73,7 @@ const SIMDEV={namesFw:true,sess:null,
  track(buf,item){return buf.tracks[TRACK_ITEMS.indexOf(item)]},
  /* p0x57: root, then semitone offsets from the root, 0x7F padding (16 bytes) */
  getv(buf,item,param,ix){const [i0]=ix;
-  if(item===PROJECT_ITEM){if(P_USER1.includes(param)){const m=buf.user[0],j=P_USER1.indexOf(param);return [m&127,m>>7,0][j]}if([0x68,0x69,0x6A].includes(param)){const m=buf.user[1],j=param-0x68;return [m&127,m>>7,0][j]}return buf.raw[param]||0}
+  if(item===PROJECT_ITEM){if(P_USER1.includes(param)){const m=buf.user[0],j=P_USER1.indexOf(param);return [m&127,m>>7,0][j]}if([0x68,0x69,0x6A].includes(param)){const m=buf.user[1],j=param-0x68;return [m&127,m>>7,0][j]}return buf.raw[pjKey(param,ix)]||0}
   if(item===SCENE_ITEM&&param===P_SCENE_STATE)return buf.scenes[i0-1]?3:2;
   if(item===0x7A&&param===P_PATTERN_STATE)return buf.ctrl.pats[i0-1].valid?3:2;
   const tr=this.track(buf,item);if(!tr)return buf.raw[item+"/"+param+"/"+ix.join(",")]||0;
@@ -82,14 +85,14 @@ const SIMDEV={namesFw:true,sess:null,
   const key=param+"/"+ix.join(",");if(pat.raw[key]!=null)return pat.raw[key];
   return ix.length===3&&SIM_SLOT_PARAMS.includes(param)?0x7F:ix.length===3&&SIM_STEP_DEFAULTS[param]!=null?SIM_STEP_DEFAULTS[param]:ix.length===1&&SIM_PAT_DEFAULTS[param]!=null?SIM_PAT_DEFAULTS[param]:0},
  setv(buf,item,param,ix,v){const [i0]=ix;
-  if(item===PROJECT_ITEM){if(P_USER1.includes(param)){const j=P_USER1.indexOf(param),m=buf.user[0];buf.user[0]=j===0?(m&~127)|v:j===1?(m&127)|((v&31)<<7):m}else if([0x68,0x69,0x6A].includes(param)){const j=param-0x68,m=buf.user[1];buf.user[1]=j===0?(m&~127)|v:j===1?(m&127)|((v&31)<<7):m}else buf.raw[param]=v;return}
+  if(item===PROJECT_ITEM){if(P_USER1.includes(param)){const j=P_USER1.indexOf(param),m=buf.user[0];buf.user[0]=j===0?(m&~127)|v:j===1?(m&127)|((v&31)<<7):m}else if([0x68,0x69,0x6A].includes(param)){const j=param-0x68,m=buf.user[1];buf.user[1]=j===0?(m&~127)|v:j===1?(m&127)|((v&31)<<7):m}else buf.raw[pjKey(param,ix)]=v;return}
   if(item===SCENE_ITEM&&param===P_SCENE_STATE){if(v===3&&!buf.scenes[i0-1])buf.scenes[i0-1]={pat:[0,0,0,0],dpat:0,chain:[[],[],[],[]],dchain:[],mute:[0,0,0,0],solo:-1,track:0};if(v===2)buf.scenes[i0-1]=null;return}
   if(item===0x7A&&param===P_PATTERN_STATE){buf.ctrl.pats[i0-1].valid=v===3;return}
   const tr=this.track(buf,item);if(!tr){buf.raw[item+"/"+param+"/"+ix.join(",")]=v;return}
   if(param===0x27){tr.valid=v===3;return}
   if(param===P_MODE){tr.oct=clamp((v&7)-3,-3,2);tr.chordOn=!!(v&CHORD_MODE_BIT);tr.valid=true;return}
   /* the setter stores the 7-bit value as is, so SysEx can only write offsets above the root */
-  if(param===P_CHORD){const raw=chordRaw(tr);raw[i0-1]=v;const end=raw.indexOf(0x7F,1);tr.chord=raw[0]===0x7F?{root:null,off:[]}:{root:raw[0],off:raw.slice(1,end<0?16:end).map(o=>o>127?o-256:o)};tr.valid=true;return}
+  if(param===P_CHORD){const raw=chordRaw(tr);raw[i0-1]=v;const end=raw.findIndex((x,k)=>k>0&&(x===0x7F||x===0));tr.chord=raw[0]===0x7F?{root:null,off:[]}:{root:raw[0],off:raw.slice(1,end<0?16:end).map(o=>o>127?o-256:o)};tr.valid=true;return}
   const pat=tr.pats[i0-1];if(!pat)return;
   if(param===P_PATTERN_STATE){pat.valid=v===3;return}if(param===P_ROOT){pat.root=v%12;return}if(param===P_SCALE){pat.scale=v;return}
   pat.raw[param+"/"+ix.join(",")]=v},
@@ -154,6 +157,13 @@ async function readProject(link,p,prog=()=>{}){const plan=bulkPlan(),data=[];
    if(v.length<n||v.some(x=>x>127)){const one=[];for(let j=0;j<n;j++){const ix=path.slice();ix[ix.length-1]+=j;const r=n===1?v:await link.getMany(p,prm,item,ix,1);if(r==null)throw fail(prm,item,ix);one.push(r.length===1&&r[0]<=127?r[0]:null)}v=one}
    data.push([item,prm,path,v]);if(i%64===0)prog(i/plan.length)}
   prog(1);return {format:PROJECT_FORMAT,version:1,firmware:"2.5.20",project:p,name:null,saved:new Date().toISOString(),data}})}
+/* a fresh project, from the template recalled off a real KeyStep Pro (1e-blank.js); needs no device */
+async function blankProject(p=1){if(typeof DecompressionStream!=="function")throw new Error("this browser cannot unpack the empty project (needs DecompressionStream)");
+ const bin=Uint8Array.from(atob(BLANK_PROJECT_GZ),c=>c.charCodeAt(0));
+ const vals=JSON.parse(await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"))).text());
+ const plan=bulkPlan();if(vals.length!==plan.length)throw new Error("the empty-project template does not match the recall plan");
+ return checkProjectFile({format:PROJECT_FORMAT,version:1,firmware:"2.5.20",project:p,name:null,saved:new Date().toISOString(),data:plan.map((q,i)=>[q[0],q[1],q[2],vals[i]])})}
+async function newBlankProject(){try{const f=await blankProject(1);DEV.showProject?DEV.showProject(f,"New empty project"):(DEV.project=f);devLog("started a new empty project; choose the slot with Send to project","ok");emit("dev:blank")}catch(e){devLog("Error: "+e.message,"bad")}}
 function checkProjectFile(f){if(!f||f.format!==PROJECT_FORMAT||f.version!==1||!Array.isArray(f.data))throw new Error("not a KeyStep Pro project file from this page");
  const plan=bulkPlan();if(f.data.length!==plan.length)throw new Error(`project file has ${f.data.length} blocks, expected ${plan.length}`);
  f.data.forEach(([item,prm,path,v],i)=>{const q=plan[i];if(item!==q[0]||prm!==q[1]||path.join()!==q[2].join()||!Array.isArray(v)||v.length!==q[3]||v.some(x=>x!==null&&!(x>=0&&x<=127)))throw new Error(`project file block ${i+1} does not match the recall plan`)});return f}
@@ -263,7 +273,7 @@ const FEATURES=[
  {id:"projects",title:"Projects: recall, save to file, send",verified:"2026-10-20: project 15 recalled (36 s) and matched an independent read; sent to project 16 and played the same; project 16 restored from its file.",needs:null,
   about:"What MIDI Control Center does with a project, value for value: Recall reads a saved project from the device using MCC's own list of parameters (under a minute over USB). Save it as a file, open it later, and send it to any project slot. Sending replaces everything in that slot and reads it all back to check (about three minutes). The name is kept in the file and sent with it if the project-names firmware is installed. One limit of the firmware's SysEx, so MCC has it too: a chord entered on the device with a note below its first note cannot be read or written over SysEx. Such a chord is marked in the file and not sent, and the target slot keeps its own chord on that track.",
   render(el){const opts=[...Array(16).keys()].map(i=>`<option value="${i+1}">${i+1}</option>`).join("");
-   el.innerHTML=`<div class="row">Project <select data-a="p">${opts}</select><button class="sm" data-a="rc">Recall from device</button> or open a file <input type="file" accept=".json,application/json" data-a="f"></div>
+   el.innerHTML=`<div class="row">Project <select data-a="p">${opts}</select><button class="sm" data-a="rc">Recall from device</button> or open a file <input type="file" accept=".json,application/json" data-a="f"> or <button class="sm2" data-a="new">New empty project</button></div>
    <div class="row"><progress data-a="pg" max="1" value="0"></progress><span data-a="st"></span></div>
    <div class="row" data-a="sum">No project loaded.</div>
    <div class="row">Name <input type="text" data-a="nm" maxlength="16" placeholder="(optional)"><button class="sm" data-a="sv">Save to file</button></div>
@@ -272,6 +282,7 @@ const FEATURES=[
    const prog=x=>{q("pg").value=x;q("st").textContent=` ${Math.round(x*100)}%`};
    const show=(f,src)=>{cur=DEV.project=f;q("nm").value=f.name||"";q("to").value=f.project;q("sum").textContent=`${src}: ${projectSummary(f)}`;if(DEV.editorLoad)DEV.editorLoad();if(DEV.midiLoad)DEV.midiLoad()};
    DEV.showProject=show; /* the library loads into this tool */
+   q("new").onclick=newBlankProject;
    q("rc").onclick=()=>busy(async()=>{const p=+q("p").value,t0=performance.now();prog(0);const f=await readProject(DEV.link,p,prog);
     show(f,`Project ${p}, recalled`);devLog(`project ${p} recalled: ${f.data.length} blocks in ${((performance.now()-t0)/1000).toFixed(1)} s`,"ok");emit("dev:recall")});
    q("f").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{show(checkProjectFile(JSON.parse(await file.text())),file.name);devLog(`opened ${file.name}`,"ok")}catch(err){devLog("Error: "+err.message,"bad")}};

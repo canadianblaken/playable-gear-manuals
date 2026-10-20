@@ -79,8 +79,8 @@ function mfExportTrack(f,item,patList){const notes=[];let at=0;
 
 /* ---------- the feature ---------- */
 const MIDIFILE_FEATURE={id:"midifile",title:"MIDI file import / export: a part per track",verified:"Tested in the simulation (import, too-long and too-dense warnings, export round trip); the step format it writes was measured on a KeyStep Pro on 2026-10-20.",needs:null,
- about:"Import: open a .mid (for example a song part exported from Logic), choose which KeyStep track each part goes to and the pattern to start on. Notes snap to 16th-note steps; small timing offsets are kept as time shift, note lengths become gate lengths, velocity is kept. One pattern holds 64 steps (4 bars of 4/4); a longer part can continue on the following patterns and be chained in a scene. The result goes into the project loaded in the Projects tool: check it in the editor, then Send. Export: writes the chosen patterns of each track as a .mid.",
- render(el){el.innerHTML=`<div class="row" data-a="none">Load a project in the Projects tool first.</div><div data-a="ui" hidden>
+ about:"Import: open a .mid (for example a song part exported from Logic), choose which KeyStep track each part goes to and the pattern to start on. Notes snap to 16th-note steps; small timing offsets are kept as time shift, note lengths become gate lengths, velocity is kept. One pattern holds 64 steps (4 bars of 4/4); a longer part can continue on the following patterns and be chained in a scene. The result goes into the project loaded in the Projects tool, or into a new empty project: check it in the editor, then Send. Export: writes the chosen patterns of each track as a .mid.",
+ render(el){el.innerHTML=`<div class="row" data-a="none">Load a project in the Projects tool first, or <button class="sm2" data-a="blank">start from a new empty project</button></div><div data-a="ui" hidden>
    <h3>Import</h3><div class="row small"><input type="file" accept=".mid,.midi,audio/midi" data-a="f"><label><input type="checkbox" data-a="tempo"> use the file's tempo</label></div>
    <div data-a="parts" class="pg"></div><div data-a="warn"></div>
    <div class="row"><button class="sm2" data-a="imp">Import into the loaded project</button></div>
@@ -138,5 +138,5 @@ const MIDIFILE_FEATURE={id:"midifile",title:"MIDI file import / export: a part p
    const blob=new Blob([mfWrite({tempo:mfGetTempo(f),tracks})],{type:"audio/midi"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);
    a.download=`KeyStep Pro P${f.project}${f.name?" "+fileSafe(f.name):""}.mid`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
    say(`Saved ${tracks.reduce((s,t)=>s+t.notes.length,0)} notes on ${tracks.length} track(s) at ${mfGetTempo(f).toFixed(2)} BPM.`,"ok");emit("midifile:export")};
-  DEV.midiLoad=load;load()}};
+  q("blank").onclick=newBlankProject;DEV.midiLoad=load;load()}};
 FEATURES.splice(FEATURES.findIndex(f=>f.id==="editor")+1,0,MIDIFILE_FEATURE);

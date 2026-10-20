@@ -131,5 +131,13 @@ const back=mfParse(mfWrite({tempo:mfGetTempo(ip),tracks:[{name:"L",ch:0,notes:mf
 const bl=back.tracks[1].notes,bb=back.tracks[2].notes;
 ok("export: lead timing and lengths survive a round trip",bl.length===3&&bl[1].start===2*T+T/4&&bl[1].end-bl[1].start===T*1.5&&bl[2].end-bl[2].start===4*T&&Math.round(back.tempo)===100,bl);
 ok("export: chained bass patterns play in order, 25 notes",bb.length===25&&bb[16].start===16*4*T,{n:bb.length,s16:bb[16]&&bb[16].start});
+/* new empty project from the hardware template, then a MIDI import into it */
+const bp=await blankProject(3);const bpat=edReadPattern(bp,0x7B,1),bsc=edReadScene(bp,1);
+ok("empty project: valid file, fresh patterns and scenes, no chords, 120 BPM",bp.project===3&&bp.data.length===8951&&!bpat.valid&&bpat.len===16&&bpat.steps.every(s=>s.passes===15&&!s.notes.length)&&!bsc.valid&&mfGetTempo(bp)===120&&TRACK_ITEMS.every(it=>edGet(bp,it,0x57,[1])===0x7F&&!(edGet(bp,it,0x56,[1])&0x10)),{len:bpat.len,valid:bpat.valid,tempo:mfGetTempo(bp)});
+DEV.project=null;DEV.midiLoad();ok("MIDI tool offers an empty project when none is loaded",!$("#feat-midifile").querySelector("[data-a=none]").hidden&&!!$("#feat-midifile").querySelector("[data-a=blank]"));
+$("#feat-midifile").querySelector("[data-a=blank]").click();for(let i=0;i<50&&!DEV.project;i++)await W(20);
+ok("the button starts a new empty project in the Projects tool",DEV.project&&DEV.project.data.length===8951&&/New empty project/.test($("#feat-projects").textContent));
+const into=JSON.parse(JSON.stringify(DEV.project));mfApply(into,0x7C,mfPlan(mfPlace(mparts[1],mfx),1,16),{chainScene:1});const pr6=await storeProject(L,12,into);
+ok("MIDI import into the empty project sends and reads back",pr6.length===0&&edReadPattern(await readProject(L,12),0x7C,2).len===48,pr6.slice(0,3));
 ok("file check rejects a damaged file",(()=>{const b=deep(f1);b.data[5][3]=[200];try{checkProjectFile(b);return false}catch(e){return true}})());
 selectTab("man");return R;
