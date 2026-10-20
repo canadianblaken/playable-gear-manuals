@@ -59,5 +59,14 @@ ok("unreadable chord bytes recalled as null",cb(0x7B,2)===null&&cb(0x7B,3)===3&&
 ok("summary marks the note below the root",/track 1: .*chord G#3 \(below root\) B3/.test(projectSummary(f2)),projectSummary(f2));
 const pr4=await storeProject(L,10,f2);
 ok("store skips those chords and reports them, the rest verifies",pr4.length===2&&pr4.every(s=>/chord not sent/.test(s)),pr4);
+/* backup: several projects + globals in one file; restore only the ticked ones */
+reset();saveProject();S.flash[1].raw["121/76/1"]=7;S.globals[152]=2;
+const bk=await readBackup(L,[1,2,3]);ok("backup holds 3 projects and the globals",bk.projects.length===3&&bk.globals[152]===2&&checkBackupFile(deep(bk)),{n:bk.projects.length,g:bk.globals&&bk.globals[152]});
+S.flash[1].raw["121/76/1"]=0;S.flash[2].raw["121/76/1"]=9;S.globals[152]=0;
+const rs=await restoreBackup(L,bk,[2],{globals:true});
+ok("restore puts back only the ticked project and the globals",rs[2].length===0&&rs.globals.length===0&&S.flash[1].raw["121/76/1"]===7&&S.flash[2].raw["121/76/1"]===9&&S.globals[152]===2,rs);
+DEV.busy=true;DEV.stop=false;let sets=0;const sm=L.setMany;L.setMany=async(...a)=>{if(++sets===100)DEV.stop=true;return sm.apply(L,a)};const keep2=JSON.stringify(S.flash[4]);let stopped=false;
+try{await storeProject(L,5,bk.projects[0])}catch(e){stopped=e.message==="stopped"}L.setMany=sm;DEV.busy=false;DEV.stop=false;
+ok("Stop during a send leaves the slot unchanged",stopped&&JSON.stringify(S.flash[4])===keep2,{stopped});
 ok("file check rejects a damaged file",(()=>{const b=deep(f1);b.data[5][3]=[200];try{checkProjectFile(b);return false}catch(e){return true}})());
 selectTab("man");return R;

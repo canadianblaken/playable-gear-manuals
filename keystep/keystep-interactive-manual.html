@@ -68,6 +68,9 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
 #tourBox .nav{display:flex;gap:8px;margin-top:8px}
 #tourBox button,.chap button,.card button.sm{font:inherit;font-size:12px;padding:3px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
 .card button.sm:disabled{opacity:.5;cursor:default}
+.card button.sm2{font:inherit;font-size:12px;padding:3px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.feat progress{width:14em}
+.feat .pick{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:12px}
 #tourBox .done{color:var(--ok)}
 .chap{list-style:none;margin:0;padding:0;max-height:420px;overflow:auto}
 .chap li{display:flex;gap:8px;align-items:baseline;padding:4px 6px;border-radius:6px;font-size:13px}
@@ -1298,11 +1301,13 @@ const PROJECT_FORMAT="keystep-pro-project";
 function bulkPlan(){const out=[];for(const [lo,hi,item,dims,n,params] of BULK)for(let I=lo;I<=hi;I++){
   let paths=[[]];for(const d of dims)paths=paths.flatMap(p=>d.map(x=>[...p,x==="I"?I:x]));
   for(const path of paths)for(const prm of params)out.push([item,prm,path,n])}return out}
+/* Stop: checked between requests; a store stopped before its commit leaves the slot unchanged */
+const stopCheck=()=>{if(DEV.stop)throw new Error("stopped")};
 async function quietly(link,fn){link.quiet=true;try{return await fn()}finally{link.quiet=false;dirty()}}
 async function readProject(link,p,prog=()=>{}){const plan=bulkPlan(),data=[];
  return quietly(link,async()=>{await link.open(p);
   const fail=(prm,item,path)=>new Error(`no reply reading project ${p} (item ${item}, param ${prm}, index ${path.join(",")})`);
-  for(let i=0;i<plan.length;i++){const [item,prm,path,n]=plan[i];let v=await link.getMany(p,prm,item,path,n);if(v==null)throw fail(prm,item,path);
+  for(let i=0;i<plan.length;i++){stopCheck();const [item,prm,path,n]=plan[i];let v=await link.getMany(p,prm,item,path,n);if(v==null)throw fail(prm,item,path);
    /* the getter sends stored bytes unmasked: 0xF7 ends the frame early and 0xF8-0xFF are split off as real-time bytes.
       Re-read such a block value by value and keep what cannot be read as null (seen: chord notes below the root). */
    if(v.length<n||v.some(x=>x>127)){const one=[];for(let j=0;j<n;j++){const ix=path.slice();ix[ix.length-1]+=j;const r=n===1?v:await link.getMany(p,prm,item,ix,1);if(r==null)throw fail(prm,item,ix);one.push(r.length===1&&r[0]<=127?r[0]:null)}v=one}
@@ -1324,7 +1329,7 @@ async function storeProject(link,p,f,{verify=true,prog=()=>{}}={}){checkProjectF
  const skip=e=>e[1]===P_CHORD&&badChord.has(e[0]);
  const order=[...f.data.filter(e=>!STATE_PARAMS.includes(e[1])),...f.data.filter(e=>STATE_PARAMS.includes(e[1]))];
  await quietly(link,async()=>{await link.open(p);
-  for(let i=0;i<N;i++){const e=order[i],[item,prm,path,v]=e;if(i%64===0)prog(verify?i/N/2:i/N);if(skip(e))continue;
+  for(let i=0;i<N;i++){stopCheck();const e=order[i],[item,prm,path,v]=e;if(i%64===0)prog(verify?i/N/2:i/N);if(skip(e))continue;
    if(!v.includes(null)){await link.setMany(p,prm,item,path,v);continue}
    for(let j=0;j<v.length;j++)if(v[j]!==null){const ix=path.slice();ix[ix.length-1]+=j;await link.setMany(p,prm,item,ix,[v[j]])}}
   await link.commit(p)});
@@ -1344,6 +1349,24 @@ function projectSummary(f){const get=(item,prm,i0)=>{const e=f.data.find(([it,pr
  return [0,1,2,3].map(t=>`track ${t+1}: ${pats(t)} pattern${pats(t)===1?"":"s"}${chord(t)}`).join("; ")+`; ${scenes} scene${scenes===1?"":"s"}`}
 function saveJSON(obj,fname){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(obj)],{type:"application/json"}));a.download=fname;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000)}
 const fileSafe=s=>s.replace(/[^\w .-]+/g,"").trim()||"project";
+
+/* ---------- backup: several projects (and the global settings) in one file ---------- */
+const BACKUP_FORMAT="keystep-pro-backup";
+async function readBackup(link,projects,{globals=true,prog=()=>{}}={}){
+ const b={format:BACKUP_FORMAT,version:1,firmware:"2.5.20",saved:new Date().toISOString(),globals:null,projects:[]},parts=projects.length+(globals?.05:0);
+ if(globals){b.globals={};await quietly(link,async()=>{for(const [i,g] of GLOBALS.entries()){stopCheck();b.globals[g.id]=await link.getGlobal(g.id);prog(i/GLOBALS.length*.05/parts)}})}
+ const base=globals?.05:0;
+ for(const [i,p] of projects.entries())b.projects.push(await readProject(link,p,x=>prog((base+i+x)/parts)));
+ prog(1);return b}
+function checkBackupFile(b){if(!b||b.format!==BACKUP_FORMAT||b.version!==1||!Array.isArray(b.projects))throw new Error("not a KeyStep Pro backup file from this page");
+ b.projects.forEach(checkProjectFile);if(new Set(b.projects.map(f=>f.project)).size!==b.projects.length)throw new Error("backup lists a project twice");return b}
+/* restores the chosen projects to their own slots; returns {project: problems[]} plus "globals" if asked */
+async function restoreBackup(link,b,projects,{globals=false,verify=true,prog=()=>{}}={}){checkBackupFile(b);const res={},list=b.projects.filter(f=>projects.includes(f.project));
+ const parts=list.length+(globals&&b.globals?.05:0);
+ for(const [i,f] of list.entries())res[f.project]=await storeProject(link,f.project,f,{verify,prog:x=>prog((i+x)/parts)});
+ if(globals&&b.globals){const bad=[];await quietly(link,async()=>{const ids=Object.keys(b.globals).map(Number).filter(id=>b.globals[id]!=null);
+  for(const [i,id] of ids.entries()){stopCheck();await link.setGlobal(id,b.globals[id]);if(verify){const rb=await link.getGlobal(id);if(rb!==b.globals[id])bad.push(`global ${id} reads ${rb}, wrote ${b.globals[id]}`)}prog((list.length+i/ids.length*.05)/parts)}});res.globals=bad}
+ prog(1);return res}
 
 /* ---------- feature registry ---------- */
 const FEATURES=[
@@ -1402,12 +1425,38 @@ const FEATURES=[
     busy(async()=>{const n=q("nm").value.trim();cur.name=n?displayName(n):null;prog(0);const t0=performance.now();
      const pr=await storeProject(DEV.link,to,cur,{verify:q("vf").checked,prog});const s=((performance.now()-t0)/1000).toFixed(1);
      devLog(pr.length?`PROBLEM: ${pr.length} value(s) differ after sending to project ${to}: ${pr.slice(0,5).join("; ")}${pr.length>5?" …":""}`:`project ${to} written${q("vf").checked?" and verified":""} in ${s} s`,pr.length?"bad":"ok");if(!pr.length)emit("dev:store")})}}},
+ {id:"backup",title:"Backup: all projects in one file",verified:"2026-10-20: all 16 projects and the settings backed up in 9.7 min; project 16 restored from it and verified. Restoring global settings is tested only in the simulation.",needs:null,
+  about:"Recalls all 16 projects, plus the global settings, into one file (about ten minutes; Stop ends it early with nothing saved). Restore sends the projects you tick back to their own slots and checks each one, about three minutes per project. Global settings are restored only if you ask. Project names are not in the backup: the firmware has no way to read them back. A few stored bytes cannot be read over SysEx (seen in never-used parts of a project); restore leaves those as they are in the slot.",
+  render(el){el.innerHTML=`<div class="row"><button class="sm" data-a="bk">Back up all 16</button><label><input type="checkbox" data-a="gl" checked> include global settings</label></div>
+   <div class="row"><progress data-a="pg" max="1" value="0"></progress><span data-a="st"></span></div>
+   <div class="row">Open a backup <input type="file" accept=".json,application/json" data-a="f"></div>
+   <div data-a="sum" class="pg">No backup loaded.</div>
+   <div class="row"><span class="pick" data-a="pick"></span></div>
+   <div class="row"><button class="sm" data-a="all">All</button><button class="sm" data-a="none">None</button><label><input type="checkbox" data-a="rg"> restore global settings</label><label><input type="checkbox" data-a="vf" checked> read back to verify</label><button class="sm" data-a="go">Restore ticked projects</button></div>`;
+   const q=a=>el.querySelector(`[data-a=${a}]`),go=q("go");let cur=null,armT=0;
+   const prog=x=>{q("pg").value=x;q("st").textContent=` ${Math.round(x*100)}%`};
+   const show=(b,src)=>{cur=b;q("sum").innerHTML="";const h=document.createElement("div");h.textContent=`${src}: ${b.projects.length} projects${b.globals?" and the global settings":""}, saved ${b.saved.slice(0,16).replace("T"," ")}`;q("sum").appendChild(h);
+    for(const f of b.projects){const d=document.createElement("div");d.textContent=`P${f.project}: ${projectSummary(f)}`;q("sum").appendChild(d)}
+    q("pick").innerHTML=b.projects.map(f=>`<label><input type="checkbox" value="${f.project}" checked> ${f.project}</label>`).join("")};
+   const ticked=()=>[...q("pick").querySelectorAll("input:checked")].map(i=>+i.value);
+   q("all").onclick=()=>q("pick").querySelectorAll("input").forEach(i=>i.checked=true);q("none").onclick=()=>q("pick").querySelectorAll("input").forEach(i=>i.checked=false);
+   q("bk").onclick=()=>busy(async()=>{const t0=performance.now();prog(0);const b=await readBackup(DEV.link,[...Array(16).keys()].map(i=>i+1),{globals:q("gl").checked,prog});
+    show(b,"Backup");saveJSON(b,`KeyStep Pro backup ${b.saved.slice(0,16).replace("T"," ").replace(":","-")}.json`);
+    const nul=b.projects.filter(f=>f.data.some(e=>e[3].includes(null))).map(f=>f.project);
+    devLog(`backup of 16 projects saved in ${((performance.now()-t0)/60000).toFixed(1)} min${nul.length?`; projects ${nul.join(", ")} have a chord with a note below its root, which cannot be restored over SysEx`:""}`,nul.length?"bad":"ok");emit("dev:backup")});
+   q("f").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{show(checkBackupFile(JSON.parse(await file.text())),file.name);devLog(`opened ${file.name}`,"ok")}catch(err){devLog("Error: "+err.message,"bad")}};
+   const disarm=()=>{clearTimeout(armT);armT=0;go.textContent="Restore ticked projects"};
+   go.onclick=()=>{if(!cur){devLog("Back up or open a backup first.","bad");return}const ps=ticked();if(!ps.length&&!q("rg").checked){devLog("Tick at least one project.","bad");return}
+    if(!armT){go.textContent=`Click again to replace ${ps.length} project${ps.length===1?"":"s"}${q("rg").checked?" and the settings":""}`;armT=setTimeout(disarm,4000);return}disarm();
+    busy(async()=>{const t0=performance.now();prog(0);const res=await restoreBackup(DEV.link,cur,ps,{globals:q("rg").checked,verify:q("vf").checked,prog});let bad=0;
+     for(const [k,pr] of Object.entries(res)){bad+=!!pr.length;devLog(`${k==="globals"?"global settings":"P"+k}: ${pr.length?"PROBLEM: "+pr.slice(0,3).join("; ")+(pr.length>3?" …":""):"OK"}`,pr.length?"bad":"ok")}
+     devLog(`restore finished in ${((performance.now()-t0)/60000).toFixed(1)} min${bad?`, ${bad} with problems`:""}`,bad?"bad":"ok");if(!bad)emit("dev:restore")})}}},
 ];
 
 /* ---------- the tab ---------- */
-const DEV={link:null,gvals:{},busy:false,ports:null};
+const DEV={link:null,gvals:{},busy:false,stop:false,ports:null};
 function devLog(s,cls=""){const box=$("#devLog");if(!box)return;const d=document.createElement("div");d.className=cls;d.textContent=s;box.appendChild(d);while(box.childNodes.length>400)box.firstChild.remove();box.scrollTop=box.scrollHeight}
-async function busy(fn){if(!DEV.link){devLog("Connect first.","bad");return}if(DEV.busy)return;DEV.busy=true;document.querySelectorAll("#paneDev button.sm").forEach(b=>b.disabled=true);
+async function busy(fn){if(!DEV.link){devLog("Connect first.","bad");return}if(DEV.busy)return;DEV.busy=true;DEV.stop=false;document.querySelectorAll("#paneDev button.sm").forEach(b=>b.disabled=true);
  try{await fn()}catch(e){devLog("Error: "+e.message,"bad")}finally{DEV.busy=false;document.querySelectorAll("#paneDev button.sm").forEach(b=>b.disabled=false)}}
 async function devConnect(){const sel=$("#devPort").value;if(DEV.link&&DEV.link.close)DEV.link.close();DEV.link=null;DEV.gvals={};
  if(sel==="sim"){DEV.link=new SimLink();SIMDEV.namesFw=$("#simNames").checked}
@@ -1423,10 +1472,10 @@ async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">
 function renderDevice(){const pane=$("#paneDev");if(pane.dataset.built)return;pane.dataset.built=1;
  pane.innerHTML=`<div class="card"><h2>Device tools <span id="devState"></span></h2>
   <p class="pg">Talks SysEx to a KeyStep Pro on USB (Chrome/Edge, Web MIDI with SysEx permission) or to the simulated one in this page. Everything here was worked out from firmware 2.5.20 and tested on hardware; new tools are added as they are solved. Unofficial: back up your projects with MIDI Control Center before writing.</p>
-  <div class="feat"><div class="row"><select id="devPort"><option value="sim">Simulated KeyStep Pro (this page)</option></select><button class="sm" id="devScanBtn">Find MIDI ports</button><button class="sm" id="devConnBtn">Connect</button></div>
+  <div class="feat"><div class="row"><select id="devPort"><option value="sim">Simulated KeyStep Pro (this page)</option></select><button class="sm" id="devScanBtn">Find MIDI ports</button><button class="sm" id="devConnBtn">Connect</button><button class="sm2" id="devStopBtn" title="Stop the transfer that is running">Stop</button></div>
   <div class="row"><label><input type="checkbox" id="simNames" checked> simulation runs the project-names firmware</label></div></div>
   <div id="featList"></div><h3>Log</h3><div id="devLog"></div></div>`;
- $("#devScanBtn").onclick=devScan;$("#devConnBtn").onclick=()=>devConnect().catch(e=>devLog("Error: "+e.message,"bad"));$("#simNames").onchange=e=>{SIMDEV.namesFw=e.target.checked};
+ $("#devScanBtn").onclick=devScan;$("#devStopBtn").onclick=()=>{if(DEV.busy){DEV.stop=true;devLog("Stopping…")}};$("#devConnBtn").onclick=()=>devConnect().catch(e=>devLog("Error: "+e.message,"bad"));$("#simNames").onchange=e=>{SIMDEV.namesFw=e.target.checked};
  const list=$("#featList");for(const f of FEATURES){const box=document.createElement("div");box.className="feat";box.innerHTML=`<h3>${f.title}</h3><div class="meta"><b>Verified</b> ${f.verified}${f.needs?` <span class="need">Needs ${f.needs}</span>`:""}</div><p class="pg">${f.about}</p><div class="body"></div>`;list.appendChild(box);f.render(box.querySelector(".body"))}}
 boot();
 </script>
