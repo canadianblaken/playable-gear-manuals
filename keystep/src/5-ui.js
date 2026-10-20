@@ -389,7 +389,7 @@ function renderTour(){const box=$("#tourBox");document.querySelectorAll(".tourTa
  if(!tour){box.hidden=true;return}const T=TOURS[tour.i];box.hidden=false;
  if(tour.k>=T.steps.length){box.innerHTML=`<h2>${T.n}</h2><p class="done">Done. Pick another tour or keep playing.</p><div class="nav"><button id="tourClose">Close</button></div>`;$("#tourClose").onclick=()=>{tour=null;renderTour()};return}
  const st=T.steps[tour.k];box.innerHTML=`<div class="crumb">Tour · step ${tour.k+1} of ${T.steps.length}</div><h2>${T.n}</h2><p class="step">${st.s}</p><div class="nav"><button id="tourSkip">Skip step</button><button id="tourClose">End tour</button></div>`;
- if(st.t&&ctlEls[st.t])ctlEls[st.t].classList.add("tourTarget");$("#tourSkip").onclick=()=>{tour.k++;renderTour()};$("#tourClose").onclick=()=>{tour=null;renderTour()}}
+ if(st.t&&ctlEls[st.t])ctlEls[st.t].classList.add("tourTarget");viewFollow(viewForControl(st.t));$("#tourSkip").onclick=()=>{tour.k++;renderTour()};$("#tourClose").onclick=()=>{tour=null;renderTour()}}
 LISTEN.push(ev=>{if(!tour)return;const st=TOURS[tour.i].steps[tour.k];if(!st)return;if(st.ev instanceof RegExp?st.ev.test(ev):st.ev===ev){tour.k++;renderTour()}});
 
 /* ---------- chapters ---------- */
@@ -417,7 +417,7 @@ const SHOW={
  deviceTools(){selectTab("dev");return "<p>The Device tools tab sends SysEx to a real KeyStep Pro through Web MIDI, or to this simulation. It only contains features already tested on hardware.</p>"},
 };
 function renderChapters(){const ul=$("#chapList");ul.innerHTML="";CHAPTERS.forEach(([sec,t,fn])=>{const li=document.createElement("li");li.innerHTML=`<i>${sec}</i><span>${t}</span><button>Show</button>`;
- li.querySelector("button").onclick=()=>{const html=SHOW[fn]();$("#info").innerHTML=`<div class="crumb">Manual <b>${sec}</b></div><h2>${t}</h2>${html}`;dirty();$("#info").scrollIntoView({block:"nearest"})};ul.appendChild(li)})}
+ li.querySelector("button").onclick=()=>{const html=SHOW[fn]();DEV.lastChap=fn;if(fn!=="deviceTools")viewFollow(CHAP_VIEW[fn]||"whole");$("#info").innerHTML=`<div class="crumb">Manual <b>${sec}</b></div><h2>${t}</h2>${html}`;dirty();$("#info").scrollIntoView({block:"nearest"})};ul.appendChild(li)})}
 
 /* ---------- demos ---------- */
 const DEMOS={
@@ -438,22 +438,50 @@ function loadDemo(name){const pr=DEMOS[name]();stop();S.ram[S.proj]=pr;S.flash[S
 
 /* ---------- tabs, buttons, boot ---------- */
 function selectTab(w){$("#tabMan").setAttribute("aria-selected",w==="man");$("#tabDev").setAttribute("aria-selected",w==="dev");$("#tabCC").setAttribute("aria-selected",w==="cc");$("#paneMan").hidden=w!=="man";$("#paneDev").hidden=w!=="dev";$("#paneCC").hidden=w!=="cc";if(w==="dev"){renderDevice();emit("tab:dev")}$("#devWide").hidden=w!=="dev";$("#paneDevNote").hidden=w!=="dev";$("#paneDev").hidden=w!=="dev";
- if(w==="dev"){const c=$("#devCol"),t=$("#devWide");if(c.scrollTo)c.scrollTo({top:Math.max(0,t.offsetTop-c.offsetTop-8),behavior:"smooth"})}if(w==="cc"){renderCCMap();emit("tab:cc")}try{localStorage.setItem("ksp.tab",w)}catch(e){}}
-function initPanelZoom(){
- let zoom=100;
- try{const saved=Number(localStorage.getItem("ksp.panelZoom"));if(Number.isFinite(saved)&&saved>=50&&saved<=250)zoom=saved}catch(e){}
- const apply=()=>{svg.style.width=zoom+"%";svg.style.maxWidth="none";$("#panelZoomValue").textContent=zoom+"%";$("#panelZoomOut").disabled=zoom<=50;$("#panelZoomIn").disabled=zoom>=250;try{localStorage.setItem("ksp.panelZoom",String(zoom))}catch(e){}};
- $("#panelZoomOut").onclick=()=>{zoom=Math.max(50,zoom-25);apply()};
- $("#panelZoomIn").onclick=()=>{zoom=Math.min(250,zoom+25);apply()};
- $("#panelZoomFit").onclick=()=>{zoom=100;apply();$("#panelViewport").scrollLeft=0};
- apply();
-}
-function boot(){baseState();drawPanel();bindInput();renderChapters();initPanelZoom();devBindBar();
+ if(w==="dev"){const c=$("#devCol"),t=$("#devWide");if(c.scrollTo)c.scrollTo({top:Math.max(0,t.offsetTop-c.offsetTop-8-$("#panelWrap").offsetHeight),behavior:"smooth"})}if(w==="cc"){renderCCMap();emit("tab:cc")}viewFollow(w==="cc"?"knobs":w==="dev"?(DEV.lastFeat&&FEATURE_VIEW[DEV.lastFeat])||"tracks":tour&&TOURS[tour.i].steps[tour.k]?viewForControl(TOURS[tour.i].steps[tour.k].t):(DEV.lastChap&&CHAP_VIEW[DEV.lastChap])||"whole");try{localStorage.setItem("ksp.tab",w)}catch(e){}}
+/* ---------- panel view: zoom the drawing to the part of the KeyStep in use ----------
+   Each view is the box around a group of controls, widened to a short strip so the tools below get the room.
+   Auto follows the tab, the Device tool in use and the tour step; picking a view by hand pins it. */
+const VB_WHOLE=[30,140,1250,460],VIEW_MIN=3,VIEW_MAX=6;   // strip shape limits (width/height)
+const VIEWS=[["auto","Auto"],["whole","Whole",null],["transport","Transport",["tempo","swing","tap","shift","play","project","erase","control","sel"]],
+ ["tracks","Tracks",["t0dn","t3up","t3trk","scene","pattern","s15","control"]],["steps","Steps & encoders",["enc0","enc4","s0","s15","pg3","stepedit"]],
+ ["knobs","Knobs",["enc0","enc4","lst","pg3"]],["keys","Keys",["k0","k36"]]];
+const CHAP_VIEW={trackSettings:"tracks",recordBasics:"steps",arpBasics:"keys",scaleBasics:"keys",tempo:"transport",encoders:"steps",shiftFns:"keys",seqLength:"steps",stepEdit:"steps",
+ copyPaste:"transport",saving:"transport",drum:"keys",chordMode:"keys",projects:"transport",tracks:"tracks",patterns:"tracks",arranging:"tracks",controlMode:"knobs",utility:"transport"};
+const FEATURE_VIEW={projects:"tracks",library:"tracks",backup:"tracks",setlist:"tracks",names:"tracks",midifile:"tracks",editor:"steps",trackkey:"keys",globals:"knobs"};
+let viewMode="auto",viewAuto="whole",viewCur=VB_WHOLE.slice(),viewAnim=0;
+function viewBox(name){const v=VIEWS.find(x=>x[0]===name);if(!v||!v[2])return VB_WHOLE.slice();
+ let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+ for(const id of v[2]){const c=CI[id];if(!c)continue;const b=c.t==="knob"?[c.cx-c.r-9,c.cy-c.r-9,c.cx+c.r+9,c.cy+c.r+16]:[c.x,c.y,c.x+c.w,c.y+c.h+10];
+  x0=Math.min(x0,b[0]);y0=Math.min(y0,b[1]);x1=Math.max(x1,b[2]);y1=Math.max(y1,b[3])}
+ if(name==="keys")y0-=32;   // the key function labels above the keys
+ x0-=16;y0-=16;x1+=16;y1+=16;let w=x1-x0,h=y1-y0;
+ if(w/h>VIEW_MAX){const nh=w/VIEW_MAX;y0-=(nh-h)/2;h=nh}else if(w/h<VIEW_MIN){const nw=h*VIEW_MIN;x0-=(nw-w)/2;w=nw}
+ return [x0,y0,w,h]}
+function viewApply(vb){viewCur=vb;svg.setAttribute("viewBox",vb.map(n=>n.toFixed(1)).join(" "));$("#panelViewport").style.aspectRatio=vb[2]+"/"+vb[3]}
+function viewGo(name){const to=viewBox(name),from=viewCur.slice();cancelAnimationFrame(viewAnim);
+ if(matchMedia("(prefers-reduced-motion: reduce)").matches||document.hidden){viewApply(to);return}
+ const t0=performance.now(),T=300;const step=t=>{const k=Math.min(1,(t-t0)/T),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;viewApply(from.map((f,i)=>f+(to[i]-f)*e));if(k<1)viewAnim=requestAnimationFrame(step)};viewAnim=requestAnimationFrame(step)}
+function viewDraw(){const shown=viewMode==="auto"?viewAuto:viewMode;
+ document.querySelectorAll("#viewBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===viewMode));
+ $("#viewNote").textContent=viewMode==="auto"?"showing "+VIEWS.find(v=>v[0]===shown)[1].toLowerCase():"";
+ viewGo(shown)}
+/* what is in use right now: called on tab changes, Device tool use and tour steps */
+function viewFollow(name){viewAuto=name||"whole";if(viewMode==="auto")viewDraw()}
+function viewForControl(id){if(!id||!CI[id])return "whole";const c=CI[id],x=c.cx??c.x+c.w/2,y=c.cy??c.y+c.h/2;
+ for(const n of ["steps","tracks","transport","keys"]){const b=viewBox(n);if(x>=b[0]&&x<=b[0]+b[2]&&y>=b[1]&&y<=b[1]+b[3])return n}return "whole"}
+function initPanelView(){
+ try{const m=localStorage.getItem("ksp.view");if(VIEWS.some(v=>v[0]===m))viewMode=m}catch(e){}
+ const box=$("#viewBtns");VIEWS.forEach(([v,n])=>{const b=document.createElement("button");b.dataset.v=v;b.textContent=n;b.onclick=()=>{viewMode=v;try{localStorage.setItem("ksp.view",v)}catch(e){}viewDraw()};box.appendChild(b)});
+ /* the Device tool being used decides the Auto view */
+ const tools=$("#devCol");const pick=e=>{const f=e.target.closest&&e.target.closest(".feat");if(f&&f.id.startsWith("feat-")){DEV.lastFeat=f.id.slice(5);viewFollow(FEATURE_VIEW[f.id.slice(5)]||"whole")}};
+ tools.addEventListener("focusin",pick);tools.addEventListener("pointerdown",e=>{if(!svg.contains(e.target))pick(e)});$("#sideCol").addEventListener("focusin",pick);
+ viewApply(viewBox(viewMode==="auto"?viewAuto:viewMode));viewDraw()}
+function boot(){baseState();drawPanel();bindInput();renderChapters();initPanelView();devBindBar();
  const ex=$("#exSel");Object.keys(DEMOS).forEach(n=>ex.add(new Option(n,n)));ex.onchange=()=>{if(ex.value)loadDemo(ex.value);ex.value=""};
  const ts=$("#tourSel");TOURS.forEach((t,i)=>ts.add(new Option(t.n,i)));ts.onchange=()=>{if(ts.value!==""){startTour(+ts.value);selectTab("man")}ts.value=""};
  $("#soundBtn").onclick=e=>{SOUND=!SOUND;e.target.setAttribute("aria-pressed",SOUND);if(!SOUND)allOff()};
  $("#midiBtn").onclick=toggleMidi;$("#resetBtn").onclick=()=>{stop();const keep=SIMDEV&&SIMDEV.namesFw;baseState();if(SIMDEV)SIMDEV.namesFw=keep;LATCH.forEach(id=>ctlEls[id]&&ctlEls[id].classList.remove("latched"));dirty();msg("Reset")};
- document.querySelectorAll(".vsw button").forEach(b=>b.onclick=()=>{svg.setAttribute("viewBox",b.dataset.vb);document.querySelectorAll(".vsw button").forEach(x=>x.setAttribute("aria-pressed",x===b))});
  $("#tabMan").onclick=()=>selectTab("man");$("#tabDev").onclick=()=>selectTab("dev");$("#tabCC").onclick=()=>selectTab("cc");
  $("#info").innerHTML=`<h2>Start here</h2><p>Hover any control for a short description; click it for the details on this card. Load the <b>Quick tour</b> demo and press Play (or <kbd>Space</kbd>), or pick a guided tour.</p><p>Right-click (long-press on touch) <b>latches</b> a button as if you were holding it, so two-handed combos like Shift + key or Save + Project work with a mouse.</p>`;
  loadDemo("Quick tour");

@@ -30,8 +30,6 @@ h1{font-size:20px;margin:0}
 .bar .hint{color:var(--muted);font-size:12px;margin-left:auto}
 .bar .ksp{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;padding-left:10px;border-left:1px solid var(--line)}
 .bar .ksp .lbl{font-size:12px;color:var(--muted)}.bar #devPort{max-width:15em}
-.vsw{display:none;gap:4px}
-@media (max-width:700px){.vsw{display:inline-flex}}
 .hint .touch{display:none}
 @media (pointer:coarse){.hint .desk{display:none}.hint .touch{display:inline}}
 main{max-width:1700px;margin:0 auto;padding:4px 16px 40px;display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:16px;align-items:start}
@@ -42,12 +40,14 @@ main{max-width:1700px;margin:0 auto;padding:4px 16px 40px;display:grid;grid-temp
 @media (min-width:901px){html,body{height:100%;overflow:hidden}body{display:flex;flex-direction:column}
   main{flex:1;min-height:0;width:100%;grid-template-rows:100%;padding-bottom:12px}
   #devCol{overflow:auto;height:100%}#sideCol{overflow-y:auto;height:100%;padding-right:4px}}
-#panelViewport{overflow:auto;max-width:100%}
-.panelZoom{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;color:var(--muted)}
-.panelZoom button{font:inherit;padding:4px 10px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--fg);cursor:pointer}
-.panelZoom button:disabled{opacity:.45}
-#panelZoomValue{min-width:4em;text-align:center}
-#device{width:100%;height:auto;display:block;touch-action:pan-y pinch-zoom;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#panelWrap{position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:6px}
+#panelViewport{aspect-ratio:1250/460;max-width:100%;border-radius:10px;overflow:hidden}
+.panelView{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;color:var(--muted)}
+#viewBtns{display:inline-flex;flex-wrap:wrap;gap:4px}
+.panelView button{font:inherit;padding:4px 10px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--fg);cursor:pointer}
+.panelView button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+#viewNote{margin-left:4px}
+#device{width:100%;height:100%;display:block;touch-action:pan-y pinch-zoom;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .screenRow{display:flex;gap:12px;align-items:center;margin-top:8px;flex-wrap:wrap}
 #oledBig{width:384px;max-width:100%;height:auto;aspect-ratio:4/1;background:#000;border-radius:8px;border:6px solid #111;display:block}
 .screenRow .ledinfo{font-size:12px;color:var(--muted);flex:1;min-width:200px}
@@ -148,13 +148,14 @@ table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
   <button id="midiBtn" aria-pressed="false" title="Mirror notes to MIDI gear and accept a MIDI keyboard (Web MIDI)">MIDI</button>
   <button id="resetBtn">Reset</button>
   <span class="ksp" role="group" aria-label="KeyStep Pro connection"><span class="lbl">KeyStep</span><select id="devPort" aria-label="KeyStep Pro MIDI port"><option value="sim">Simulated KeyStep Pro</option></select><button id="devScanBtn" title="Ask the browser for MIDI ports (Chrome/Edge, with SysEx permission)">Find MIDI ports</button><button id="devConnBtn">Connect</button><button id="devStopBtn" title="Stop the transfer that is running">Stop</button><span id="devState" aria-live="polite"></span></span>
-  <span class="vsw" role="group" aria-label="Zoom the panel"><button data-vb="30 140 1250 460" aria-pressed="true">Whole</button><button data-vb="30 160 650 220" aria-pressed="false">Left</button><button data-vb="650 160 630 220" aria-pressed="false">Steps</button><button data-vb="230 340 1050 260" aria-pressed="false">Keys</button></span>
   <span class="hint"><span class="touch">Tap = press · long-press = hold (latches) · drag an encoder up/down = turn · tap anything for help</span><span class="desk">Hover for help · right-click = hold a button (latch) · drag/wheel an encoder, click = touch · <kbd>Shift</kbd> = Shift · <kbd>Space</kbd> play · <kbd>.</kbd> stop · <kbd>R</kbd> rec · <kbd>A W S E D F T G Y H U J K</kbd> keys · <kbd>Z</kbd>/<kbd>X</kbd> octave</span></span>
 </div>
 <main>
   <div id="devCol">
-    <div class="panelZoom" role="group" aria-label="Keyboard size"><span>Keyboard size</span><button id="panelZoomOut" aria-label="Make keyboard smaller">−</button><output id="panelZoomValue" aria-live="polite">100%</output><button id="panelZoomIn" aria-label="Make keyboard larger">+</button><button id="panelZoomFit">Fit</button></div>
-    <div id="panelViewport"><svg id="device" viewBox="30 140 1250 460" role="application" aria-label="KeyStep Pro front panel"></svg></div>
+    <div id="panelWrap">
+    <div class="panelView" role="group" aria-label="Part of the KeyStep shown"><span>Show</span><span id="viewBtns"></span><output id="viewNote" aria-live="polite"></output></div>
+    <div id="panelViewport"><svg id="device" viewBox="30 140 1250 460" preserveAspectRatio="xMidYMid meet" role="application" aria-label="KeyStep Pro front panel"></svg></div>
+    </div>
     <div class="screenRow"><canvas id="oledBig" width="512" height="128" aria-label="OLED display, enlarged"></canvas><div class="ledinfo" id="ledInfo"></div></div>
     <div id="devWide" hidden></div>
   </div>

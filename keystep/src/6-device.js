@@ -370,7 +370,7 @@ async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">
 const FEATURE_SIDE=new Set(["midifile"]);
 const FEATURE_ORDER=["projects","midifile","editor","library","backup","setlist","trackkey","names","globals"],FEATURE_KEY=new Set(["midifile"]);
 const FEATURE_SHORT={projects:"Projects",midifile:"MIDI file import / export",editor:"Step editor",library:"Library",backup:"Backup",setlist:"Set list",trackkey:"Chord & key",names:"Names",globals:"Global settings"};
-function featJump(id){const box=$("#feat-"+id);if(!box)return;const c=$("#devCol").contains(box)?$("#devCol"):$("#sideCol");if(c&&c.contains(box)&&c.scrollTo)c.scrollTo({top:Math.max(0,box.offsetTop-c.offsetTop-8),behavior:"smooth"});else box.scrollIntoView({behavior:"smooth"})}
+function featJump(id){const box=$("#feat-"+id);if(!box)return;DEV.lastFeat=id;viewFollow(FEATURE_VIEW[id]||"whole");const c=$("#devCol").contains(box)?$("#devCol"):$("#sideCol");const pw=$("#panelWrap"),over=c===$("#devCol")&&pw?pw.offsetHeight:0;if(c&&c.contains(box)&&c.scrollTo)c.scrollTo({top:Math.max(0,box.offsetTop-c.offsetTop-8-over),behavior:"smooth"});else box.scrollIntoView({behavior:"smooth"})}
 function featNav(){const nav=document.createElement("div");nav.className="featNav";nav.setAttribute("role","navigation");nav.setAttribute("aria-label","Device tools");
  for(const f of FEATURES){const b=document.createElement("button");b.type="button";b.textContent=FEATURE_SHORT[f.id]||f.title.split(":")[0];if(FEATURE_KEY.has(f.id))b.className="hi";b.onclick=()=>featJump(f.id);nav.appendChild(b)}return nav}
 function renderDevice(){const pane=$("#paneDev");if(pane.dataset.built)return;pane.dataset.built=1;
