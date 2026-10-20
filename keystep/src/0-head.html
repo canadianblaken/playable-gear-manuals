@@ -71,6 +71,12 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
 .card button.sm2{font:inherit;font-size:12px;padding:3px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
 .feat progress{width:14em}
 .feat .pick{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:12px}
+.feat select.ccmList{width:100%;margin-top:6px}
+.ccmKnob{display:grid;grid-template-columns:auto minmax(0,1fr) auto 4.2em auto 4.2em;gap:4px 6px;align-items:center;margin:6px 0;font-size:12.5px}
+.ccmKnob select{min-width:0;width:100%}.ccmKnob .pg{grid-column:2/-1;margin:0}
+@media (max-width:560px){.ccmKnob{grid-template-columns:auto minmax(0,1fr)}.ccmKnob .pg{grid-column:1/-1}}
+.filebtn{display:inline-block}
+.feat .row.small{font-size:12.5px}
 #tourBox .done{color:var(--ok)}
 .chap{list-style:none;margin:0;padding:0;max-height:420px;overflow:auto}
 .chap li{display:flex;gap:8px;align-items:baseline;padding:4px 6px;border-radius:6px;font-size:13px}
@@ -135,7 +141,7 @@ table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
     <div class="screenRow"><canvas id="oledBig" width="512" height="128" aria-label="OLED display, enlarged"></canvas><div class="ledinfo" id="ledInfo"></div></div>
   </div>
   <div id="sideCol">
-    <div class="tabs" role="tablist"><button role="tab" id="tabMan" aria-selected="true">Manual</button><button role="tab" id="tabDev" aria-selected="false">Device tools</button></div>
+    <div class="tabs" role="tablist"><button role="tab" id="tabMan" aria-selected="true">Manual</button><button role="tab" id="tabDev" aria-selected="false">Device tools</button><button role="tab" id="tabCC" aria-selected="false">Synth CC</button></div>
     <div id="paneMan">
       <div class="card" id="tourBox" hidden></div>
       <section class="card" id="info" aria-live="polite"></section>
@@ -162,6 +168,7 @@ table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
       </div>
     </div>
     <div id="paneDev" hidden></div>
+    <div id="paneCC" hidden></div>
   </div>
 </main>
 <div id="tip" hidden></div>

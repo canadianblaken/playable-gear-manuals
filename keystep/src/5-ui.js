@@ -117,7 +117,7 @@ function encFracs(){const e=encTarget();const fr=o=>[o.p!=null?o.p/127:null,Graw
  if(e.kind==="arp")return [null,Graw(e.a.g)/127,(e.a.vo+127)/254,(e.a.t+49)/99,e.a.r/100];
  if(e.kind==="step"&&e.notes.length)return fr(e.notes[0]);return [null,null,null,null,null]}
 function encShow(i){const e=encTarget(),n=e.kind==="step"&&e.notes.length?e.notes[0]:e.kind==="dstep"?e.st:e.kind==="def"?e.d:null;
- if(e.kind==="cc"){msg(`Knob ${i+1} CC#${S.globals[28+i]}\n${S.cc[i]}`);return}
+ if(e.kind==="cc"){const l=knobLabel(i);msg(`${l?l.slice(0,18):"Knob "+(i+1)}\nCC${S.globals[28+i]} ${knobValue(i,S.cc[i])}`);return}
  if(e.kind==="arp"){const a=e.a;msg([null,`Gate Length\n${a.g.toFixed(2)}`,`Velocity\n${a.vo>0?"+":""}${a.vo}`,`Time Shift\n${a.t}%`,`Randomness\n${a.r}%`][i]||"Pitch\n(no effect in Arp)");return}
  if(!n){msg("Step\nempty");return}
  msg([`Pitch\n${e.kind==="step"?e.notes.map(x=>nm(x.p)).join(" "):nm(n.p)}`,`Gate Length\n${n.g.toFixed(2)}`,`Velocity\n${n.v}`,`Time Shift\n${n.t>0?"+":""}${n.t}%`,`Randomness\n${n.r}%`][i])}
@@ -365,7 +365,13 @@ function midiNote(t,midi,vel,t0,t1){if(!MOUT)return;const ch=outCh(t);if(ch==nul
 function midiDrum(l,vel,t0,t1){if(!MOUT)return;const ch=S.globals[79];if(ch>15)return;const n=S.globals[81]?S.globals[83+l]:S.globals[82]+36+l;MOUT.send([0x90|ch,n&127,vel],tms(t0));MOUT.send([0x80|ch,n&127,0],tms(t1))}
 function midiOn(t,midi,vel){if(!MOUT)return;const ch=outCh(t);if(ch!=null)MOUT.send([0x90|ch,midi,vel])}
 function midiOff(t,midi){if(!MOUT)return;const ch=outCh(t);if(ch!=null)MOUT.send([0x80|ch,midi,0])}
-function midiCC(i,v){if(!MOUT)return;if(i<0){const ch=outCh(S.cur);if(ch!=null)MOUT.send([0xB0|ch,1,v]);return}const c=S.globals[38+i],ch=c>15?S.globals[80]:c;MOUT.send([0xB0|(ch&15),S.globals[28+i]&127,v])}
+/* Control-mode knob i: S.cc and Control-track steps hold the knob position 0-127; Min/Max (48-57) scale it on the way out
+   (Min > Max reverses), so live moves and recorded automation send the same values. Channel 38-42: 0-15, or Global (>15) = ID 80.
+   Port 33-37: the mirror stands in for the USB port, so it sends for USB (0) or All (3); MIDI 1/2 DIN routing is not simulated. */
+const knobValue=(i,pos)=>{const lo=S.globals[48+i],hi=S.globals[53+i];return clamp(Math.round(lo+(hi-lo)*pos/127),0,127)};
+const knobChannel=i=>{const c=S.globals[38+i];return (c>15?S.globals[80]:c)&15};
+const knobLabel=i=>{const l=S.knobLabels&&S.knobLabels[i];return l&&l.cc===S.globals[28+i]?l.name:null};
+function midiCC(i,v){if(!MOUT)return;if(i<0){const ch=outCh(S.cur);if(ch!=null)MOUT.send([0xB0|ch,1,v]);return}const port=S.globals[33+i];if(port!==0&&port!==3)return;MOUT.send([0xB0|knobChannel(i),S.globals[28+i]&127,knobValue(i,v)])}
 function midiPC(t,pc){if(!MOUT)return;const ch=outCh(t);if(ch!=null)MOUT.send([0xC0|ch,pc&127])}
 function midiBend(b){if(!MOUT)return;const ch=outCh(S.cur);if(ch==null)return;const v=clamp(Math.round(8192+b*8191),0,16383);MOUT.send([0xE0|ch,v&127,v>>7])}
 function midiAllOff(){if(!MOUT)return;for(let c=0;c<16;c++)MOUT.send([0xB0|c,123,0])}
@@ -425,7 +431,7 @@ function loadDemo(name){const pr=DEMOS[name]();stop();S.ram[S.proj]=pr;S.flash[S
  S.cur=1;msg(name);dirty()}
 
 /* ---------- tabs, buttons, boot ---------- */
-function selectTab(w){$("#tabMan").setAttribute("aria-selected",w==="man");$("#tabDev").setAttribute("aria-selected",w==="dev");$("#paneMan").hidden=w!=="man";$("#paneDev").hidden=w!=="dev";if(w==="dev"){renderDevice();emit("tab:dev")}try{localStorage.setItem("ksp.tab",w)}catch(e){}}
+function selectTab(w){$("#tabMan").setAttribute("aria-selected",w==="man");$("#tabDev").setAttribute("aria-selected",w==="dev");$("#tabCC").setAttribute("aria-selected",w==="cc");$("#paneMan").hidden=w!=="man";$("#paneDev").hidden=w!=="dev";$("#paneCC").hidden=w!=="cc";if(w==="dev"){renderDevice();emit("tab:dev")}if(w==="cc"){renderCCMap();emit("tab:cc")}try{localStorage.setItem("ksp.tab",w)}catch(e){}}
 function initPanelZoom(){
  let zoom=100;
  try{const saved=Number(localStorage.getItem("ksp.panelZoom"));if(Number.isFinite(saved)&&saved>=50&&saved<=250)zoom=saved}catch(e){}
@@ -441,10 +447,10 @@ function boot(){baseState();drawPanel();bindInput();renderChapters();initPanelZo
  $("#soundBtn").onclick=e=>{SOUND=!SOUND;e.target.setAttribute("aria-pressed",SOUND);if(!SOUND)allOff()};
  $("#midiBtn").onclick=toggleMidi;$("#resetBtn").onclick=()=>{stop();const keep=SIMDEV&&SIMDEV.namesFw;baseState();if(SIMDEV)SIMDEV.namesFw=keep;LATCH.forEach(id=>ctlEls[id]&&ctlEls[id].classList.remove("latched"));dirty();msg("Reset")};
  document.querySelectorAll(".vsw button").forEach(b=>b.onclick=()=>{svg.setAttribute("viewBox",b.dataset.vb);document.querySelectorAll(".vsw button").forEach(x=>x.setAttribute("aria-pressed",x===b))});
- $("#tabMan").onclick=()=>selectTab("man");$("#tabDev").onclick=()=>selectTab("dev");
+ $("#tabMan").onclick=()=>selectTab("man");$("#tabDev").onclick=()=>selectTab("dev");$("#tabCC").onclick=()=>selectTab("cc");
  $("#info").innerHTML=`<h2>Start here</h2><p>Hover any control for a short description; click it for the details on this card. Load the <b>Quick tour</b> demo and press Play (or <kbd>Space</kbd>), or pick a guided tour.</p><p>Right-click (long-press on touch) <b>latches</b> a button as if you were holding it, so two-handed combos like Shift + key or Save + Project work with a mouse.</p>`;
  loadDemo("Quick tour");
- try{if(localStorage.getItem("ksp.tab")==="dev")selectTab("dev")}catch(e){}
+ try{const t=localStorage.getItem("ksp.tab");if(t==="dev"||t==="cc")selectTab(t)}catch(e){}
  const w=new Worker(URL.createObjectURL(new Blob(["setInterval(()=>postMessage(0),10)"],{type:"text/javascript"})));w.onmessage=advance;
  const loop=()=>{advance();if(S.msg&&performance.now()>S.msgT){S.msg=null;dirtyFlag=true}if(dirtyFlag||S.playing||NOTEFLASH.length||S.msg||ARP.some(a=>a.running)||S.trans.some(x=>x.on)||trk().chordOn||S.stepEdit||S.rec||S.patMode||S.control||P.some(p=>p.pend!=null)||S.undo||HELD.size){render();dirtyFlag=false}requestAnimationFrame(loop)};requestAnimationFrame(loop);
 }
