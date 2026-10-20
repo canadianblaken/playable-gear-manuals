@@ -104,7 +104,13 @@ const heldStep=()=>{for(const [id] of HELD){const m=id.match(/^s(\d+)$/);if(m)re
 const heldSteps=()=>[...HELD.keys()].filter(id=>/^s\d+$/.test(id)).map(id=>+id.slice(1));
 
 /* ---------- encoder values ---------- */
-const G=raw=>clamp(.0625*Math.pow(2,raw/12.7),.06,64),Graw=g=>Math.round(12.7*Math.log2(g/.0625));
+/* gate: stored value 0-127 -> length in steps, measured on a KeyStep Pro over USB MIDI (2026-10-20, all 128 values, within 2 ms):
+   0-7 in 1/16 steps (1/16..1/2), 8-27 in 1/8 (..3), 28-47 in 1/4 (..8), 48-95 in 1/2 (..32), 96-127 in whole steps (..64) */
+const gateSteps=raw=>{const g=clamp(Math.round(raw),0,127);return g<=7?(g+1)/16:g<=27?.5+(g-7)/8:g<=47?3+(g-27)/4:g<=95?8+(g-47)/2:32+(g-95)};
+const G=gateSteps,Graw=st=>{let best=0;for(let g=1;g<128;g++)if(Math.abs(gateSteps(g)-st)<Math.abs(gateSteps(best)-st))best=g;return best};
+/* "1 1/2 steps", "1/16 step" */
+const gateText=raw=>{const st=gateSteps(raw),w=Math.floor(st),n=Math.round((st-w)*16),gcd=(a,b)=>b?gcd(b,a%b):a,d=n?gcd(n,16):1;
+ return `${w?w:""}${w&&n?" ":""}${n?`${n/d}/${16/d}`:""} step${st>1?"s":""}`};
 function encTarget(){// what the five encoders edit right now
  if(S.control)return {kind:"cc"};const t=S.cur;
  if(isDrum()){const pat=curPat(),hs=heldStep();const idx=S.stepEdit&&S.sel!=null?S.sel:hs!=null?S.view[4]*16+hs:null;if(idx!=null)return {kind:"dstep",st:pat.lanes[S.lane].st[idx]};return {kind:"def",d:S.drumDefs}}
@@ -120,7 +126,7 @@ function encShow(i){const e=encTarget(),n=e.kind==="step"&&e.notes.length?e.note
  if(e.kind==="cc"){const l=knobLabel(i);msg(`${l?l.slice(0,18):"Knob "+(i+1)}\nCC${S.globals[28+i]} ${knobValue(i,S.cc[i])}`);return}
  if(e.kind==="arp"){const a=e.a;msg([null,`Gate Length\n${a.g.toFixed(2)}`,`Velocity\n${a.vo>0?"+":""}${a.vo}`,`Time Shift\n${a.t}%`,`Randomness\n${a.r}%`][i]||"Pitch\n(no effect in Arp)");return}
  if(!n){msg("Step\nempty");return}
- msg([`Pitch\n${e.kind==="step"?e.notes.map(x=>nm(x.p)).join(" "):nm(n.p)}`,`Gate Length\n${n.g.toFixed(2)}`,`Velocity\n${n.v}`,`Time Shift\n${n.t>0?"+":""}${n.t}%`,`Randomness\n${n.r}%`][i])}
+ msg([`Pitch\n${e.kind==="step"?e.notes.map(x=>nm(x.p)).join(" "):nm(n.p)}`,`Gate Length\n${gateText(Graw(n.g))}`,`Velocity\n${n.v}`,`Time Shift\n${n.t>0?"+":""}${n.t}%`,`Randomness\n${n.r}%`][i])}
 function turnEnc(i,d){for(const h of HELD.values())h.used=true;const t=S.cur;
  if(S.control){S.cc[i]=clamp(S.cc[i]+d,0,127);midiCC(i,S.cc[i]);const cp=proj().ctrl.pats[proj().ctrl.cur];
   if(held("erase")){if(S.stepEdit&&S.sel!=null)cp.st[S.sel].cc[i]=null;else cp.st.forEach(s=>s.cc[i]=null);msg("Automation\nErased")}

@@ -78,12 +78,16 @@ await DEV.libDraw();const row=[...document.querySelectorAll("#featList table.t t
 ok("library Load puts the project into the Projects tool",DEV.project&&DEV.project.data.length===8951&&/Library “Renamed”/.test(document.querySelector("#featList").textContent));
 ok("library refuses a damaged project",await libAdd({format:"x"},"bad","").then(()=>false,()=>true));
 for(const it of await libList())await libDelete(it.id);ok("library delete",(await libList()).length===0);
+/* gate table measured on hardware: stored value -> steps */
+ok("gate table matches the hardware measurements",[[0,1/16],[3,.25],[7,.5],[15,1.5],[27,3],[31,4],[47,8],[58,13.5],[95,32],[96,33],[127,64]].every(([g,st])=>gateSteps(g)===st)&&Graw(.5)===7&&Graw(4)===31);
+ok("gate labels",gateText(0)==="1/16 step"&&gateText(7)==="1/2 step"&&gateText(15)==="1 1/2 steps"&&gateText(29)==="3 1/2 steps"&&gateText(127)==="64 steps",[gateText(0),gateText(7),gateText(15),gateText(29),gateText(127)]);
 /* project editor: notes into slots, scenes, limits, send and read back */
 reset();saveProject();const fe=await readProject(L,1);DEV.showProject(fe,"test");
 const pe=edReadPattern(fe,0x7C,3);pe.steps[0].notes=[60,64,67].map(p=>({pitch:p,gate:7,vel:100,shift:49,rand:100}));pe.steps[0].on=true;
 pe.steps[4].notes=[{pitch:69,gate:20,vel:90,shift:60,rand:80}];pe.steps[4].on=true;pe.len=8;pe.root=4;pe.scale=1;edWritePattern(fe,0x7C,3,pe);
 const pe2=edReadPattern(fe,0x7C,3);
 ok("editor: notes, length, root/scale read back",pe2.valid&&pe2.len===8&&pe2.root===4&&pe2.scale===1&&pe2.steps[0].notes.map(n=>n.pitch).join()==="60,64,67"&&pe2.steps[4].notes[0].shift===60&&pe2.steps[4].notes[0].gate===20&&pe2.steps.filter(s=>s.notes.length).length===2,pe2.steps.slice(0,5).map(s=>s.notes));
+ok("editor: step pass masks stay 15 (plays every pass) through an edit",edGet(fe,0x7C,0x31,[3,1,1])===15&&edGet(fe,0x7C,0x31,[3,1,2])===15&&edGet(fe,0x7C,0x31,[3,1,64])===15,[edGet(fe,0x7C,0x31,[3,1,1]),edGet(fe,0x7C,0x31,[3,1,2])]);
 ok("editor: notes fill slots in step order, the rest are 0x7F",edGet(fe,0x7C,0x32,[3,1,1])===0&&edGet(fe,0x7C,0x32,[3,1,4])===4&&edGet(fe,0x7C,0x32,[3,1,5])===0x7F&&edGet(fe,0x7C,0x6D,[3,3,64])===0x7F);
 ok("editor: 17 notes on a step refused",(()=>{const x=edReadPattern(fe,0x7C,3);x.steps[2].notes=Array.from({length:17},(_,i)=>({pitch:40+i,gate:7,vel:100,shift:49,rand:100}));try{edWritePattern(fe,0x7C,3,x);return false}catch(e){return /limit is 16/.test(e.message)}})());
 ok("editor: 193 notes in a pattern refused",(()=>{const x=edReadPattern(fe,0x7C,3);x.steps.forEach((s,i)=>s.notes=Array.from({length:i<1?4:3},(_,j)=>({pitch:40+j,gate:7,vel:100,shift:49,rand:100})));try{edWritePattern(fe,0x7C,3,x);return false}catch(e){return /holds 192/.test(e.message)}})());

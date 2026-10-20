@@ -3,7 +3,8 @@
    Send in the Projects tool writes the edited file. Layout from the firmware setter 0800d3c0 and MCC's recall plan:
    a sequencer pattern has 192 note slots (param 0x6D-0x71 pitch/gate/velocity/time shift/randomness, 0x32 the step
    the slot belongs to, 0x7F = unused), addressed [pattern, voice 1-3, slot 1-64], at most 16 notes per step;
-   step on/skip bits are 0x30/0x31 [pattern, 1, step]. Seq-mode data only; drum lanes and arpeggio settings are left as they are. */
+   per step [pattern, 1, step]: on bit 0x30, and 0x31, which is not a skip flag but a 4-bit mask of the passes the step
+   plays on (15 = every pass, the hardware default; 0 = never: writing 0 silenced whole patterns on 2026-10-20). Seq-mode data only; drum lanes and arpeggio settings are left as they are. */
 const ED_P={state:0x28,swing:0x61,len:0x62,root:P_ROOT,scale:P_SCALE,pitch:0x6D,gate:0x6E,vel:0x6F,shift:0x70,rand:0x71,on:0x30,skip:0x31,step:0x32};
 const ED_NOTE=["pitch","gate","vel","shift","rand"],ED_EMPTY=0x7F,ED_SLOTS=192,ED_MAX_STEP_NOTES=16;
 const SC_P={state:P_SCENE_STATE,track:0x4C,mute:0x4D,solo:0x4E,pat:0x53,chain:0x54};
@@ -19,7 +20,7 @@ const slotPath=(pat,s)=>[pat,Math.floor(s/64)+1,s%64+1];
 /* read one pattern of a track (item 0x7B-0x7E) into plain objects */
 function edReadPattern(f,item,pat){const g=(p,path)=>edGet(f,item,p,path);
  const pt={valid:g(ED_P.state,[pat])===3,len:(g(ED_P.len,[pat])??15)+1,root:g(ED_P.root,[pat])??0,scale:g(ED_P.scale,[pat])??0,swing:(g(ED_P.swing,[pat])??25)-25,
-  def:Object.fromEntries(ED_NOTE.map(k=>[k,g(ED_P[k],[pat])])),steps:Array.from({length:64},(_,i)=>({on:!!g(ED_P.on,[pat,1,i+1]),skip:!!g(ED_P.skip,[pat,1,i+1]),notes:[]})),unreadable:0};
+  def:Object.fromEntries(ED_NOTE.map(k=>[k,g(ED_P[k],[pat])])),steps:Array.from({length:64},(_,i)=>({on:!!g(ED_P.on,[pat,1,i+1]),passes:g(ED_P.skip,[pat,1,i+1])??15,notes:[]})),unreadable:0};
  for(let s=0;s<ED_SLOTS;s++){const st=g(ED_P.step,slotPath(pat,s));if(st===null){pt.unreadable++;continue}if(st===ED_EMPTY||st==null||st>63)continue;
   const n=Object.fromEntries(ED_NOTE.map(k=>[k,g(ED_P[k],slotPath(pat,s))]));if(ED_NOTE.some(k=>n[k]==null)){pt.unreadable++;continue}pt.steps[st].notes.push(n)}
  return pt}
@@ -29,7 +30,7 @@ function edWritePattern(f,item,pat,pt){const s=(p,path,v)=>edSet(f,item,p,path,v
  pt.steps.forEach((st,i)=>{if(st.notes.length>ED_MAX_STEP_NOTES)throw new Error(`step ${i+1} has ${st.notes.length} notes; the limit is ${ED_MAX_STEP_NOTES}`)});
  if(!(pt.len>=1&&pt.len<=64))throw new Error("pattern length is 1–64 steps");
  s(ED_P.state,[pat],3);s(ED_P.len,[pat],pt.len-1);s(ED_P.root,[pat],pt.root);s(ED_P.scale,[pat],pt.scale);
- pt.steps.forEach((st,i)=>{s(ED_P.on,[pat,1,i+1],st.on?1:0);s(ED_P.skip,[pat,1,i+1],st.skip?1:0)});
+ pt.steps.forEach((st,i)=>{if(!(st.passes>=0&&st.passes<=15))throw new Error(`step ${i+1}: pass mask must be 0–15`);s(ED_P.on,[pat,1,i+1],st.on?1:0);s(ED_P.skip,[pat,1,i+1],st.passes)});
  let slot=0;pt.steps.forEach((st,i)=>st.notes.forEach(n=>{const path=slotPath(pat,slot++);s(ED_P.step,path,i);ED_NOTE.forEach(k=>s(ED_P[k],path,n[k]))}));
  for(;slot<ED_SLOTS;slot++){const path=slotPath(pat,slot);s(ED_P.step,path,ED_EMPTY);ED_NOTE.forEach(k=>s(ED_P[k],path,ED_EMPTY))}}
 /* scenes: data state, current pattern per track (1-4, 5 = control track), mutes, current track, chain */
@@ -44,8 +45,8 @@ const noteName=p=>p==null?"?":nm(p);
 function parseNote(s){const m=String(s).trim().match(/^([A-Ga-g])(#|b)?(-?\d)$/);if(!m)return null;const v=12*(+m[3]+1)+NN.indexOf(m[1].toUpperCase())+(m[2]==="#"?1:m[2]==="b"?-1:0);return v>=0&&v<=127?v:null}
 
 /* ---------- the editor (a Device tools feature; needs no connection) ---------- */
-const EDITOR_FEATURE={id:"editor",title:"Project editor: steps, notes, scenes",verified:"Tested in the simulation; the note and scene layout follows firmware 2.5.20 but has not yet been played back on a KeyStep Pro.",needs:null,
- about:"Edits the project loaded in the Projects tool above: the notes of each step, pattern length, root and scale, and the scenes (which pattern each track plays, mutes, chains). Nothing is sent until you use Send in the Projects tool. Sequencer-mode data only; drum lanes and arpeggio settings are kept as they are. Gate is shown as the stored value (7 is the KeyStep Pro's default) until its units are confirmed on the device.",
+const EDITOR_FEATURE={id:"editor",title:"Project editor: steps, notes, scenes",verified:"2026-10-20: patterns written to project 16 and recorded over USB MIDI while playing: notes land on their steps, time shift +25% plays 31 ms late at 120 BPM, gate measured for all 128 values. Randomness and scenes not yet checked by ear.",needs:null,
+ about:"Edits the project loaded in the Projects tool above: the notes of each step, pattern length, root and scale, and the scenes (which pattern each track plays, mutes, chains). Nothing is sent until you use Send in the Projects tool. Sequencer-mode data only; drum lanes and arpeggio settings are kept as they are. Gate lengths, time shift and step positions were measured on a KeyStep Pro.",
  render(el){el.innerHTML=`<div class="row" data-a="none">Load a project in the Projects tool first.</div><div data-a="ui" hidden>
    <div class="row">Track <select data-a="t">${[1,2,3,4].map(t=>`<option value="${t}">${t}</option>`).join("")}</select> Pattern <select data-a="pat">${[...Array(16).keys()].map(i=>`<option value="${i+1}">${i+1}</option>`).join("")}</select><span class="pg" data-a="pst"></span></div>
    <div class="row small">Length <input type="number" data-a="len" min="1" max="64" style="width:4em"> Root <select data-a="root">${NN.map((n,i)=>`<option value="${i}">${n}</option>`).join("")}</select> Scale <select data-a="scale">${SCALE_NAMES.map(([v,n])=>`<option value="${v}">${n}</option>`).join("")}</select></div>
@@ -63,25 +64,27 @@ const EDITOR_FEATURE={id:"editor",title:"Project editor: steps, notes, scenes",v
    const mode=edGet(work,item(),P_MODE,[1])??0;
    q("pst").textContent=` ${pt.valid?"holds data":"default (empty)"}${mode&0x40?(item()===0x7B?" · track 1 is in drum mode: this edits its sequencer-mode patterns":" · this track is in arpeggio mode: its steps play when it is switched back to sequencer"):""}${pt.unreadable?` · ${pt.unreadable} note slot(s) could not be read, so this pattern is read-only`:""}`;drawGrid();drawStep()};
   const commitPat=()=>{if(pt.unreadable){say("This pattern has note slots the recall could not read; editing it would lose them, so it is read-only.","bad");loadPat();return}try{edWritePattern(work,item(),pat(),pt);dirtyEd=true;q("pst").textContent=" holds data (edited)"}catch(e){say(e.message,"bad")}};
-  const drawGrid=()=>{const g=q("grid");g.innerHTML="";pt.steps.forEach((st,i)=>{const b=document.createElement("button");b.type="button";b.className="edCell"+(st.on?" on":"")+(st.skip?" skip":"")+(i>=pt.len?" out":"")+(i===selStep?" sel":"");
+  const drawGrid=()=>{const g=q("grid");g.innerHTML="";pt.steps.forEach((st,i)=>{const b=document.createElement("button");b.type="button";b.className="edCell"+(st.on?" on":"")+(st.passes!==15?" skip":"")+(i>=pt.len?" out":"")+(i===selStep?" sel":"");
    b.setAttribute("aria-label",`Step ${i+1}${st.notes.length?": "+st.notes.map(n=>noteName(n.pitch)).join(" "):""}${st.on?"":" (off)"}`);
    const n=document.createElement("span");n.className="n";n.textContent=String(i+1);const t=document.createElement("span");t.className="v";t.textContent=st.notes.length?st.notes.map(x=>noteName(x.pitch)).join(" "):"·";
    b.append(n,t);b.onclick=()=>{selStep=i;drawGrid();drawStep()};g.appendChild(b)})};
   const drawStep=()=>{const box=q("step"),st=pt.steps[selStep];box.innerHTML="";const h=document.createElement("div");h.className="row";
    const title=document.createElement("b");title.textContent=`Step ${selStep+1}`;const on=document.createElement("label"),onb=document.createElement("input");onb.type="checkbox";onb.checked=st.on;on.append(onb," on");
-   const sk=document.createElement("label"),skb=document.createElement("input");skb.type="checkbox";skb.checked=st.skip;sk.append(skb," skip");
-   onb.onchange=()=>{st.on=onb.checked;commitPat();drawGrid()};skb.onchange=()=>{st.skip=skb.checked;commitPat();drawGrid()};
+   const sk=document.createElement("span");sk.append("plays on pass");for(let k=0;k<4;k++){const l=document.createElement("label"),c=document.createElement("input");c.type="checkbox";c.checked=!!(st.passes&1<<k);
+    c.onchange=()=>{st.passes=c.checked?st.passes|1<<k:st.passes&~(1<<k);commitPat();drawGrid()};l.append(c,String(k+1));sk.append(" ",l)}
+   onb.onchange=()=>{st.on=onb.checked;commitPat();drawGrid()};
    const add=document.createElement("input");add.type="text";add.placeholder="Add notes: C4 E4 G4";add.style.width="10em";const ab=document.createElement("button");ab.className="sm2";ab.textContent="Add";
    ab.onclick=()=>{const ps=add.value.trim().split(/[\s,]+/).filter(Boolean).map(parseNote);if(!ps.length||ps.includes(null))return say("Notes are like C4, F#3, Bb2.","bad");
     if(st.notes.length+ps.length>ED_MAX_STEP_NOTES)return say(`A step holds at most ${ED_MAX_STEP_NOTES} notes.`,"bad");
-    for(const p of ps)st.notes.push({pitch:p,gate:pt.def.gate??7,vel:pt.def.vel??100,shift:pt.def.shift??49,rand:pt.def.rand??100});st.on=true;commitPat();drawGrid();drawStep()};
+    for(const p of ps)st.notes.push({pitch:p,gate:pt.def.gate??7,vel:pt.def.vel??100,shift:pt.def.shift??49,rand:pt.def.rand??100});st.on=true;if(!st.passes)st.passes=15;commitPat();drawGrid();drawStep()};
    h.append(title,on,sk,add,ab);box.appendChild(h);
-   if(st.notes.length){const t=document.createElement("table");t.className="t";t.innerHTML="<thead><tr><th>Note</th><th>Velocity</th><th>Gate (stored)</th><th>Time shift %</th><th>Chance %</th><th></th></tr></thead>";const tb=document.createElement("tbody");t.appendChild(tb);
+   if(st.notes.length){const t=document.createElement("table");t.className="t";t.innerHTML="<thead><tr><th>Note</th><th>Velocity</th><th>Gate</th><th>Time shift (% of a step)</th><th>Randomness %</th><th></th></tr></thead>";const tb=document.createElement("tbody");t.appendChild(tb);
     st.notes.forEach((n,j)=>{const tr=tb.insertRow();const fld=(k,lo,hi,off=0)=>{const i=document.createElement("input");i.type="number";i.min=lo;i.max=hi;i.value=n[k]-off;i.style.width="4.5em";
       i.onchange=()=>{const v=Math.round(+i.value)+off;if(!(v-off>=lo&&v-off<=hi)){i.value=n[k]-off;return say(`${lo} to ${hi}.`,"bad")}n[k]=v;commitPat()};return i};
      const pi=document.createElement("input");pi.type="text";pi.value=noteName(n.pitch);pi.style.width="4em";pi.onchange=()=>{const v=parseNote(pi.value);if(v==null){pi.value=noteName(n.pitch);return say("Notes are like C4, F#3, Bb2.","bad")}n.pitch=v;commitPat();drawGrid()};
      const del=document.createElement("button");del.className="sm2";del.textContent="Remove";del.onclick=()=>{st.notes.splice(j,1);if(!st.notes.length)st.on=false;commitPat();drawGrid();drawStep()};
-     [pi,fld("vel",0,127),fld("gate",0,127),fld("shift",-49,50,49),fld("rand",0,100),del].forEach(x=>tr.insertCell().append(x))});box.appendChild(t)}
+     const gs=document.createElement("select");for(let g=0;g<128;g++)gs.add(new Option(gateText(g),g));gs.value=n.gate;gs.onchange=()=>{n.gate=+gs.value;commitPat()};
+     [pi,fld("vel",0,127),gs,fld("shift",-49,50,49),fld("rand",0,100),del].forEach(x=>tr.insertCell().append(x))});box.appendChild(t)}
    else{const p=document.createElement("p");p.className="pg";p.textContent="No notes on this step.";box.appendChild(p)}};
   const drawScenes=()=>{const box=q("scenes");box.innerHTML="";const t=document.createElement("table");t.className="t";
    t.innerHTML="<thead><tr><th>Scene</th><th>Used</th><th>T1</th><th>T2</th><th>T3</th><th>T4</th><th>Ctrl</th><th>Muted</th><th>Chains (patterns)</th></tr></thead>";const tb=document.createElement("tbody");t.appendChild(tb);
