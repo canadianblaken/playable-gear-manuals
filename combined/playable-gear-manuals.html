@@ -27,8 +27,9 @@ iframe[hidden]{display:none}
 <button role="tab" id="t-blackbox" aria-controls="f-blackbox" aria-selected="false">1010music Blackbox</button>
 <label title="Show the features of the community blackbox-mod 3.1.n firmware (github.com/j3threejay/blackbox-mod)"><input type="checkbox" id="bbmod">+ blackbox-mod 3.1.n</label>
 <button role="tab" id="t-hapax" aria-controls="f-hapax" aria-selected="false">Squarp Hapax</button>
+<button role="tab" id="t-keystep" aria-controls="f-keystep" aria-selected="false">Arturia KeyStep Pro</button>
 </nav>
-<iframe id="f-squid" role="tabpanel" title="Toraiz SQUID" hidden data-doc="<!doctype html>
+<iframe id="f-squid" role="tabpanel" title="Toraiz SQUID" allow="midi" hidden data-doc="<!doctype html>
 <html lang=&quot;en&quot;>
 <head>
 <meta charset=&quot;utf-8&quot;>
@@ -1189,7 +1190,7 @@ demo();build();introInfo();draw();requestAnimationFrame(tick);
 </body>
 </html>
 "></iframe>
-<iframe id="f-blackbox" role="tabpanel" title="1010music Blackbox" hidden data-doc="<!doctype html>
+<iframe id="f-blackbox" role="tabpanel" title="1010music Blackbox" allow="midi" hidden data-doc="<!doctype html>
 <html lang=&quot;en&quot;>
 <head>
 <meta charset=&quot;utf-8&quot;>
@@ -2645,7 +2646,7 @@ $(&quot;#wavIn&quot;).onchange=async e=>{const fs=[...e.target.files];const dc=n
 </body>
 </html>
 "></iframe>
-<iframe id="f-hapax" role="tabpanel" title="Squarp Hapax" hidden data-doc="<!doctype html>
+<iframe id="f-hapax" role="tabpanel" title="Squarp Hapax" allow="midi" hidden data-doc="<!doctype html>
 <html lang=&quot;en&quot;>
 <head>
 <meta charset=&quot;utf-8&quot;>
@@ -4055,10 +4056,1344 @@ document.querySelectorAll(&quot;.vsw button&quot;).forEach(b=>b.onclick=()=>{svg
 </body>
 </html>
 "></iframe>
+<iframe id="f-keystep" role="tabpanel" title="Arturia KeyStep Pro" allow="midi" hidden data-doc="<!doctype html>
+<html lang=&quot;en&quot;>
+<head>
+<meta charset=&quot;utf-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;>
+<title>KeyStep Pro Interactive Manual</title>
+<style>
+:root{
+  --bg:#f4f3ef; --fg:#1d1d1f; --muted:#5b5b60; --card:#ffffff; --line:#d9d7d0; --accent:#2f6fd6; --accent-fg:#fff;
+  --ok:#15803d; --warn:#b45309; --bad:#b91c1c; --blue:#2563eb;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme=&quot;light&quot;]){
+    --bg:#141416; --fg:#ececef; --muted:#a1a1aa; --card:#1e1e22; --line:#33333a; --accent:#6fa8ff; --accent-fg:#111;
+    --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; --blue:#6fa8ff;
+  }
+}
+:root[data-theme=&quot;dark&quot;]{
+  --bg:#141416; --fg:#ececef; --muted:#a1a1aa; --card:#1e1e22; --line:#33333a; --accent:#6fa8ff; --accent-fg:#111;
+  --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; --blue:#6fa8ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,&quot;Segoe UI&quot;,sans-serif}
+header{padding:14px 16px 8px;max-width:1700px;margin:0 auto}
+h1{font-size:20px;margin:0}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:1700px;margin:0 auto;padding:6px 16px}
+.bar button,.bar select{font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+.bar button[aria-pressed=&quot;true&quot;]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.bar .hint{color:var(--muted);font-size:12px;margin-left:auto}
+.vsw{display:none;gap:4px}
+@media (max-width:700px){.vsw{display:inline-flex}}
+.hint .touch{display:none}
+@media (pointer:coarse){.hint .desk{display:none}.hint .touch{display:inline}}
+main{max-width:1700px;margin:0 auto;padding:4px 16px 40px;display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){main{grid-template-columns:minmax(0,1fr)}.bar .hint{margin-left:0}
+  #tourBox:not([hidden]){position:fixed;left:8px;right:8px;bottom:8px;z-index:15;max-height:38vh;overflow:auto;box-shadow:0 6px 24px rgba(0,0,0,.3)}
+  main{padding-bottom:40vh}}
+/* wide screens: the device stays put, only the right column scrolls */
+@media (min-width:901px){html,body{height:100%;overflow:hidden}body{display:flex;flex-direction:column}
+  main{flex:1;min-height:0;width:100%;grid-template-rows:100%;padding-bottom:12px}
+  #devCol{overflow:auto;height:100%}#sideCol{overflow-y:auto;height:100%;padding-right:4px}}
+#device{width:100%;height:auto;display:block;touch-action:pan-y pinch-zoom;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.screenRow{display:flex;gap:12px;align-items:center;margin-top:8px;flex-wrap:wrap}
+#oledBig{width:384px;max-width:100%;height:auto;aspect-ratio:4/1;background:#000;border-radius:8px;border:6px solid #111;display:block}
+.screenRow .ledinfo{font-size:12px;color:var(--muted);flex:1;min-width:200px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.card h2{font-size:16px;margin:0 0 6px}
+.card h3{font-size:14px;margin:10px 0 4px}
+.card p{margin:6px 0}
+.card a{color:var(--blue)}
+.pg{font-size:12px;color:var(--muted)}
+.crumb{font-size:12px;color:var(--muted);margin-bottom:4px}
+.crumb b{color:var(--accent)}
+kbd{font:12px ui-monospace,monospace;border:1px solid var(--line);border-radius:4px;padding:0 4px}
+code{font:12px ui-monospace,monospace}
+ul.tight{margin:4px 0;padding-left:18px}
+ul.tight li{margin:3px 0}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+.fw{border-left:3px solid var(--accent);padding:4px 8px;margin:8px 0;font-size:13px;background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:0 6px 6px 0}
+.fw b{color:var(--accent)}
+#tourBox .step{font-size:14px}
+#tourBox .nav{display:flex;gap:8px;margin-top:8px}
+#tourBox button,.chap button,.card button.sm{font:inherit;font-size:12px;padding:3px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.card button.sm:disabled{opacity:.5;cursor:default}
+#tourBox .done{color:var(--ok)}
+.chap{list-style:none;margin:0;padding:0;max-height:420px;overflow:auto}
+.chap li{display:flex;gap:8px;align-items:baseline;padding:4px 6px;border-radius:6px;font-size:13px}
+.chap li:hover{background:var(--bg)}
+.chap li span{flex:1}
+.chap li i{font-size:11px;color:var(--muted);white-space:nowrap;font-style:normal}
+table.t{border-collapse:collapse;font-size:12.5px;width:100%;margin:6px 0}
+table.t td,table.t th{border-bottom:1px solid var(--line);padding:3px 6px;text-align:left;vertical-align:top}
+table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
+.tabs{display:flex;gap:4px;margin-bottom:10px}
+.tabs button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+.tabs button[aria-selected=&quot;true&quot;]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+/* device tools */
+.feat{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}
+.feat h3{margin:0 0 2px;font-size:14px}
+.feat .meta{font-size:11.5px;color:var(--muted)}
+.feat .meta b{color:var(--ok);font-weight:600}
+.feat .need{color:var(--warn)}
+.feat .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0}
+.feat select,.feat input{font:inherit;font-size:12.5px;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.feat input[type=text]{width:12em}
+.feat textarea{width:100%;font:12px ui-monospace,monospace;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);min-height:4em}
+#devLog{font:11.5px/1.45 ui-monospace,monospace;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;max-height:180px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+#devLog .tx{color:var(--muted)}#devLog .ok{color:var(--ok)}#devLog .bad{color:var(--bad)}
+.gtab{max-height:340px;overflow:auto}
+.gtab td:last-child{white-space:nowrap}
+.pill{display:inline-block;font-size:11px;border-radius:999px;padding:0 7px;border:1px solid var(--line);color:var(--muted)}
+.pill.sim{border-color:var(--accent);color:var(--accent)}
+.pill.real{border-color:var(--ok);color:var(--ok)}
+/* device */
+.ctl{cursor:pointer}
+.ctl:focus{outline:none}
+.ctl .face{transition:stroke .1s}
+.hl .face{stroke:#2f6fd6!important;stroke-width:2.5!important}
+.latched .face{stroke:#facc15!important;stroke-width:3!important;stroke-dasharray:5 3}
+.tourTarget .face{stroke:#06b6d4!important;stroke-width:3!important;animation:pulse 1s infinite}
+@keyframes pulse{50%{stroke-opacity:.25}}
+@media (prefers-reduced-motion:reduce){.tourTarget .face{animation:none}}
+#tip{position:fixed;z-index:20;max-width:320px;padding:8px 10px;border-radius:8px;background:var(--card);color:var(--fg);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.18);font-size:12.5px;line-height:1.4;pointer-events:none}
+#tip b{display:block;font-size:13px;margin-bottom:2px}
+#tip .s{color:var(--muted);margin-top:4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>KeyStep Pro interactive manual</h1>
+  <p class=&quot;sub&quot;>Unofficial, playable recreation of the Arturia KeyStep Pro (firmware 2.5), built from the 2.5.1 user manual, the MIDI Control Center device definition and a reverse-engineering study of firmware 2.5.20. All sounds are synthesized stand-ins. The Device tools tab talks to a real KeyStep Pro over Web MIDI, or to this simulation. Not affiliated with Arturia.</p>
+</header>
+<div class=&quot;bar&quot;>
+  <select id=&quot;exSel&quot; aria-label=&quot;Load a demo project&quot;><option value=&quot;&quot;>Load demo…</option></select>
+  <select id=&quot;tourSel&quot; aria-label=&quot;Guided tours&quot;><option value=&quot;&quot;>Guided tours…</option></select>
+  <button id=&quot;soundBtn&quot; aria-pressed=&quot;true&quot;>Sound</button>
+  <button id=&quot;midiBtn&quot; aria-pressed=&quot;false&quot; title=&quot;Mirror notes to MIDI gear and accept a MIDI keyboard (Web MIDI)&quot;>MIDI</button>
+  <button id=&quot;resetBtn&quot;>Reset</button>
+  <span class=&quot;vsw&quot; role=&quot;group&quot; aria-label=&quot;Zoom the panel&quot;><button data-vb=&quot;30 140 1250 460&quot; aria-pressed=&quot;true&quot;>Whole</button><button data-vb=&quot;30 160 650 220&quot; aria-pressed=&quot;false&quot;>Left</button><button data-vb=&quot;650 160 630 220&quot; aria-pressed=&quot;false&quot;>Steps</button><button data-vb=&quot;230 340 1050 260&quot; aria-pressed=&quot;false&quot;>Keys</button></span>
+  <span class=&quot;hint&quot;><span class=&quot;touch&quot;>Tap = press · long-press = hold (latches) · drag an encoder up/down = turn · tap anything for help</span><span class=&quot;desk&quot;>Hover for help · right-click = hold a button (latch) · drag/wheel an encoder, click = touch · <kbd>Shift</kbd> = Shift · <kbd>Space</kbd> play · <kbd>.</kbd> stop · <kbd>R</kbd> rec · <kbd>A W S E D F T G Y H U J K</kbd> keys · <kbd>Z</kbd>/<kbd>X</kbd> octave</span></span>
+</div>
+<main>
+  <div id=&quot;devCol&quot;>
+    <svg id=&quot;device&quot; viewBox=&quot;30 140 1250 460&quot; role=&quot;application&quot; aria-label=&quot;KeyStep Pro front panel&quot;></svg>
+    <div class=&quot;screenRow&quot;><canvas id=&quot;oledBig&quot; width=&quot;512&quot; height=&quot;128&quot; aria-label=&quot;OLED display, enlarged&quot;></canvas><div class=&quot;ledinfo&quot; id=&quot;ledInfo&quot;></div></div>
+  </div>
+  <div id=&quot;sideCol&quot;>
+    <div class=&quot;tabs&quot; role=&quot;tablist&quot;><button role=&quot;tab&quot; id=&quot;tabMan&quot; aria-selected=&quot;true&quot;>Manual</button><button role=&quot;tab&quot; id=&quot;tabDev&quot; aria-selected=&quot;false&quot;>Device tools</button></div>
+    <div id=&quot;paneMan&quot;>
+      <div class=&quot;card&quot; id=&quot;tourBox&quot; hidden></div>
+      <section class=&quot;card&quot; id=&quot;info&quot; aria-live=&quot;polite&quot;></section>
+      <div class=&quot;card&quot;>
+        <h2>The manual, chapter by chapter</h2>
+        <p class=&quot;pg&quot;>Show jumps the simulation to that part of the KeyStep Pro and explains it here.</p>
+        <ul class=&quot;chap&quot; id=&quot;chapList&quot;></ul>
+      </div>
+      <div class=&quot;card&quot;>
+        <h2>About this simulation</h2>
+        <p>Four tracks with 16 patterns of up to 64 steps (up to 16 notes per step), the drum sequencer with 24 lanes, three arpeggiators, scales and user scales, chord mode, transpose (with groups and latch), quick edit, step edit, step and real-time recording, overdub, the Shift step functions, step skip, pages, chains, scenes, projects with save/copy/erase/recall, the looper strip, control mode, the Utility menu, tempo, swing, metronome and Web MIDI in/out all work.</p>
+        <details><summary>Firmware notes</summary>
+          <p class=&quot;pg&quot;>Some behaviour here follows the decoded 2.5.20 firmware rather than the manual. Those places are marked with a blue “Firmware” note in the help text.</p>
+        </details>
+        <details><summary>Simplified or not simulated</summary>
+          <ul class=&quot;tight&quot;>
+            <li>Sounds are stand-ins; CV/Gate outputs, clock in/out, sync and pedal are settings only.</li>
+            <li>Arpeggiator randomness, keyboard splits and the Program Change assign page are simplified.</li>
+            <li>Copy/paste of individual notes inside a step and the Chroma colour sets are not simulated.</li>
+            <li>Multi-touch is replaced by holding with right-click (or long-press on touch) and then pressing other controls.</li>
+          </ul>
+        </details>
+        <p class=&quot;pg&quot;>Sources: KeyStep Pro user manual 2.5.1 (14 March 2024), MIDI Control Center device file, firmware 2.5.20 reverse-engineering notes. Section numbers refer to the manual.</p>
+      </div>
+    </div>
+    <div id=&quot;paneDev&quot; hidden></div>
+  </div>
+</main>
+<div id=&quot;tip&quot; hidden></div>
+<script>
+&quot;use strict&quot;;
+/* ================= reference data ================= */
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const NN=[&quot;C&quot;,&quot;C#&quot;,&quot;D&quot;,&quot;D#&quot;,&quot;E&quot;,&quot;F&quot;,&quot;F#&quot;,&quot;G&quot;,&quot;G#&quot;,&quot;A&quot;,&quot;A#&quot;,&quot;B&quot;];
+const nm=m=>NN[((m%12)+12)%12]+(Math.floor(m/12)-1); // middle C (60) = C4
+const hz=m=>440*Math.pow(2,(m-69)/12);
+const rnd=n=>Math.floor(Math.random()*n);
+const deep=o=>JSON.parse(JSON.stringify(o));
+const HOLDMS=450;
+const TCOL=[&quot;#22b573&quot;,&quot;#f26b21&quot;,&quot;#f2c418&quot;,&quot;#e5175e&quot;];      // track 1-4 default colours
+const TNAME=[&quot;Track 1&quot;,&quot;Track 2&quot;,&quot;Track 3&quot;,&quot;Track 4&quot;];
+
+/* Scales: index = the pattern's scale value in firmware (masks at 0x0805CB60; bit n = n semitones above the root).
+   7 is an unused slot; 8 and 9 are User 1 / User 2, read from the project. */
+const SCALES=[[&quot;Chromatic&quot;,0xFFF],[&quot;Major&quot;,0xAB5],[&quot;Minor&quot;,0x5AD],[&quot;Dorian&quot;,0x6AD],[&quot;Mixolydian&quot;,0x6B5],[&quot;Harmonic minor&quot;,0x9AD],[&quot;Blues&quot;,0x4E9],[&quot;(unused)&quot;,0],[&quot;User 1&quot;,0xFFF],[&quot;User 2&quot;,0xFFF]];
+const maskIv=m=>[...Array(12).keys()].filter(i=>m>>i&amp;1);
+/* Firmware note map (0800e3a8): in-scale notes map to themselves; an out-of-scale note snaps to the nearest
+   in-scale note, checking DOWN before UP at each distance, so ties resolve down. */
+function buildMap(mask,root){const m=new Int16Array(128);if(!mask){for(let n=0;n<128;n++)m[n]=n;return m}
+ const inS=n=>(mask>>(((n-root)%12+12)%12))&amp;1;
+ for(let n=0;n<128;n++){if(inS(n)){m[n]=n;continue}let r=n;for(let d=1;d<12;d++){if(n-d>=0&amp;&amp;inS(n-d)){r=n-d;break}if(n+d<128&amp;&amp;inS(n+d)){r=n+d;break}}m[n]=r}
+ return m}
+
+const DIVS=[[&quot;1/4&quot;,96],[&quot;1/8&quot;,48],[&quot;1/16&quot;,24],[&quot;1/32&quot;,12]]; // ticks at 96 per quarter
+const ARPS=[&quot;Up&quot;,&quot;Down&quot;,&quot;Exclu&quot;,&quot;Inclu&quot;,&quot;Rand&quot;,&quot;Order&quot;,&quot;Poly&quot;];
+const SEQDIRS=[&quot;Fwd&quot;,&quot;Rand&quot;,&quot;Walk&quot;];
+
+/* key shift functions above the keyboard (left to right, 37 keys; 36 = top C has none) */
+const KEYFN=[&quot;Fwd&quot;,&quot;Rand&quot;,&quot;Walk&quot;,&quot;Mono&quot;,&quot;Poly&quot;,&quot;Up&quot;,&quot;Down&quot;,&quot;Exclu&quot;,&quot;Inclu&quot;,&quot;Rand&quot;,&quot;Order&quot;,&quot;Poly&quot;,&quot;-1&quot;,&quot;0&quot;,&quot;+1&quot;,&quot;+2&quot;,&quot;+3&quot;,&quot;1/4&quot;,&quot;1/8&quot;,&quot;1/16&quot;,&quot;1/32&quot;,&quot;Triplet&quot;,&quot;Chrom&quot;,&quot;Major&quot;,&quot;Minor&quot;,&quot;Dorian&quot;,&quot;Mixo&quot;,&quot;H.Min&quot;,&quot;Blues&quot;,&quot;Root&quot;,&quot;User 1&quot;,&quot;User 2&quot;,&quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;,&quot;&quot;];
+const KEYGRP=[[0,2,&quot;Seq Pattern&quot;],[3,4,&quot;Seq / Drum Mode&quot;],[5,11,&quot;Arp Pattern&quot;],[12,16,&quot;Arp Octave&quot;],[17,21,&quot;Time Division&quot;],[22,31,&quot;Scale&quot;],[32,35,&quot;CV Routing&quot;]];
+/* scale keys -> firmware scale value */
+const KEYSCALE={22:0,23:1,24:2,25:3,26:4,27:5,28:6,30:8,31:9};
+const STEPFN=[&quot;Clr Ptn&quot;,&quot;Clr Steps&quot;,&quot;‹Nudge&quot;,&quot;Nudge›&quot;,&quot;Invert&quot;,&quot;Semi Up&quot;,&quot;Semi Down&quot;,&quot;Oct Up&quot;,&quot;Oct Down&quot;,&quot;Qnt 50%&quot;,&quot;Qnt 100%&quot;,&quot;Rand Order&quot;,&quot;Rand Notes&quot;,&quot;Rand Oct&quot;,&quot;Global BPM&quot;,&quot;Wait Load&quot;];
+
+/* ---------- panel controls (coordinates from the MCC panel layout) ---------- */
+const C=[];
+const btn=(id,x,y,w,h,label,sec,kind=&quot;btn&quot;)=>C.push({id,t:kind,x,y,w,h,label,sec});
+const knob=(id,cx,cy,r,label,sec,ring)=>C.push({id,t:&quot;knob&quot;,cx,cy,r,label,sec,ring});
+knob(&quot;tempo&quot;,99,223,18,&quot;Tempo&quot;,&quot;Fine&quot;);btn(&quot;tap&quot;,135,207,32,32,&quot;Tap\nTempo&quot;,&quot;Metronome&quot;);knob(&quot;swing&quot;,202,223,18,&quot;Swing&quot;,&quot;Offset&quot;);
+knob(&quot;sel&quot;,336,223,17,&quot;&quot;,&quot;&quot;);
+btn(&quot;shift&quot;,68,280,32,32,&quot;Shift&quot;,&quot;&quot;);btn(&quot;rec&quot;,113,280,32,32,&quot;●&quot;,&quot;Quant&quot;);btn(&quot;stop&quot;,158,280,32,32,&quot;■&quot;,&quot;&quot;);btn(&quot;play&quot;,202,280,40,32,&quot;▶❙❙&quot;,&quot;Restart&quot;);
+btn(&quot;project&quot;,273,259,31,15,&quot;Project&quot;,&quot;Utility&quot;);btn(&quot;exit&quot;,307,259,31,15,&quot;Exit&quot;,&quot;Undo&quot;);
+btn(&quot;copy&quot;,273,282,31,15,&quot;Copy&quot;,&quot;&quot;);btn(&quot;paste&quot;,307,282,31,15,&quot;Paste&quot;,&quot;&quot;);btn(&quot;save&quot;,273,298,31,15,&quot;Save&quot;,&quot;&quot;);btn(&quot;erase&quot;,307,298,31,15,&quot;Erase&quot;,&quot;&quot;);
+btn(&quot;control&quot;,273,323,65,15,&quot;Control&quot;,&quot;&quot;);
+[362,439,516,592].forEach((x,t)=>{btn(`t${t}dn`,x,259,30,15,&quot;←&quot;,&quot;&quot;);btn(`t${t}up`,x+35,259,30,15,&quot;→&quot;,&quot;&quot;);
+ btn(`t${t}seq`,x,275,30,15,&quot;Seq&quot;,&quot;&quot;);btn(`t${t}alt`,x+35,275,30,15,t?&quot;Arp&quot;:&quot;Drum&quot;,&quot;&quot;);btn(`t${t}mute`,x+35,298,30,15,&quot;Mute&quot;,&quot;&quot;);btn(`t${t}trk`,x,323,65,14,TNAME[t],&quot;&quot;)});
+btn(&quot;scene&quot;,678,193,34,15,&quot;Scene&quot;,&quot;&quot;);btn(&quot;chain&quot;,678,216,34,15,&quot;Chain&quot;,&quot;&quot;);btn(&quot;pattern&quot;,678,238,34,15,&quot;Pattern&quot;,&quot;&quot;);
+const ENCN=[&quot;Pitch&quot;,&quot;Gate&quot;,&quot;Velocity&quot;,&quot;Time Shift&quot;,&quot;Randomness&quot;];
+[754,822,890,958,1026].forEach((cx,i)=>knob(&quot;enc&quot;+i,cx,223,18,ENCN[i],&quot;&quot;,1));
+btn(&quot;lst&quot;,1079,216,30,14,&quot;Lst Step&quot;,&quot;Follow&quot;);[&quot;16&quot;,&quot;32&quot;,&quot;48&quot;,&quot;64&quot;].forEach((l,i)=>btn(&quot;pg&quot;+i,[1115,1147,1180,1212][i],216,30,14,l,&quot;&quot;));
+btn(&quot;stepedit&quot;,670,289,34,15,&quot;Step Edit&quot;,&quot;&quot;);
+for(let i=0;i<16;i++)btn(&quot;s&quot;+i,707+34*i,280,26,32,String(i+1),STEPFN[i],&quot;step&quot;);
+btn(&quot;octdn&quot;,79,375,34,14,&quot;←&quot;,&quot;&quot;);btn(&quot;octup&quot;,125,375,34,14,&quot;→&quot;,&quot;&quot;);
+btn(&quot;hold&quot;,191,405,30,14,&quot;Hold&quot;,&quot;Clear&quot;);btn(&quot;trans&quot;,191,442,30,14,&quot;Trans&quot;,&quot;Clear&quot;);btn(&quot;tie&quot;,191,478,30,14,&quot;Tie/Rest&quot;,&quot;Chord&quot;);btn(&quot;overdub&quot;,191,515,30,14,&quot;Overdub&quot;,&quot;&quot;);
+C.push({id:&quot;pbend&quot;,t:&quot;strip&quot;,x:62,y:405,w:55,h:127},{id:&quot;modw&quot;,t:&quot;strip&quot;,x:120,y:405,w:55,h:127},{id:&quot;looper&quot;,t:&quot;looper&quot;,x:62,y:542,w:165,h:26});
+const KX0=255,KX1=1258,WW=(KX1-KX0)/22,KY=382,KH=206;
+const BLK=[1,3,6,8,10];
+{let wi=0;for(let k=0;k<37;k++){const pc=k%12;if(BLK.includes(pc)){C.push({id:&quot;k&quot;+k,t:&quot;key&quot;,k,black:1,x:KX0+wi*WW-13,y:KY,w:26,h:122})}else{C.push({id:&quot;k&quot;+k,t:&quot;key&quot;,k,black:0,x:KX0+wi*WW,y:KY,w:WW,h:KH});wi++}}}
+const CI=Object.fromEntries(C.map(c=>[c.id,c]));
+const keyX=k=>{const c=CI[&quot;k&quot;+k];return c.x+c.w/2};
+
+/* ---------- help text: [name, what it does, Shift function, manual section, firmware note] ---------- */
+const INFO={
+ tempo:[&quot;Tempo / Fine&quot;,&quot;Sets the tempo from 30 to 240 BPM, rounded to whole BPM.&quot;,&quot;Shift + turn: fine tempo in 0.01 BPM steps.&quot;,&quot;4.2.1, 7.1&quot;],
+ tap:[&quot;Tap Tempo / Metronome&quot;,&quot;Tap at least twice to set the tempo; after 4 taps it estimates, after 8 it averages. Hold Tap and press a Time Division key to set the metronome division.&quot;,&quot;Shift + Tap: metronome on/off.&quot;,&quot;4.2.1, 7.1.3&quot;],
+ swing:[&quot;Swing / Offset&quot;,&quot;Swing from 50% (straight) to 75%, for all tracks at once. Press or touch it to see the global and track values.&quot;,&quot;Shift + turn: swing offset for the selected track only.&quot;,&quot;4.2.1, 7.1.1&quot;],
+ sel:[&quot;Selection encoder&quot;,&quot;Turn to scroll menus and values on the OLED; push to enter a submenu or confirm. Confirming Save, Copy and Erase Project is a push of this encoder.&quot;,&quot;&quot;,&quot;4.2.5.1, 6.1.3&quot;,&quot;On hardware, pressing a step pad at the “Save Project / Confirm ?” screen does not confirm: it loads that project and the unsaved edits are gone. Push this encoder.&quot;],
+ shift:[&quot;Shift&quot;,&quot;Gives access to the blue functions printed under buttons, under the steps and above the keys. While held, the LEDs above the keys show which key functions are active and the steps dim.&quot;,&quot;&quot;,&quot;4.2.4, 4.2.14&quot;],
+ rec:[&quot;Record / Quantize&quot;,&quot;Stopped: Step Record (each key press fills a step and advances). Hold Record and press Play: Real-time Record.&quot;,&quot;Shift + Rec: quantized recording on/off.&quot;,&quot;5.3.2&quot;],
+ stop:[&quot;Stop&quot;,&quot;Stops all sequencers and returns them to step 1. Press three times quickly to send All Notes Off.&quot;,&quot;&quot;,&quot;4.2.2&quot;],
+ play:[&quot;Play / Pause&quot;,&quot;Starts the sequencers; press again to pause and again to resume.&quot;,&quot;Shift + Play: restart from step 1.&quot;,&quot;4.2.2, 5.3.1.1&quot;],
+ project:[&quot;Project / Utility&quot;,&quot;Hold Project and press a step to load that project (1–16), or hold and turn the selection encoder. Save + Project saves, Copy + Project copies to the next slot, Erase + Project erases.&quot;,&quot;Shift + Project: the Utility menu. Hold Project and press Shift: recall the project from flash.&quot;,&quot;6.1, 9.1&quot;],
+ exit:[&quot;Exit / Undo&quot;,&quot;Leaves menus and cancels confirmations. Blinks when an undo is available.&quot;,&quot;Shift + Exit: undo the last paste, erase or recording.&quot;,&quot;4.2.5.2, 6.3.6&quot;],
+ copy:[&quot;Copy&quot;,&quot;Copy + step(s): copy steps. Copy + page button: copy a page. Copy + Pattern, then a step: copy a pattern. Copy + Scene, then a step: copy a scene. Copy + Project: copy the project to the next slot.&quot;,&quot;&quot;,&quot;5.3.7, 6.3.3&quot;],
+ paste:[&quot;Paste&quot;,&quot;Paste + step: paste the copied steps from that step. Paste + page: paste a page. Paste + Pattern, then steps: paste a pattern.&quot;,&quot;&quot;,&quot;5.3.7, 6.3.3&quot;],
+ save:[&quot;Save&quot;,&quot;Hold Save: unsaved patterns of this track show red, saved ones blue. Save + step: save that pattern. Save + Track button: save all patterns of the track. Save + Scene + step: save a scene. Save + Project: save the whole project (confirm with the encoder).&quot;,&quot;Shift + Save: reload the current pattern from memory (“Pattern Reloaded”).&quot;,&quot;5.3.9, 6.1.3, 6.3.2&quot;],
+ erase:[&quot;Erase&quot;,&quot;Erase + step: erase steps. Erase + page: erase a page. Erase + Pattern, then steps: erase patterns. Erase + Scene, then a step. Erase + Project: erase the project (confirm). Erase + Trans: delete the transpose group.&quot;,&quot;&quot;,&quot;5.3.7, 6.3.5&quot;],
+ control:[&quot;Control&quot;,&quot;Control mode: the five main encoders send MIDI CC instead of editing steps, and the selected track's patterns can record and play CC automation. Press the blinking track button to leave.&quot;,&quot;&quot;,&quot;8&quot;],
+ scene:[&quot;Scene&quot;,&quot;Hold Scene and press a step to load a scene: the pattern, chain and mute state of every track. Save + Scene + step stores one.&quot;,&quot;&quot;,&quot;6.5.2&quot;],
+ chain:[&quot;Chain&quot;,&quot;Hold Chain and press steps in order to build a chain of up to 16 patterns for the selected track. Leave the chain with the track arrows.&quot;,&quot;&quot;,&quot;6.5.1&quot;],
+ pattern:[&quot;Pattern&quot;,&quot;Hold Pattern and press a step to choose one of the 16 patterns of the selected track.&quot;,&quot;&quot;,&quot;6.3.1&quot;],
+ lst:[&quot;Lst Step / Follow&quot;,&quot;Hold Lst Step and press a step to set the pattern length, or a page button (16/32/48/64) to set it in whole pages.&quot;,&quot;Shift + Lst Step: follow the playing page.&quot;,&quot;4.2.15, 5.3.1.2&quot;],
+ pg0:[&quot;Page 16&quot;,&quot;Shows steps 1–16. Hold a step and press page buttons to skip that step on those pages.&quot;,&quot;Shift + page: extend the pattern by copying page 1 to it.&quot;,&quot;4.2.15, 6.5.4&quot;],
+ stepedit:[&quot;Step Edit&quot;,&quot;Step Edit mode: press a step to select it (it blinks), play keys to replace its notes and use the encoders to edit it. When stopped, pressing a step also plays it (step listen).&quot;,&quot;&quot;,&quot;5.3.3.1&quot;],
+ enc0:[&quot;Pitch encoder&quot;,&quot;Step Edit / holding a step: moves the step's notes up or down along the current scale. In Control mode: sends Knob 1 CC.&quot;,&quot;Shift + turn: offset all steps of the pattern.&quot;,&quot;4.2.10.1&quot;],
+ enc1:[&quot;Gate encoder&quot;,&quot;Gate length from 0.06 to 64 steps (default 0.5). No step held: sets the track default for new notes. Arp mode: gate of the whole arpeggio.&quot;,&quot;Shift + turn: offset all steps.&quot;,&quot;4.2.10.2, 5.3.5.1&quot;],
+ enc2:[&quot;Velocity encoder&quot;,&quot;Velocity 0–127 (default 100). Arp mode: bipolar offset added to the played velocity. With Fixed Velocity ON for the track, new notes use this value.&quot;,&quot;Shift + turn: offset all steps.&quot;,&quot;4.2.10.3&quot;],
+ enc3:[&quot;Time Shift encoder&quot;,&quot;Moves notes from −49% to +50% of a step. Arp mode: shifts the whole held arpeggio in time.&quot;,&quot;Shift + turn: offset all steps.&quot;,&quot;4.2.10.4&quot;],
+ enc4:[&quot;Randomness encoder&quot;,&quot;Probability that a note plays, 0–100%. Arp mode: inserts random notes.&quot;,&quot;Shift + turn: offset all steps.&quot;,&quot;4.2.10.5&quot;],
+ octdn:[&quot;Octave −&quot;,&quot;Keyboard octave down (to −3). Press both octave buttons to reset.&quot;,&quot;&quot;,&quot;4.2.11.2&quot;],
+ octup:[&quot;Octave +&quot;,&quot;Keyboard octave up (to +2). Press both octave buttons to reset.&quot;,&quot;&quot;,&quot;4.2.11.2&quot;],
+ hold:[&quot;Hold / Clear&quot;,&quot;Arpeggio keeps playing after you lift your fingers; while one key is down you can add notes (up to 16). In chord mode it acts as a sustain pedal.&quot;,&quot;Shift + Hold: release all held arpeggios.&quot;,&quot;4.2.11.3, 5.2.2&quot;],
+ trans:[&quot;Trans / Clear&quot;,&quot;Hold Trans and press a key: transpose the selected track's sequence or arpeggio (middle C = no transposition). Press Trans to toggle the transposition off and on. While holding Trans, press other track buttons to build a transpose group. With Utility > Misc > Transpose Latch ON, Trans latches.&quot;,&quot;Shift + Trans: clear all transpositions.&quot;,&quot;4.2.11.4, 4.2.14.1&quot;],
+ tie:[&quot;Tie / Rest / Chord&quot;,&quot;Step Record: enter a rest or extend the last notes. Real-time record: hold to erase the steps you pass. Step Edit: clear the selected step.&quot;,&quot;Shift + Tie: chord mode. Hold Shift + Tie and play notes to store a chord; then each key plays that chord. Shift + Tie again turns chord mode off.&quot;,&quot;4.2.11.5, 5.5.2&quot;,&quot;Each chord note is snapped through the track's scale on its own (ties snap down), so one stored shape turns diatonic: in E major an E-G#-B shape plays F#m on F#, G#m on G# and D#dim on D#. The chord shape and chord-mode state are part of the track block written by Save Project, so they survive a power cycle (the manual says they don't).&quot;],
+ overdub:[&quot;Overdub&quot;,&quot;ON: notes you record are added to the step. OFF: they replace it. With a step held, pressing keys of its chord selects those notes for editing.&quot;,&quot;&quot;,&quot;4.2.11.6, 5.3.4&quot;],
+ pbend:[&quot;Pitch strip&quot;,&quot;Pitch bend, springs back to the centre. Range 2 semitones by default.&quot;,&quot;&quot;,&quot;4.2.11.1&quot;],
+ modw:[&quot;Mod strip&quot;,&quot;Mod wheel (CC 1). Holds its value, remembered per track.&quot;,&quot;&quot;,&quot;4.2.11.1&quot;],
+ looper:[&quot;Looper touch strip&quot;,&quot;Touch during playback to loop all tracks from that moment: 1/4 (left, longest) to 1/32 (right, shortest). Release to continue.&quot;,&quot;Shift + strip: disable / enable the strip.&quot;,&quot;4.2.12&quot;],
+ key:[&quot;Keyboard&quot;,&quot;37 velocity-sensitive keys. Plays the selected track; with Shift, the blue functions printed above each key.&quot;,&quot;&quot;,&quot;4.2.13&quot;],
+ step:[&quot;Step button&quot;,&quot;Quick Edit: toggle the step, or hold it and play keys to fill it. Step Edit: select the step. Hold Pattern/Scene/Project/Chain and press a step to choose that item.&quot;,&quot;&quot;,&quot;4.2.9&quot;],
+ trk:[&quot;Track button&quot;,&quot;Selects the track: keyboard, encoders and steps now act on it. Hold two track buttons and press a key to make a split.&quot;,&quot;Shift + Track: Track Settings (MIDI channels, Program Change, Fixed Velocity).&quot;,&quot;4.2.6.1, 1.3.1&quot;],
+ seq:[&quot;Seq&quot;,&quot;Sequencer mode for this track.&quot;,&quot;&quot;,&quot;4.2.6.4&quot;],
+ arp:[&quot;Arp&quot;,&quot;Arpeggiator mode (tracks 2–4).&quot;,&quot;&quot;,&quot;4.2.6.6, 5.2&quot;],
+ drum:[&quot;Drum&quot;,&quot;Drum sequencer on track 1: 24 lanes on the lowest 24 keys, lowest 8 also on the Drum Gate outputs.&quot;,&quot;Shift + Drum: unmute all drum lanes.&quot;,&quot;4.2.6.7, 5.4&quot;],
+ mute:[&quot;Mute&quot;,&quot;Mutes the track's sequencer/arpeggio (the keyboard still plays it).&quot;,&quot;Shift + Mute: solo (exclusive).&quot;,&quot;4.2.6.2, 6.2.3&quot;],
+ dn:[&quot;Previous pattern&quot;,&quot;Selects the previous pattern of the track (and leaves a chain).&quot;,&quot;&quot;,&quot;6.3.1&quot;],
+ up:[&quot;Next pattern&quot;,&quot;Selects the next pattern of the track (and leaves a chain).&quot;,&quot;&quot;,&quot;6.3.1&quot;],
+};
+const infoFor=id=>{if(INFO[id])return INFO[id];if(/^k\d+$/.test(id))return INFO.key;if(/^s\d+$/.test(id))return INFO.step;
+ if(/^pg\d$/.test(id))return [`Page ${[&quot;16&quot;,&quot;32&quot;,&quot;48&quot;,&quot;64&quot;][+id[2]]}`,...INFO.pg0.slice(1)];
+ const m=id.match(/^t(\d)(dn|up|seq|alt|mute|trk)$/);if(m){const k=m[2]===&quot;alt&quot;?(m[1]===&quot;0&quot;?&quot;drum&quot;:&quot;arp&quot;):m[2];const i=INFO[k];return [`${TNAME[m[1]]} ${i[0]}`,...i.slice(1)]}return null};
+
+/* ---------- chapters ---------- */
+const CHAPTERS=[
+ [&quot;1.3&quot;,&quot;What's new in 2.5: Track Settings, Program Change, Transpose Latch, Fixed Velocity&quot;,&quot;trackSettings&quot;],
+ [&quot;3.2&quot;,&quot;Record and play a sequence&quot;,&quot;recordBasics&quot;],
+ [&quot;3.3&quot;,&quot;Using the arpeggiator&quot;,&quot;arpBasics&quot;],
+ [&quot;3.4&quot;,&quot;Scales and chords&quot;,&quot;scaleBasics&quot;],
+ [&quot;4.2.1&quot;,&quot;Tempo, tap tempo, swing&quot;,&quot;tempo&quot;],
+ [&quot;4.2.10&quot;,&quot;The five main encoders and track defaults&quot;,&quot;encoders&quot;],
+ [&quot;4.2.12&quot;,&quot;The looper touch strip&quot;,&quot;looper&quot;],
+ [&quot;4.2.14&quot;,&quot;Shift functions (keys and steps)&quot;,&quot;shiftFns&quot;],
+ [&quot;5.2&quot;,&quot;The three arpeggiators&quot;,&quot;arpBasics&quot;],
+ [&quot;5.3.1&quot;,&quot;Sequence length, pages, mono/poly, directions&quot;,&quot;seqLength&quot;],
+ [&quot;5.3.2&quot;,&quot;Recording: quick, step and real-time&quot;,&quot;recordBasics&quot;],
+ [&quot;5.3.3&quot;,&quot;Step Edit and Quick Edit&quot;,&quot;stepEdit&quot;],
+ [&quot;5.3.7&quot;,&quot;Copy, paste and erase steps and pages&quot;,&quot;copyPaste&quot;],
+ [&quot;5.3.9&quot;,&quot;Saving patterns&quot;,&quot;saving&quot;],
+ [&quot;5.4&quot;,&quot;The drum sequencer&quot;,&quot;drum&quot;],
+ [&quot;5.5.1&quot;,&quot;Scales, roots and user scales&quot;,&quot;scaleBasics&quot;],
+ [&quot;5.5.2&quot;,&quot;Chord mode&quot;,&quot;chordMode&quot;],
+ [&quot;6.1&quot;,&quot;Projects: load, save, copy, erase, recall&quot;,&quot;projects&quot;],
+ [&quot;6.2&quot;,&quot;Tracks: mute, solo, splits&quot;,&quot;tracks&quot;],
+ [&quot;6.3&quot;,&quot;Patterns&quot;,&quot;patterns&quot;],
+ [&quot;6.5&quot;,&quot;Arranging: chains, scenes, wait to load, step skip&quot;,&quot;arranging&quot;],
+ [&quot;8&quot;,&quot;Control mode&quot;,&quot;controlMode&quot;],
+ [&quot;9.1&quot;,&quot;The Utility menu&quot;,&quot;utility&quot;],
+ [&quot;Device&quot;,&quot;Device tools: talk to a real KeyStep Pro&quot;,&quot;deviceTools&quot;],
+];
+
+/* ---------- guided tours: each step waits for an emitted event (string or RegExp) ---------- */
+const TOURS=[
+ {n:&quot;First sequence (real-time recording)&quot;,steps:[
+  {s:&quot;Select Track 2.&quot;,t:&quot;t1trk&quot;,ev:&quot;track:1&quot;},
+  {s:&quot;Make sure it is in Seq mode.&quot;,t:&quot;t1seq&quot;,ev:/^mode:1:seq|^track:1/},
+  {s:&quot;Hold Record (right-click to latch it) and press Play: real-time recording starts.&quot;,t:&quot;rec&quot;,ev:&quot;rec:rt&quot;},
+  {s:&quot;Play a few notes on the keyboard (mouse or A S D F… keys). They are added to the loop.&quot;,t:&quot;k12&quot;,ev:/^recnote/},
+  {s:&quot;Press Record again to stop recording; the pattern keeps playing.&quot;,t:&quot;rec&quot;,ev:&quot;rec:off&quot;},
+  {s:&quot;Hold Shift and press step 6 (Semi Up) to transpose the pattern a semitone.&quot;,t:&quot;s5&quot;,ev:&quot;shiftfn:Semi Up&quot;},
+  {s:&quot;Press Stop. Done: that is the basic recording loop.&quot;,t:&quot;stop&quot;,ev:&quot;stop&quot;}]},
+ {n:&quot;Step recording&quot;,steps:[
+  {s:&quot;Select Track 3 and Seq.&quot;,t:&quot;t2trk&quot;,ev:&quot;track:2&quot;},
+  {s:&quot;With the sequencer stopped, press Record: Step Record mode.&quot;,t:&quot;rec&quot;,ev:&quot;rec:step&quot;},
+  {s:&quot;Play a note: it fills step 1 and the cursor moves on.&quot;,t:&quot;k12&quot;,ev:&quot;steprec:note&quot;},
+  {s:&quot;Press Tie/Rest to leave a rest.&quot;,t:&quot;tie&quot;,ev:&quot;steprec:rest&quot;},
+  {s:&quot;Play two or three more notes.&quot;,t:&quot;k16&quot;,ev:&quot;steprec:note&quot;},
+  {s:&quot;Press Record to leave Step Record, then Play.&quot;,t:&quot;play&quot;,ev:&quot;play&quot;}]},
+ {n:&quot;Quick edit: hold a step, play a chord&quot;,steps:[
+  {s:&quot;Select Track 4.&quot;,t:&quot;t3trk&quot;,ev:&quot;track:3&quot;},
+  {s:&quot;Hold step 1 (right-click latches it) and play a chord: all notes go into the step with the current encoder values.&quot;,t:&quot;s0&quot;,ev:&quot;quick:fill&quot;},
+  {s:&quot;Still holding the step, turn the Gate encoder: only that step changes.&quot;,t:&quot;enc1&quot;,ev:&quot;enc:enc1&quot;},
+  {s:&quot;Release the step, then press steps 5, 9 and 13 to switch them on (an empty step gets the last note).&quot;,t:&quot;s4&quot;,ev:/^step:on/},
+  {s:&quot;Press Play.&quot;,t:&quot;play&quot;,ev:&quot;play&quot;}]},
+ {n:&quot;Arpeggiator with Hold&quot;,steps:[
+  {s:&quot;Select Track 2.&quot;,t:&quot;t1trk&quot;,ev:&quot;track:1&quot;},
+  {s:&quot;Press Arp.&quot;,t:&quot;t1alt&quot;,ev:&quot;mode:1:arp&quot;},
+  {s:&quot;Press Hold.&quot;,t:&quot;hold&quot;,ev:&quot;hold:on&quot;},
+  {s:&quot;Play a chord. It keeps playing after you let go (the arp runs even when the sequencer is stopped).&quot;,t:&quot;k12&quot;,ev:&quot;arp:note&quot;},
+  {s:&quot;Hold Shift and press the Inclu key (G# in the lower octave) to change the arp pattern.&quot;,t:&quot;k8&quot;,ev:&quot;arpmode:Inclu&quot;},
+  {s:&quot;Hold Shift and press +1 (D in the middle octave) for a two-octave arp.&quot;,t:&quot;k14&quot;,ev:&quot;arpoct:1&quot;},
+  {s:&quot;Turn the Gate encoder to shorten or lengthen the whole arpeggio.&quot;,t:&quot;enc1&quot;,ev:&quot;enc:enc1&quot;}]},
+ {n:&quot;Three arpeggiators at once&quot;,steps:[
+  {s:&quot;Track 2 → Arp → Hold → play a chord.&quot;,t:&quot;t1alt&quot;,ev:/arp:note:1/},
+  {s:&quot;Track 3 → Arp → Hold → play another chord.&quot;,t:&quot;t2alt&quot;,ev:/arp:note:2/},
+  {s:&quot;On Track 3, hold Shift and press 1/8 (F# middle octave): it runs at half the speed of Track 2.&quot;,t:&quot;k18&quot;,ev:/^div:2/},
+  {s:&quot;Mute Track 2 for a moment.&quot;,t:&quot;t1mute&quot;,ev:&quot;mute:1&quot;}]},
+ {n:&quot;Scales and the root note&quot;,steps:[
+  {s:&quot;Load the “Quick tour” demo (or record a pattern on Track 2) and press Play.&quot;,t:&quot;play&quot;,ev:&quot;play&quot;},
+  {s:&quot;Select Track 2. Hold Shift and press the Major key (B in the middle octave).&quot;,t:&quot;k23&quot;,ev:&quot;scale:1&quot;},
+  {s:&quot;Notice the black keys now play scale notes too. Hold Shift and press Minor (top octave C).&quot;,t:&quot;k24&quot;,ev:&quot;scale:2&quot;},
+  {s:&quot;Hold Shift and keep holding the Root key (F, top octave), then press a key in the lowest octave to change the root.&quot;,t:&quot;k29&quot;,ev:/^root:/}]},
+ {n:&quot;Chord mode&quot;,steps:[
+  {s:&quot;Select Track 3 and stop everything.&quot;,t:&quot;t2trk&quot;,ev:&quot;track:2&quot;},
+  {s:&quot;Hold Shift and Tie/Rest (right-click latches both) and play a chord, e.g. E G# B.&quot;,t:&quot;tie&quot;,ev:&quot;chord:stored&quot;},
+  {s:&quot;Release Shift and Tie: Tie/Rest blinks, chord mode is on. Play any single key.&quot;,t:&quot;k16&quot;,ev:&quot;chord:play&quot;},
+  {s:&quot;Hold Shift and press Major (B, middle octave): each chord note is now snapped into the scale, so the shape becomes diatonic.&quot;,t:&quot;k23&quot;,ev:&quot;scale:1&quot;},
+  {s:&quot;Play other keys: the chord quality follows the scale. Shift + Tie/Rest turns chord mode off.&quot;,t:&quot;tie&quot;,ev:&quot;chord:off&quot;}]},
+ {n:&quot;A drum pattern&quot;,steps:[
+  {s:&quot;Select Track 1 and press Drum.&quot;,t:&quot;t0alt&quot;,ev:&quot;mode:0:drum&quot;},
+  {s:&quot;Press the lowest C to select drum lane 1 (kick).&quot;,t:&quot;k0&quot;,ev:&quot;drum:lane:0&quot;},
+  {s:&quot;Press steps 1, 5, 9 and 13.&quot;,t:&quot;s0&quot;,ev:/^drum:step/},
+  {s:&quot;Press D (lane 3, snare) and then steps 5 and 13.&quot;,t:&quot;k2&quot;,ev:&quot;drum:lane:2&quot;},
+  {s:&quot;Press F# (lane 7, hat) and some off-beat steps, then Play.&quot;,t:&quot;play&quot;,ev:&quot;play&quot;}]},
+ {n:&quot;Patterns and a chain&quot;,steps:[
+  {s:&quot;Load the “Quick tour” demo and select Track 2.&quot;,t:&quot;t1trk&quot;,ev:&quot;track:1&quot;},
+  {s:&quot;Hold Pattern and press step 2: the second pattern of Track 2.&quot;,t:&quot;pattern&quot;,ev:&quot;pattern:1:1&quot;},
+  {s:&quot;Now hold Chain and press steps 1, 1, 2: a chain of three patterns.&quot;,t:&quot;chain&quot;,ev:&quot;chain:set&quot;},
+  {s:&quot;Press Play and watch the track display change pattern.&quot;,t:&quot;play&quot;,ev:&quot;play&quot;},
+  {s:&quot;Press a track arrow to jump off the chain.&quot;,t:&quot;t1up&quot;,ev:/^pattern:1/}]},
+ {n:&quot;Save a project (and confirm it properly)&quot;,steps:[
+  {s:&quot;Make an edit (for example, toggle step 1).&quot;,t:&quot;s0&quot;,ev:/^step:/},
+  {s:&quot;Hold Save (right-click to latch) and press Project.&quot;,t:&quot;project&quot;,ev:&quot;save:project:ask&quot;},
+  {s:&quot;The OLED asks “Save Project / Confirm ?”. Push the selection encoder (click it). Do not press a step pad: that would load a project instead.&quot;,t:&quot;sel&quot;,ev:&quot;save:project&quot;},
+  {s:&quot;Saved. Change something, then hold Project, press Shift and push the encoder: the project is recalled from flash.&quot;,t:&quot;project&quot;,ev:&quot;recall&quot;}]},
+ {n:&quot;Transpose, groups and latch&quot;,steps:[
+  {s:&quot;Load the “Quick tour” demo and press Play.&quot;,t:&quot;play&quot;,ev:&quot;play&quot;},
+  {s:&quot;Select Track 2. Hold Trans (right-click latches it) and press the G above middle C: +7 semitones.&quot;,t:&quot;trans&quot;,ev:/^trans:1:/},
+  {s:&quot;Press Trans: the transposition toggles off. Press again: back on.&quot;,t:&quot;trans&quot;,ev:/^transtoggle/},
+  {s:&quot;Hold Trans and press the Track 3 button: Track 3 joins the transpose group (white).&quot;,t:&quot;t2trk&quot;,ev:&quot;transgroup&quot;},
+  {s:&quot;Shift + Trans clears all transpositions.&quot;,t:&quot;trans&quot;,ev:&quot;trans:clear&quot;}]},
+ {n:&quot;Control mode: CC automation&quot;,steps:[
+  {s:&quot;Select Track 4, then press Control. The track button blinks.&quot;,t:&quot;control&quot;,ev:&quot;control:on&quot;},
+  {s:&quot;Turn the Gate encoder: it sends Knob 2's CC (see Utility > Controller).&quot;,t:&quot;enc1&quot;,ev:&quot;cc&quot;},
+  {s:&quot;Press Step Edit, press step 1 and turn the Pitch encoder: that value is stored in step 1.&quot;,t:&quot;stepedit&quot;,ev:&quot;cc:step&quot;},
+  {s:&quot;Press the blinking Track 4 button to leave Control mode.&quot;,t:&quot;t3trk&quot;,ev:&quot;control:off&quot;}]},
+ {n:&quot;Hidden settings: Fixed Velocity&quot;,steps:[
+  {s:&quot;Select Track 2. Hold Shift and press the Track 2 button: Track Settings.&quot;,t:&quot;t1trk&quot;,ev:&quot;menu:Track Settings&quot;},
+  {s:&quot;Turn the selection encoder to “Fixed Velocity” and push it.&quot;,t:&quot;sel&quot;,ev:&quot;menu:item:Fixed Velocity&quot;},
+  {s:&quot;Turn to ON and push. New notes on Track 2 now use the Velocity encoder value.&quot;,t:&quot;sel&quot;,ev:&quot;global:156&quot;},
+  {s:&quot;Open the Device tools tab: this setting is global ID 156, which MCC does not show. Read it from the simulated device.&quot;,t:null,ev:&quot;dev:read&quot;}]},
+ {n:&quot;Device tools: write a song setup to the simulated KeyStep&quot;,steps:[
+  {s:&quot;Open the Device tools tab (top of the right column).&quot;,t:null,ev:&quot;tab:dev&quot;},
+  {s:&quot;Choose “Simulated KeyStep Pro” as the device and connect.&quot;,t:null,ev:&quot;dev:connect&quot;},
+  {s:&quot;In “Project names”, name project 2 and send it (the simulation runs the project-names firmware).&quot;,t:null,ev:&quot;dev:name&quot;},
+  {s:&quot;In “Chord and key per track”, write a chord and scale to project 2, track 2.&quot;,t:null,ev:&quot;dev:trackkey&quot;},
+  {s:&quot;Load project 2 on the panel (hold Project, press step 2) and play a key on Track 2.&quot;,t:&quot;project&quot;,ev:&quot;project:1&quot;}]},
+];
+/* generated by ~/keysteppro/tools/gen_globals_js.py from MCC KeyStepPro.json + firmware findings; do not edit */
+const GLOBALS=[{&quot;id&quot;:70,&quot;g&quot;:&quot;MIDI Channel&quot;,&quot;n&quot;:&quot;Track 1 input&quot;,&quot;d&quot;:0,&quot;ch&quot;:[[127,&quot;OFF&quot;]]},{&quot;id&quot;:75,&quot;g&quot;:&quot;MIDI Channel&quot;,&quot;n&quot;:&quot;Track 1 output&quot;,&quot;d&quot;:0,&quot;ch&quot;:[[127,&quot;OFF&quot;]]},{&quot;id&quot;:71,&quot;g&quot;:&quot;MIDI Channel&quot;,&quot;n&quot;:&quot;Track 2 input&quot;,&quot;d&quot;:1,&quot;ch&quot;:[[127,&quot;OFF&quot;]]},{&quot;id&quot;:76,&quot;g&quot;:&quot;MIDI Channel&quot;,&quot;n&quot;:&quot;Track 2 output&quot;,&quot;d&quot;:1,&quot;ch&quot;:[[127,&quot;OFF&quot;]]},{&quot;id&quot;:72,&quot;g&quot;:&quot;MIDI Channel&quot;,&quot;n&quot;:&quot;Track 3 input&quot;,&quot;d&quot;:2,&quot;ch&quot;:[[127,&quot;OFF&quot;]]},{&quot;id&quot;:77,&quot;g&quot;:&quot;MIDI Channel&quot;,&quot;n&quot;:&quot;Track 3 output&quot;,&quot;d&quot;:2,&quot;ch&quot;:[[127,&quot;OFF&quot;]]},{&quot;id&quot;:73,&quot;g&quot;:&quot;MIDI Channel&quot;,&quot;n&quot;:&quot;Track 4 input&quot;,&quot;d&quot;:3,&quot;ch&quot;:[[127,&quot;OFF&quot;]]},{&quot;id&quot;:78,&quot;g&quot;:&quot;MIDI Channel&quot;,&quot;n&quot;:&quot;Track 4 output&quot;,&quot;d&quot;:3,&quot;ch&quot;:[[127,&quot;OFF&quot;]]},{&quot;id&quot;:74,&quot;g&quot;:&quot;MIDI Channel&quot;,&quot;n&quot;:&quot;Drum input&quot;,&quot;d&quot;:10,&quot;ch&quot;:[[127,&quot;OFF&quot;]]},{&quot;id&quot;:79,&quot;g&quot;:&quot;MIDI Channel&quot;,&quot;n&quot;:&quot;Drum output&quot;,&quot;d&quot;:10,&quot;ch&quot;:[[127,&quot;OFF&quot;]]},{&quot;id&quot;:122,&quot;g&quot;:&quot;Sync&quot;,&quot;n&quot;:&quot;Input&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;Internal&quot;],[1,&quot;USB&quot;],[2,&quot;MIDI&quot;],[3,&quot;Clock&quot;],[4,&quot;Auto&quot;]]},{&quot;id&quot;:123,&quot;g&quot;:&quot;Sync&quot;,&quot;n&quot;:&quot;Clock rate&quot;,&quot;d&quot;:6,&quot;o&quot;:[[0,&quot;1 PP16&quot;],[5,&quot;2 PPQ&quot;],[6,&quot;24 PPQ&quot;],[7,&quot;48 PPQ&quot;]]},{&quot;id&quot;:124,&quot;g&quot;:&quot;Sync&quot;,&quot;n&quot;:&quot;Output&quot;,&quot;d&quot;:0,&quot;o&quot;:[[4,&quot;1 PP4Q&quot;],[3,&quot;1 PP2Q&quot;],[2,&quot;1 PPQ&quot;],[1,&quot;1 PP8&quot;],[0,&quot;1 PP16&quot;],[5,&quot;2 PPQ&quot;],[6,&quot;24 PPQ&quot;],[7,&quot;48 PPQ&quot;]]},{&quot;id&quot;:114,&quot;g&quot;:&quot;Metronome&quot;,&quot;n&quot;:&quot;Count in&quot;,&quot;d&quot;:1,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;1 bar&quot;],[2,&quot;2 bars&quot;]]},{&quot;id&quot;:116,&quot;g&quot;:&quot;Metronome&quot;,&quot;n&quot;:&quot;Time division&quot;,&quot;d&quot;:4,&quot;o&quot;:[[0,&quot;1/4&quot;],[1,&quot;1/4 Triplet&quot;],[2,&quot;1/8&quot;],[3,&quot;1/8 Triplet&quot;],[4,&quot;1/16&quot;],[5,&quot;1/16 Triplet&quot;],[6,&quot;1/32&quot;],[7,&quot;1/32 Triplet&quot;]]},{&quot;id&quot;:115,&quot;g&quot;:&quot;Metronome&quot;,&quot;n&quot;:&quot;Time signature&quot;,&quot;d&quot;:4,&quot;o&quot;:[[0,&quot;1&quot;],[1,&quot;2&quot;],[2,&quot;3&quot;],[3,&quot;4&quot;],[4,&quot;5&quot;],[5,&quot;6&quot;],[6,&quot;7&quot;],[7,&quot;8&quot;],[8,&quot;9&quot;],[9,&quot;10&quot;],[10,&quot;11&quot;],[11,&quot;12&quot;],[12,&quot;13&quot;],[13,&quot;14&quot;],[14,&quot;15&quot;],[15,&quot;16&quot;]]},{&quot;id&quot;:3,&quot;g&quot;:&quot;Launch Quantize&quot;,&quot;n&quot;:&quot;Wait to Load Project&quot;,&quot;d&quot;:1,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;1 bar&quot;],[2,&quot;2 bars&quot;],[3,&quot;4 bars&quot;]]},{&quot;id&quot;:2,&quot;g&quot;:&quot;Launch Quantize&quot;,&quot;n&quot;:&quot;Wait to Load Scene&quot;,&quot;d&quot;:1,&quot;o&quot;:[[0,&quot;1 beat&quot;],[1,&quot;1 bar&quot;],[2,&quot;2 bars&quot;],[3,&quot;4 bars&quot;]]},{&quot;id&quot;:4,&quot;g&quot;:&quot;Launch Quantize&quot;,&quot;n&quot;:&quot;Wait to Load Pattern&quot;,&quot;d&quot;:1,&quot;o&quot;:[[1,&quot;At end&quot;],[2,&quot;1 bar&quot;]]},{&quot;id&quot;:59,&quot;g&quot;:&quot;MIDI Settings&quot;,&quot;n&quot;:&quot;Knob acceleration&quot;,&quot;d&quot;:1,&quot;o&quot;:[[0,&quot;Slow&quot;],[1,&quot;Medium&quot;],[2,&quot;Fast&quot;]]},{&quot;id&quot;:60,&quot;g&quot;:&quot;MIDI Settings&quot;,&quot;n&quot;:&quot;Aftertouch curve&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;Linear&quot;],[1,&quot;Exponential&quot;],[2,&quot;Logarithmic&quot;]]},{&quot;id&quot;:61,&quot;g&quot;:&quot;MIDI Settings&quot;,&quot;n&quot;:&quot;Velocity curve&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;Linear&quot;],[1,&quot;Exponential&quot;],[2,&quot;Logarithmic&quot;]]},{&quot;id&quot;:62,&quot;g&quot;:&quot;MIDI Settings&quot;,&quot;n&quot;:&quot;Transport send&quot;,&quot;d&quot;:3,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;MMC&quot;],[2,&quot;Real Time&quot;],[3,&quot;Both&quot;]]},{&quot;id&quot;:63,&quot;g&quot;:&quot;MIDI Settings&quot;,&quot;n&quot;:&quot;Transport receive&quot;,&quot;d&quot;:3,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;MMC&quot;],[2,&quot;Real Time&quot;],[3,&quot;Both&quot;]]},{&quot;id&quot;:64,&quot;g&quot;:&quot;MIDI Settings&quot;,&quot;n&quot;:&quot;Clock send&quot;,&quot;d&quot;:1,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;ON&quot;]]},{&quot;id&quot;:65,&quot;g&quot;:&quot;MIDI Settings&quot;,&quot;n&quot;:&quot;Clock receive&quot;,&quot;d&quot;:1,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;ON&quot;]]},{&quot;id&quot;:136,&quot;g&quot;:&quot;MIDI Settings&quot;,&quot;n&quot;:&quot;MIDI Out 2&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;Out&quot;],[1,&quot;Thru&quot;]]},{&quot;id&quot;:6,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 1 PITCH CV output&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;1 V/Oct&quot;],[1,&quot;1,2 V/Oct&quot;],[2,&quot;Hz/Volt&quot;]]},{&quot;id&quot;:10,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 1 base note&quot;,&quot;d&quot;:36,&quot;note&quot;:1},{&quot;id&quot;:14,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 1 GATE CV output&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;V-Trig 5 V&quot;],[1,&quot;V-Trig 12 V&quot;],[2,&quot;S-Trig&quot;]]},{&quot;id&quot;:18,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 1 MOD CV source&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;Velocity&quot;],[1,&quot;Pressure&quot;],[2,&quot;Mod Wheel&quot;]]},{&quot;id&quot;:22,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 1 MOD CV max voltage&quot;,&quot;d&quot;:4,&quot;o&quot;:[[0,&quot;1 V&quot;],[1,&quot;2 V&quot;],[2,&quot;3 V&quot;],[3,&quot;4 V&quot;],[4,&quot;5 V&quot;],[5,&quot;6 V&quot;],[6,&quot;7 V&quot;],[7,&quot;8 V&quot;],[8,&quot;9 V&quot;],[9,&quot;10 V&quot;]]},{&quot;id&quot;:138,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 1 Pitch Bend range&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;1 semitone&quot;],[1,&quot;2 semitones&quot;],[2,&quot;3 semitones&quot;],[3,&quot;4 semitones&quot;],[4,&quot;5 semitones&quot;],[5,&quot;6 semitones&quot;],[6,&quot;7 semitones&quot;],[7,&quot;8 semitones&quot;],[8,&quot;9 semitones&quot;],[9,&quot;10 semitones&quot;],[10,&quot;11 semitones&quot;],[11,&quot;12 semitones&quot;],[12,&quot;13 semitones&quot;],[13,&quot;14 semitones&quot;],[14,&quot;15 semitones&quot;],[15,&quot;16 semitones&quot;],[16,&quot;17 semitones&quot;],[17,&quot;18 semitones&quot;],[18,&quot;19 semitones&quot;],[19,&quot;20 semitones&quot;],[20,&quot;21 semitones&quot;],[21,&quot;22 semitones&quot;],[22,&quot;23 semitones&quot;],[23,&quot;24 semitones&quot;]]},{&quot;id&quot;:7,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 2 PITCH CV output&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;1 V/Oct&quot;],[1,&quot;1,2 V/Oct&quot;],[2,&quot;Hz/Volt&quot;]]},{&quot;id&quot;:11,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 2 base note&quot;,&quot;d&quot;:36,&quot;note&quot;:1},{&quot;id&quot;:15,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 2 GATE CV output&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;V-Trig 5 V&quot;],[1,&quot;V-Trig 12 V&quot;],[2,&quot;S-Trig&quot;]]},{&quot;id&quot;:19,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 2 MOD CV source&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;Velocity&quot;],[1,&quot;Pressure&quot;],[2,&quot;Mod Wheel&quot;]]},{&quot;id&quot;:23,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 2 MOD CV max voltage&quot;,&quot;d&quot;:4,&quot;o&quot;:[[0,&quot;1 V&quot;],[1,&quot;2 V&quot;],[2,&quot;3 V&quot;],[3,&quot;4 V&quot;],[4,&quot;5 V&quot;],[5,&quot;6 V&quot;],[6,&quot;7 V&quot;],[7,&quot;8 V&quot;],[8,&quot;9 V&quot;],[9,&quot;10 V&quot;]]},{&quot;id&quot;:139,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 2 Pitch Bend range&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;1 semitone&quot;],[1,&quot;2 semitones&quot;],[2,&quot;3 semitones&quot;],[3,&quot;4 semitones&quot;],[4,&quot;5 semitones&quot;],[5,&quot;6 semitones&quot;],[6,&quot;7 semitones&quot;],[7,&quot;8 semitones&quot;],[8,&quot;9 semitones&quot;],[9,&quot;10 semitones&quot;],[10,&quot;11 semitones&quot;],[11,&quot;12 semitones&quot;],[12,&quot;13 semitones&quot;],[13,&quot;14 semitones&quot;],[14,&quot;15 semitones&quot;],[15,&quot;16 semitones&quot;],[16,&quot;17 semitones&quot;],[17,&quot;18 semitones&quot;],[18,&quot;19 semitones&quot;],[19,&quot;20 semitones&quot;],[20,&quot;21 semitones&quot;],[21,&quot;22 semitones&quot;],[22,&quot;23 semitones&quot;],[23,&quot;24 semitones&quot;]]},{&quot;id&quot;:8,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 3 PITCH CV output&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;1 V/Oct&quot;],[1,&quot;1,2 V/Oct&quot;],[2,&quot;Hz/Volt&quot;]]},{&quot;id&quot;:12,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 3 base note&quot;,&quot;d&quot;:36,&quot;note&quot;:1},{&quot;id&quot;:16,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 3 GATE CV output&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;V-Trig 5 V&quot;],[1,&quot;V-Trig 12 V&quot;],[2,&quot;S-Trig&quot;]]},{&quot;id&quot;:20,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 3 MOD CV source&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;Velocity&quot;],[1,&quot;Pressure&quot;],[2,&quot;Mod Wheel&quot;]]},{&quot;id&quot;:24,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 3 MOD CV max voltage&quot;,&quot;d&quot;:4,&quot;o&quot;:[[0,&quot;1 V&quot;],[1,&quot;2 V&quot;],[2,&quot;3 V&quot;],[3,&quot;4 V&quot;],[4,&quot;5 V&quot;],[5,&quot;6 V&quot;],[6,&quot;7 V&quot;],[7,&quot;8 V&quot;],[8,&quot;9 V&quot;],[9,&quot;10 V&quot;]]},{&quot;id&quot;:140,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 3 Pitch Bend range&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;1 semitone&quot;],[1,&quot;2 semitones&quot;],[2,&quot;3 semitones&quot;],[3,&quot;4 semitones&quot;],[4,&quot;5 semitones&quot;],[5,&quot;6 semitones&quot;],[6,&quot;7 semitones&quot;],[7,&quot;8 semitones&quot;],[8,&quot;9 semitones&quot;],[9,&quot;10 semitones&quot;],[10,&quot;11 semitones&quot;],[11,&quot;12 semitones&quot;],[12,&quot;13 semitones&quot;],[13,&quot;14 semitones&quot;],[14,&quot;15 semitones&quot;],[15,&quot;16 semitones&quot;],[16,&quot;17 semitones&quot;],[17,&quot;18 semitones&quot;],[18,&quot;19 semitones&quot;],[19,&quot;20 semitones&quot;],[20,&quot;21 semitones&quot;],[21,&quot;22 semitones&quot;],[22,&quot;23 semitones&quot;],[23,&quot;24 semitones&quot;]]},{&quot;id&quot;:9,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 4 PITCH CV output&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;1 V/Oct&quot;],[1,&quot;1,2 V/Oct&quot;],[2,&quot;Hz/Volt&quot;]]},{&quot;id&quot;:13,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 4 base note&quot;,&quot;d&quot;:36,&quot;note&quot;:1},{&quot;id&quot;:17,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 4 GATE CV output&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;V-Trig 5 V&quot;],[1,&quot;V-Trig 12 V&quot;],[2,&quot;S-Trig&quot;]]},{&quot;id&quot;:21,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 4 MOD CV source&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;Velocity&quot;],[1,&quot;Pressure&quot;],[2,&quot;Mod Wheel&quot;]]},{&quot;id&quot;:25,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 4 MOD CV max voltage&quot;,&quot;d&quot;:4,&quot;o&quot;:[[0,&quot;1 V&quot;],[1,&quot;2 V&quot;],[2,&quot;3 V&quot;],[3,&quot;4 V&quot;],[4,&quot;5 V&quot;],[5,&quot;6 V&quot;],[6,&quot;7 V&quot;],[7,&quot;8 V&quot;],[8,&quot;9 V&quot;],[9,&quot;10 V&quot;]]},{&quot;id&quot;:141,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Voice 4 Pitch Bend range&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;1 semitone&quot;],[1,&quot;2 semitones&quot;],[2,&quot;3 semitones&quot;],[3,&quot;4 semitones&quot;],[4,&quot;5 semitones&quot;],[5,&quot;6 semitones&quot;],[6,&quot;7 semitones&quot;],[7,&quot;8 semitones&quot;],[8,&quot;9 semitones&quot;],[9,&quot;10 semitones&quot;],[10,&quot;11 semitones&quot;],[11,&quot;12 semitones&quot;],[12,&quot;13 semitones&quot;],[13,&quot;14 semitones&quot;],[14,&quot;15 semitones&quot;],[15,&quot;16 semitones&quot;],[16,&quot;17 semitones&quot;],[17,&quot;18 semitones&quot;],[18,&quot;19 semitones&quot;],[19,&quot;20 semitones&quot;],[20,&quot;21 semitones&quot;],[21,&quot;22 semitones&quot;],[22,&quot;23 semitones&quot;],[23,&quot;24 semitones&quot;]]},{&quot;id&quot;:128,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Drum Gate 1&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;V-Trig 5 V&quot;],[1,&quot;V-Trig 12 V&quot;],[2,&quot;S-Trig&quot;]]},{&quot;id&quot;:129,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Drum Gate 2&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;V-Trig 5 V&quot;],[1,&quot;V-Trig 12 V&quot;],[2,&quot;S-Trig&quot;]]},{&quot;id&quot;:130,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Drum Gate 3&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;V-Trig 5 V&quot;],[1,&quot;V-Trig 12 V&quot;],[2,&quot;S-Trig&quot;]]},{&quot;id&quot;:131,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Drum Gate 4&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;V-Trig 5 V&quot;],[1,&quot;V-Trig 12 V&quot;],[2,&quot;S-Trig&quot;]]},{&quot;id&quot;:132,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Drum Gate 5&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;V-Trig 5 V&quot;],[1,&quot;V-Trig 12 V&quot;],[2,&quot;S-Trig&quot;]]},{&quot;id&quot;:133,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Drum Gate 6&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;V-Trig 5 V&quot;],[1,&quot;V-Trig 12 V&quot;],[2,&quot;S-Trig&quot;]]},{&quot;id&quot;:134,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Drum Gate 7&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;V-Trig 5 V&quot;],[1,&quot;V-Trig 12 V&quot;],[2,&quot;S-Trig&quot;]]},{&quot;id&quot;:135,&quot;g&quot;:&quot;CV/Gate Settings&quot;,&quot;n&quot;:&quot;Drum Gate 8&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;V-Trig 5 V&quot;],[1,&quot;V-Trig 12 V&quot;],[2,&quot;S-Trig&quot;]]},{&quot;id&quot;:80,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Global channel&quot;,&quot;d&quot;:0,&quot;ch&quot;:[]},{&quot;id&quot;:28,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 1 MIDI CC&quot;,&quot;d&quot;:74,&quot;r&quot;:[0,127]},{&quot;id&quot;:33,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 1 port&quot;,&quot;d&quot;:3,&quot;o&quot;:[[0,&quot;USB&quot;],[1,&quot;MIDI 1&quot;],[2,&quot;MIDI 2&quot;],[3,&quot;All&quot;]]},{&quot;id&quot;:38,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 1 channel&quot;,&quot;d&quot;:127,&quot;ch&quot;:[[127,&quot;Global&quot;]]},{&quot;id&quot;:48,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 1 min range&quot;,&quot;d&quot;:0,&quot;r&quot;:[0,127]},{&quot;id&quot;:53,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 1 max range&quot;,&quot;d&quot;:127,&quot;r&quot;:[0,127]},{&quot;id&quot;:29,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 2 MIDI CC&quot;,&quot;d&quot;:74,&quot;r&quot;:[0,127]},{&quot;id&quot;:34,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 2 port&quot;,&quot;d&quot;:3,&quot;o&quot;:[[0,&quot;USB&quot;],[1,&quot;MIDI 1&quot;],[2,&quot;MIDI 2&quot;],[3,&quot;All&quot;]]},{&quot;id&quot;:39,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 2 channel&quot;,&quot;d&quot;:127,&quot;ch&quot;:[[127,&quot;Global&quot;]]},{&quot;id&quot;:49,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 2 min range&quot;,&quot;d&quot;:0,&quot;r&quot;:[0,127]},{&quot;id&quot;:54,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 2 max range&quot;,&quot;d&quot;:127,&quot;r&quot;:[0,127]},{&quot;id&quot;:30,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 3 MIDI CC&quot;,&quot;d&quot;:74,&quot;r&quot;:[0,127]},{&quot;id&quot;:35,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 3 port&quot;,&quot;d&quot;:3,&quot;o&quot;:[[0,&quot;USB&quot;],[1,&quot;MIDI 1&quot;],[2,&quot;MIDI 2&quot;],[3,&quot;All&quot;]]},{&quot;id&quot;:40,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 3 channel&quot;,&quot;d&quot;:127,&quot;ch&quot;:[[127,&quot;Global&quot;]]},{&quot;id&quot;:50,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 3 min range&quot;,&quot;d&quot;:0,&quot;r&quot;:[0,127]},{&quot;id&quot;:55,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 3 max range&quot;,&quot;d&quot;:127,&quot;r&quot;:[0,127]},{&quot;id&quot;:31,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 4 MIDI CC&quot;,&quot;d&quot;:74,&quot;r&quot;:[0,127]},{&quot;id&quot;:36,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 4 port&quot;,&quot;d&quot;:3,&quot;o&quot;:[[0,&quot;USB&quot;],[1,&quot;MIDI 1&quot;],[2,&quot;MIDI 2&quot;],[3,&quot;All&quot;]]},{&quot;id&quot;:41,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 4 channel&quot;,&quot;d&quot;:127,&quot;ch&quot;:[[127,&quot;Global&quot;]]},{&quot;id&quot;:51,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 4 min range&quot;,&quot;d&quot;:0,&quot;r&quot;:[0,127]},{&quot;id&quot;:56,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 4 max range&quot;,&quot;d&quot;:127,&quot;r&quot;:[0,127]},{&quot;id&quot;:32,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 5 MIDI CC&quot;,&quot;d&quot;:74,&quot;r&quot;:[0,127]},{&quot;id&quot;:37,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 5 port&quot;,&quot;d&quot;:3,&quot;o&quot;:[[0,&quot;USB&quot;],[1,&quot;MIDI 1&quot;],[2,&quot;MIDI 2&quot;],[3,&quot;All&quot;]]},{&quot;id&quot;:42,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 5 channel&quot;,&quot;d&quot;:127,&quot;ch&quot;:[[127,&quot;Global&quot;]]},{&quot;id&quot;:52,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 5 min range&quot;,&quot;d&quot;:0,&quot;r&quot;:[0,127]},{&quot;id&quot;:57,&quot;g&quot;:&quot;Controller&quot;,&quot;n&quot;:&quot;Knob 5 max range&quot;,&quot;d&quot;:127,&quot;r&quot;:[0,127]},{&quot;id&quot;:67,&quot;g&quot;:&quot;Touch Strip&quot;,&quot;n&quot;:&quot;MIDI send/receive&quot;,&quot;d&quot;:1,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;Send&quot;],[2,&quot;Receive&quot;],[3,&quot;Both&quot;]]},{&quot;id&quot;:68,&quot;g&quot;:&quot;Touch Strip&quot;,&quot;n&quot;:&quot;MIDI CC&quot;,&quot;d&quot;:9,&quot;r&quot;:[0,127]},{&quot;id&quot;:107,&quot;g&quot;:&quot;Touch Strip&quot;,&quot;n&quot;:&quot;Touch Strip&quot;,&quot;d&quot;:0,&quot;o&quot;:[[1,&quot;OFF&quot;],[0,&quot;ON&quot;]]},{&quot;id&quot;:81,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Mode&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;Chromatic&quot;],[1,&quot;Custom&quot;]]},{&quot;id&quot;:82,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Low note&quot;,&quot;d&quot;:0,&quot;r&quot;:[0,103]},{&quot;id&quot;:83,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 1&quot;,&quot;d&quot;:36,&quot;r&quot;:[0,127]},{&quot;id&quot;:84,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 2&quot;,&quot;d&quot;:37,&quot;r&quot;:[0,127]},{&quot;id&quot;:85,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 3&quot;,&quot;d&quot;:38,&quot;r&quot;:[0,127]},{&quot;id&quot;:86,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 4&quot;,&quot;d&quot;:39,&quot;r&quot;:[0,127]},{&quot;id&quot;:87,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 5&quot;,&quot;d&quot;:40,&quot;r&quot;:[0,127]},{&quot;id&quot;:88,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 6&quot;,&quot;d&quot;:41,&quot;r&quot;:[0,127]},{&quot;id&quot;:89,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 7&quot;,&quot;d&quot;:42,&quot;r&quot;:[0,127]},{&quot;id&quot;:90,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 8&quot;,&quot;d&quot;:43,&quot;r&quot;:[0,127]},{&quot;id&quot;:91,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 9&quot;,&quot;d&quot;:44,&quot;r&quot;:[0,127]},{&quot;id&quot;:92,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 10&quot;,&quot;d&quot;:45,&quot;r&quot;:[0,127]},{&quot;id&quot;:93,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 11&quot;,&quot;d&quot;:46,&quot;r&quot;:[0,127]},{&quot;id&quot;:94,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 12&quot;,&quot;d&quot;:47,&quot;r&quot;:[0,127]},{&quot;id&quot;:95,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 13&quot;,&quot;d&quot;:48,&quot;r&quot;:[0,127]},{&quot;id&quot;:96,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 14&quot;,&quot;d&quot;:49,&quot;r&quot;:[0,127]},{&quot;id&quot;:97,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 15&quot;,&quot;d&quot;:50,&quot;r&quot;:[0,127]},{&quot;id&quot;:98,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 16&quot;,&quot;d&quot;:51,&quot;r&quot;:[0,127]},{&quot;id&quot;:99,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 17&quot;,&quot;d&quot;:52,&quot;r&quot;:[0,127]},{&quot;id&quot;:100,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 18&quot;,&quot;d&quot;:53,&quot;r&quot;:[0,127]},{&quot;id&quot;:101,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 19&quot;,&quot;d&quot;:54,&quot;r&quot;:[0,127]},{&quot;id&quot;:102,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 20&quot;,&quot;d&quot;:55,&quot;r&quot;:[0,127]},{&quot;id&quot;:103,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 21&quot;,&quot;d&quot;:56,&quot;r&quot;:[0,127]},{&quot;id&quot;:104,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 22&quot;,&quot;d&quot;:57,&quot;r&quot;:[0,127]},{&quot;id&quot;:105,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 23&quot;,&quot;d&quot;:58,&quot;r&quot;:[0,127]},{&quot;id&quot;:106,&quot;g&quot;:&quot;Drum Map&quot;,&quot;n&quot;:&quot;Note 24&quot;,&quot;d&quot;:59,&quot;r&quot;:[0,127]},{&quot;id&quot;:108,&quot;g&quot;:&quot;Misc&quot;,&quot;n&quot;:&quot;Vegas mode&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;5 min&quot;],[1,&quot;10 min&quot;],[2,&quot;Never&quot;]]},{&quot;id&quot;:109,&quot;g&quot;:&quot;Misc&quot;,&quot;n&quot;:&quot;Screen saver&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;2 min&quot;],[1,&quot;10 min&quot;],[2,&quot;30 min&quot;]]},{&quot;id&quot;:110,&quot;g&quot;:&quot;Misc&quot;,&quot;n&quot;:&quot;Step listen&quot;,&quot;d&quot;:0,&quot;o&quot;:[[1,&quot;OFF&quot;],[0,&quot;ON&quot;]]},{&quot;id&quot;:143,&quot;g&quot;:&quot;Not in MCC (firmware 2.5)&quot;,&quot;n&quot;:&quot;Track 1 PC Send (Seq mode)&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;ON&quot;]],&quot;hidden&quot;:1},{&quot;id&quot;:142,&quot;g&quot;:&quot;Not in MCC (firmware 2.5)&quot;,&quot;n&quot;:&quot;Track 1 PC Send (Drum mode)&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;ON&quot;]],&quot;hidden&quot;:1},{&quot;id&quot;:144,&quot;g&quot;:&quot;Not in MCC (firmware 2.5)&quot;,&quot;n&quot;:&quot;Track 2 PC Send&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;ON&quot;]],&quot;hidden&quot;:1},{&quot;id&quot;:145,&quot;g&quot;:&quot;Not in MCC (firmware 2.5)&quot;,&quot;n&quot;:&quot;Track 3 PC Send&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;ON&quot;]],&quot;hidden&quot;:1},{&quot;id&quot;:146,&quot;g&quot;:&quot;Not in MCC (firmware 2.5)&quot;,&quot;n&quot;:&quot;Track 4 PC Send&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;ON&quot;]],&quot;hidden&quot;:1},{&quot;id&quot;:155,&quot;g&quot;:&quot;Not in MCC (firmware 2.5)&quot;,&quot;n&quot;:&quot;Track 1 Fixed Velocity (Seq mode)&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;ON&quot;]],&quot;hidden&quot;:1},{&quot;id&quot;:154,&quot;g&quot;:&quot;Not in MCC (firmware 2.5)&quot;,&quot;n&quot;:&quot;Track 1 Fixed Velocity (Drum mode)&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;ON&quot;]],&quot;hidden&quot;:1},{&quot;id&quot;:156,&quot;g&quot;:&quot;Not in MCC (firmware 2.5)&quot;,&quot;n&quot;:&quot;Track 2 Fixed Velocity&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;ON&quot;]],&quot;hidden&quot;:1},{&quot;id&quot;:157,&quot;g&quot;:&quot;Not in MCC (firmware 2.5)&quot;,&quot;n&quot;:&quot;Track 3 Fixed Velocity&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;ON&quot;]],&quot;hidden&quot;:1},{&quot;id&quot;:158,&quot;g&quot;:&quot;Not in MCC (firmware 2.5)&quot;,&quot;n&quot;:&quot;Track 4 Fixed Velocity&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;OFF&quot;],[1,&quot;ON&quot;]],&quot;hidden&quot;:1},{&quot;id&quot;:152,&quot;g&quot;:&quot;Not in MCC (firmware 2.5)&quot;,&quot;n&quot;:&quot;Brightness&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;Very Low&quot;],[1,&quot;Low&quot;],[2,&quot;High&quot;]],&quot;hidden&quot;:1},{&quot;id&quot;:153,&quot;g&quot;:&quot;Not in MCC (firmware 2.5)&quot;,&quot;n&quot;:&quot;Transpose Latch (raw value; the menu stores it inverted)&quot;,&quot;d&quot;:0,&quot;o&quot;:[[0,&quot;0&quot;],[1,&quot;1&quot;]],&quot;hidden&quot;:1}];
+/* ================= audio (stand-in instruments) ================= */
+let AC=null,MASTER=null,SOUND=true,acOff=-1e9;
+function ensureAC(){if(AC){if(AC.state===&quot;suspended&quot;)AC.resume();return AC}
+ try{AC=new (window.AudioContext||window.webkitAudioContext)();MASTER=AC.createGain();MASTER.gain.value=.5;
+  const comp=AC.createDynamicsCompressor();MASTER.connect(comp);comp.connect(AC.destination)}catch(e){AC=null}return AC}
+/* performance.now() seconds -> AudioContext time; currentTime advances in chunks, so keep the running max offset */
+function toAC(t){if(!AC)return 0;acOff=Math.max(acOff,AC.currentTime-performance.now()/1000);return Math.max(AC.currentTime,t+acOff)}
+const TIMBRE=[{w:&quot;sawtooth&quot;,cut:900,q:6,a:.004,r:.08,lvl:.32,oct:0},{w:&quot;sawtooth&quot;,cut:1800,q:3,a:.005,r:.12,lvl:.22,det:7},{w:&quot;square&quot;,cut:2600,q:1,a:.003,r:.15,lvl:.16},{w:&quot;triangle&quot;,cut:3200,q:.7,a:.02,r:.35,lvl:.3,det:5}];
+let BEND=0; // semitones
+const LIVE=new Set();
+function voice(track,midi,vel,t0,t1){if(!SOUND||!ensureAC())return null;const T=TIMBRE[track],a=toAC(t0);
+ const o=AC.createOscillator(),o2=T.det?AC.createOscillator():null,f=AC.createBiquadFilter(),g=AC.createGain();
+ o.type=T.w;o.frequency.value=hz(midi);o.detune.value=BEND*100;if(o2){o2.type=T.w;o2.frequency.value=hz(midi);o2.detune.value=BEND*100+T.det;o2.connect(f)}
+ f.type=&quot;lowpass&quot;;f.frequency.value=T.cut*(.6+vel/127*.8);f.Q.value=T.q;o.connect(f);f.connect(g);g.connect(MASTER);
+ const lv=T.lvl*(.25+.75*vel/127);g.gain.setValueAtTime(0,a);g.gain.linearRampToValueAtTime(lv,a+T.a);g.gain.setTargetAtTime(lv*.7,a+T.a,.15);
+ const v={o,o2,g,T,stop(t){const e=Math.max(AC.currentTime,t);g.gain.cancelScheduledValues(e);g.gain.setValueAtTime(g.gain.value,e);g.gain.setTargetAtTime(0,e,T.r/3);o.stop(e+T.r*2);o2&amp;&amp;o2.stop(e+T.r*2)}};
+ o.start(a);o2&amp;&amp;o2.start(a);if(t1!=null)v.stop(toAC(t1));return v}
+function liveOn(track,midi,vel){const v=voice(track,midi,vel,performance.now()/1000,null);if(v)LIVE.add(v);return v}
+function liveOff(v){if(v&amp;&amp;AC){v.stop(AC.currentTime);LIVE.delete(v)}}
+function setBend(semi){BEND=semi;for(const v of LIVE){v.o.detune.setTargetAtTime(semi*100,AC.currentTime,.01);v.o2&amp;&amp;v.o2.detune.setTargetAtTime(semi*100+v.T.det,AC.currentTime,.01)}}
+let NOISE=null;function noiseBuf(){if(NOISE)return NOISE;NOISE=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const d=NOISE.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return NOISE}
+/* 24 drum lanes: the lowest octave is a kit, the rest are tuned percussion */
+function drum(lane,vel,t){if(!SOUND||!ensureAC())return;const a=toAC(t),g=AC.createGain(),v=.25+.75*vel/127;g.connect(MASTER);
+ const env=(lv,d)=>{g.gain.setValueAtTime(lv*v,a);g.gain.exponentialRampToValueAtTime(.001,a+d)};
+ const osc=(type,f0,f1,d)=>{const o=AC.createOscillator();o.type=type;o.frequency.setValueAtTime(f0,a);if(f1)o.frequency.exponentialRampToValueAtTime(f1,a+d);o.connect(g);o.start(a);o.stop(a+d+.05)};
+ const nz=(type,f,q,d)=>{const s=AC.createBufferSource();s.buffer=noiseBuf();const fl=AC.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q;s.connect(fl);fl.connect(g);s.start(a);s.stop(a+d+.05)};
+ switch(lane){
+  case 0:env(.9,.35);osc(&quot;sine&quot;,150,42,.3);break;                 // kick
+  case 1:env(.5,.06);osc(&quot;square&quot;,800,0,.04);break;              // rim
+  case 2:env(.5,.18);osc(&quot;triangle&quot;,190,140,.1);nz(&quot;highpass&quot;,1500,.7,.18);break; // snare
+  case 3:env(.5,.22);nz(&quot;bandpass&quot;,1200,1.2,.22);break;          // clap
+  case 4:env(.6,.3);osc(&quot;sine&quot;,120,80,.3);break;                 // low tom
+  case 5:env(.6,.25);osc(&quot;sine&quot;,170,110,.25);break;              // mid tom
+  case 6:env(.25,.05);nz(&quot;highpass&quot;,7000,.8,.05);break;          // closed hat
+  case 7:env(.6,.22);osc(&quot;sine&quot;,230,160,.22);break;              // high tom
+  case 8:env(.22,.3);nz(&quot;highpass&quot;,6500,.8,.3);break;            // open hat
+  case 9:env(.3,.12);osc(&quot;square&quot;,540,0,.1);osc(&quot;square&quot;,800,0,.1);break; // cowbell
+  case 10:env(.2,.9);nz(&quot;highpass&quot;,5000,.5,.9);break;            // crash
+  case 11:env(.4,.08);nz(&quot;bandpass&quot;,3000,3,.08);break;           // shaker
+  default:env(.35,.25);osc(&quot;sine&quot;,hz(48+lane),0,.25)}             // tuned percussion
+}
+function click(accent,t){if(!SOUND||!ensureAC())return;const a=toAC(t),o=AC.createOscillator(),g=AC.createGain();o.frequency.value=accent?1800:1200;o.type=&quot;square&quot;;
+ g.gain.setValueAtTime(.12,a);g.gain.exponentialRampToValueAtTime(.001,a+.03);o.connect(g);g.connect(MASTER);o.start(a);o.stop(a+.05)}
+/* ================= data model ================= */
+const newStep=()=>({n:[],on:false,skip:[0,0,0,0]});
+const newDStep=()=>({on:false,g:.5,v:100,t:0,r:100,skip:[0,0,0,0]});
+const newPat=()=>({valid:false,len:16,div:2,trip:false,dir:0,poly:true,scale:0,root:0,arp:0,arpOct:0,swOff:0,st:Array.from({length:64},newStep),raw:{}});
+const newDrumPat=()=>({valid:false,len:16,div:2,trip:false,dir:0,poly:false,swOff:0,lanes:Array.from({length:24},()=>({len:16,st:Array.from({length:64},newDStep)})),raw:{}});
+const newCtrlPat=()=>({valid:false,len:16,st:Array.from({length:64},()=>({cc:[null,null,null,null,null]})),raw:{}});
+const newTrack=t=>({mode:&quot;seq&quot;,pats:Array.from({length:16},newPat),cur:0,chain:[],chord:{root:null,off:[]},chordOn:false,oct:0,valid:false,raw:{}});
+function newProject(){return {name:null,bpm:120,swing:50,tracks:[0,1,2,3].map(newTrack),drum:{pats:Array.from({length:16},newDrumPat),cur:0,chain:[]},
+ ctrl:{pats:Array.from({length:16},newCtrlPat),cur:0},scenes:Array.from({length:16},()=>null),user:[0xFFF,0xFFF],raw:{}}}
+const GDEF=new Int16Array(160);GLOBALS.forEach(g=>GDEF[g.id]=g.d);GDEF[153]=1;GDEF[152]=1;GDEF[143]=1;GDEF[144]=1;GDEF[145]=1;GDEF[146]=1;GDEF[142]=1;
+[0,1,2,3,4].forEach(i=>GDEF[28+i]=74+i); // the manual's defaults: Pitch 74 … Randomness 78
+GDEF[74]=GDEF[79]=9; // drum channel 10 (0-based 9, as the device reports; the MCC file says 10)
+
+/* track defaults (what the encoders set when no step is held) */
+const newDefaults=()=>({p:60,g:.5,v:100,t:0,r:100});
+const newArpParams=()=>({g:.5,vo:0,t:0,r:0});
+let S,P,HELD,LATCH;
+function baseState(){
+ S={proj:0,ram:Array.from({length:16},newProject),flash:null,globals:Int16Array.from(GDEF),cur:0,
+  playing:false,paused:false,rec:false,quant:true,metro:false,stepEdit:false,overdub:false,sel:null,selNotes:null,
+  hold:[0,0,0,0],arpHeld:[[],[],[],[]],arpLatched:[[],[],[],[]],mute:[0,0,0,0],solo:-1,drumMute:Array(24).fill(0),drumMuteMode:false,
+  trans:[0,1,2,3].map(()=>({semi:0,on:false})),tgroup:new Set(),transMode:false,
+  view:[0,0,0,0,0],follow:true,control:false,ctrlTrack:0,cc:[64,64,64,64,64],mod:[0,0,0,0],
+  defs:[0,1,2,3].map(newDefaults),drumDefs:newDefaults(),arpP:[0,1,2,3].map(newArpParams),
+  menu:null,confirm:null,msg:null,msgT:0,copy:null,undo:null,globalBpm:false,gbpm:120,waitLoad:true,looper:null,looperOn:true,
+  lane:0,chordEntry:null,taps:[],stopTaps:[],cvr:[1,2,4,8],split:null,lastNote:60,rootSel:false,userEdit:null,stepRecPos:0,patMode:null,
+  sceneCur:-1,keysDown:new Map(),recPending:new Map()};
+ S.flash=S.ram.map(deep);
+ P=[0,1,2,3,4].map(()=>({idx:0,cnt:0,next:0,pend:null,chainPos:0,lanes:Array(24).fill(0).map(()=>({idx:0,cnt:0}))}));
+ HELD=new Map();LATCH=new Set();
+}
+const proj=()=>S.ram[S.proj];
+const trk=(t=S.cur)=>proj().tracks[t];
+const isDrum=(t=S.cur)=>t===0&amp;&amp;trk(0).mode===&quot;drum&quot;;
+const curPat=(t=S.cur)=>isDrum(t)?proj().drum.pats[proj().drum.cur]:trk(t).pats[trk(t).cur];
+const patIdx=(t=S.cur)=>isDrum(t)?proj().drum.cur:trk(t).cur;
+const bpm=()=>S.globalBpm?S.gbpm:proj().bpm;
+const held=id=>HELD.has(id);
+const fvId=t=>t===0?(isDrum(0)?154:155):155+t;
+const pcId=t=>t===0?(isDrum(0)?142:143):143+t;
+const outCh=t=>{const c=isDrum(t)?S.globals[79]:S.globals[75+t];return c>15?null:c};
+
+/* ---------- scale maps ---------- */
+const mapCache=new Map();
+function scaleMask(t=S.cur){const p=curPat(t);if(isDrum(t))return 0;const s=p.scale;if(s===8)return proj().user[0];if(s===9)return proj().user[1];return SCALES[s]?SCALES[s][1]:0xFFF}
+function noteMap(t=S.cur){if(isDrum(t))return null;const m=scaleMask(t),r=curPat(t).root,k=m+&quot;/&quot;+r;let v=mapCache.get(k);if(!v){v=buildMap(m===0xFFF?0:m,r);mapCache.set(k,v)}return v}
+const q=(t,n)=>{n=clamp(n,0,127);const m=noteMap(t);return m?m[n]:n};
+/* scale-aware step: move a note to the next/previous note of the scale */
+function scaleStep(t,n,d){const mask=scaleMask(t),r=curPat(t).root;if(!mask||mask===0xFFF)return clamp(n+d,0,127);
+ const inS=x=>(mask>>(((x-r)%12+12)%12))&amp;1;let x=n;for(let i=0;i<Math.abs(d);i++){do{x+=Math.sign(d)}while(x>0&amp;&amp;x<127&amp;&amp;!inS(x))}return clamp(x,0,127)}
+
+/* ---------- messages / events ---------- */
+function msg(t,ms=1200){S.msg=t;S.msgT=performance.now()+ms;dirty()}
+const LISTEN=[];function emit(ev){for(const f of LISTEN)f(ev)}
+
+/* ---------- timing ---------- */
+const stepTicks=p=>DIVS[p.div][1]*(p.trip?2/3:1);
+const stepDur=p=>60/bpm()*stepTicks(p)/96;
+function swingDelay(t,p,cnt){const sw=clamp(proj().swing+(p.swOff||0),50,75);return cnt%2?(sw-50)/50*stepDur(p):0}
+let T0=0;const now=()=>performance.now()/1000;
+
+function play(){ensureAC();if(S.playing&amp;&amp;!S.paused){S.paused=true;allOff();emit(&quot;pause&quot;);dirty();return}
+ if(S.paused){S.paused=false;const t=now()+.03;P.forEach(p=>p.next=t);metroNext=t;emit(&quot;play&quot;);dirty();return}
+ S.playing=true;S.paused=false;const t=now()+.05;T0=t;P.forEach(p=>{p.idx=0;p.cnt=0;p.next=t;p.chainPos=0;p.lanes.forEach(l=>{l.idx=0;l.cnt=0})});
+ [0,1,2,3].forEach(i=>{const c=i===0&amp;&amp;isDrum(0)?proj().drum.chain:trk(i).chain;if(c.length)setPat(i,c[0],true)});
+ metroNext=t;metroCnt=0;arpStartAll(t);emit(&quot;play&quot;);dirty()}
+function stop(){const t=performance.now();S.stopTaps=S.stopTaps.filter(x=>t-x<700);S.stopTaps.push(t);if(S.stopTaps.length>=3){allOff(true);msg(&quot;All Notes Off&quot;);S.stopTaps=[]}
+ S.playing=false;S.paused=false;if(S.rec===&quot;rt&quot;)S.rec=false;P.forEach(p=>{p.idx=0;p.cnt=0;p.pend=null});S.looper=null;allOff();emit(&quot;stop&quot;);dirty()}
+function restart(){if(!S.playing){play();return}const t=now()+.03;P.forEach(p=>{p.idx=0;p.cnt=0;p.next=t;p.lanes.forEach(l=>{l.idx=0;l.cnt=0})});metroNext=t;metroCnt=0;emit(&quot;restart&quot;)}
+
+/* scheduled notes so stop / pause can cut them */
+const SCHED=[];
+function playNote(t,midi,vel,t0,t1){const v=voice(t,midi,vel,t0,t1);if(v)SCHED.push({v,end:t1});midiNote(t,midi,vel,t0,t1);flash(t,midi,t0,t1)}
+function allOff(midiToo){for(const s of SCHED)s.v.stop(AC?AC.currentTime:0);SCHED.length=0;for(const v of LIVE)liveOff(v);NOTEFLASH.length=0;if(midiToo)midiAllOff()}
+const NOTEFLASH=[];function flash(t,midi,t0,t1){NOTEFLASH.push({t,midi,t0,t1})}
+
+/* ---------- the clock: a Blob worker ticks every 10 ms, rAF also calls advance() ---------- */
+let metroNext=0,metroCnt=0;
+const metroDivs=[[96,1],[64,1],[48,1],[32,1],[24,1],[16,1],[12,1],[8,1]];
+function advance(){const n=now(),la=n+.12;
+ for(let i=SCHED.length-1;i>=0;i--)if(SCHED[i].end<n-1)SCHED.splice(i,1);
+ for(let i=NOTEFLASH.length-1;i>=0;i--)if(NOTEFLASH[i].t1<n)NOTEFLASH.splice(i,1);
+ arpAdvance(la);
+ if(!S.playing||S.paused)return;
+ for(let t=0;t<4;t++){const p=P[t];let guard=0;while(p.next<la&amp;&amp;guard++<64){playTrackStep(t,p.next);p.next+=stepDur(curPat(t))}}
+ {const p=P[4],cp=proj().ctrl.pats[proj().ctrl.cur];let guard=0;while(p.next<la&amp;&amp;guard++<64){playCtrlStep(cp,p);p.next+=60/bpm()/4}}
+ if(S.metro){const md=metroDivs[S.globals[116]]||[24];const d=60/bpm()*md[0]/96;let g=0;while(metroNext<la&amp;&amp;g++<64){const beats=S.globals[115]+1;click(metroCnt%beats===0,metroNext);metroCnt++;metroNext+=d}}
+ else metroNext=Math.max(metroNext,n);
+}
+function nextIdx(p,idx,len){if(p.dir===1)return rnd(len);if(p.dir===2){const r=Math.random();return r<.5?(idx+1)%len:r<.75?idx:(idx-1+len)%len}return (idx+1)%len}
+function patEnd(t){const p=P[t];// end of a pattern pass: chains and wait-to-load
+ const tr=trk(t),chain=t===0&amp;&amp;isDrum(0)?proj().drum.chain:tr.chain;
+ if(p.pend!=null){setPat(t,p.pend,true);p.pend=null;return}
+ if(chain.length>1){p.chainPos=(p.chainPos+1)%chain.length;setPat(t,chain[p.chainPos],true)}}
+function playTrackStep(t,time){const p=P[t],pat=curPat(t);
+ if(S.looper&amp;&amp;S.looper.start[t]!=null){const L=S.looper,len=Math.max(1,Math.round(L.beats*96/stepTicks(pat)));if(p.cnt-L.start[t]>=len){p.idx=L.idx[t];p.cnt=L.start[t]}}
+ const cnt=p.cnt,idx=p.idx,tt=time+swingDelay(t,pat,cnt),dur=stepDur(pat),pageIt=Math.floor(cnt/16)%4;
+ const audible=!(S.solo>=0?S.solo!==t:S.mute[t]);
+ if(isDrum(t))playDrumStep(pat,tt,dur,audible);
+ else if(trk(t).mode===&quot;seq&quot;){const st=pat.st[idx];
+  if(st.on&amp;&amp;st.n.length&amp;&amp;!st.skip[pageIt]&amp;&amp;audible){let notes=st.n;if(!pat.poly)notes=[notes.reduce((a,b)=>b.p<a.p?b:a)];
+   const tr=S.trans[t].on?S.trans[t].semi:0;
+   for(const nt of notes){if(Math.random()*100>=nt.r)continue;const pitch=q(t,nt.p+tr),t0=tt+nt.t/100*dur;playNote(t,pitch,nt.v,t0,t0+Math.max(.03,nt.g*dur*.98))}}
+  if(S.rec===&quot;rt&quot;&amp;&amp;held(&quot;tie&quot;)){pat.st[idx]=newStep();pat.valid=true}}
+ /* advance */
+ p.idx=nextIdx(pat,idx,pat.len);p.cnt++;if(pat.dir===0?p.idx===0:p.cnt%pat.len===0)patEnd(t);
+ if(t===S.cur&amp;&amp;S.follow&amp;&amp;!isDrum(t))S.view[t]=Math.floor(p.idx/16);if(t===0&amp;&amp;isDrum(0)&amp;&amp;S.follow)S.view[4]=Math.floor(p.idx/16);
+ S.playIdx=S.playIdx||[];S.playIdx[t]={idx,time:tt};
+}
+function playDrumStep(pat,tt,dur,audible){const p=P[0];
+ for(let l=0;l<24;l++){const lane=pat.lanes[l],ls=p.lanes[l],len=pat.poly?lane.len:pat.len,idx=pat.poly?ls.idx%len:p.idx,st=lane.st[idx],pageIt=Math.floor((pat.poly?ls.cnt:p.cnt)/16)%4;
+  if(st.on&amp;&amp;!st.skip[pageIt]&amp;&amp;audible&amp;&amp;!S.drumMute[l]&amp;&amp;Math.random()*100<st.r){const t0=tt+st.t/100*dur;drum(l,st.v,t0);midiDrum(l,st.v,t0,t0+st.g*dur);NOTEFLASH.push({t:0,drum:l,t0,t1:t0+.08})}
+  if(pat.poly){ls.idx=nextIdx(pat,ls.idx,len);ls.cnt++}}
+ if(S.rec===&quot;rt&quot;&amp;&amp;held(&quot;tie&quot;)){for(const l of pat.lanes)l.st[p.idx]=newDStep()}}
+function playCtrlStep(cp,p){const idx=p.idx,st=cp.st[idx];if(S.playing){st.cc.forEach((v,i)=>{if(v!=null){S.cc[i]=v;midiCC(i,v)}})}p.idx=(p.idx+1)%cp.len;p.cnt++}
+
+/* ---------- arpeggiators (run whenever notes are held, even when stopped) ---------- */
+const ARP=[0,1,2,3].map(()=>({next:0,i:0,seq:[],dirn:1,running:false}));
+function arpNotes(t){return S.hold[t]?S.arpLatched[t]:S.arpHeld[t]}
+function arpSeq(t){const pat=curPat(t),base=arpNotes(t).slice();if(!base.length)return [];
+ const oct=pat.arpOct-1;// -1..+3
+ const sorted=base.slice().sort((a,b)=>a.p-b.p);let list=[];
+ const octs=oct<0?[-1,0]:Array.from({length:oct+1},(_,i)=>i);
+ const mode=ARPS[pat.arp];
+ const src=mode===&quot;Order&quot;?base:sorted;
+ for(const o of octs)for(const n of src)list.push({p:n.p+12*o,v:n.v});
+ if(mode===&quot;Down&quot;)list.reverse();
+ if(mode===&quot;Exclu&quot;&amp;&amp;list.length>2)list=list.concat(list.slice(1,-1).reverse());
+ if(mode===&quot;Inclu&quot;)list=list.concat(list.slice().reverse());
+ if(mode===&quot;Poly&quot;)list=octs.map(o=>({chord:src.map(n=>({p:n.p+12*o,v:n.v}))}));
+ return list}
+function arpStartAll(t0){ARP.forEach((a,t)=>{if(a.running){a.next=t0;a.i=0}})}
+function arpAdvance(la){for(let t=1;t<4;t++){const tr=trk(t);const a=ARP[t];if(tr.mode!==&quot;arp&quot;||!arpNotes(t).length){a.running=false;continue}
+  const pat=curPat(t),dur=stepDur(pat),ap=S.arpP[t];
+  if(!a.running){a.running=true;a.i=0;a.cnt=0;a.next=S.playing&amp;&amp;!S.paused?Math.max(now()+.01,P[t].next):now()+.01}
+  let g=0;while(a.next<la&amp;&amp;g++<32){const list=arpSeq(t);if(!list.length)break;const it=list[a.i%list.length];a.i++;
+   const audible=!(S.solo>=0?S.solo!==t:S.mute[t]),tt=a.next+swingDelay(t,pat,a.cnt||0)+ap.t/100*dur;a.cnt=(a.cnt||0)+1;
+   const tr2=S.trans[t].on?S.trans[t].semi:0,notes=it.chord||[it];
+   for(const n of notes){let pitch=n.p+tr2;if(ap.r>0&amp;&amp;Math.random()*100<ap.r)pitch+=[-12,-7,-5,5,7,12][rnd(6)];
+    const v=clamp(n.v+ap.vo,0,127);if(v<=0)continue;pitch=q(t,pitch);if(audible)playNote(t,pitch,v,tt,tt+Math.max(.03,ap.g*dur));
+    if(S.rec===&quot;rt&quot;&amp;&amp;S.playing&amp;&amp;t===S.cur)recordNote(t,pitch,v,tt,ap.g)}
+   if(S.playing&amp;&amp;S.rec!==&quot;rt&quot;&amp;&amp;!S.paused){}
+   a.next+=dur}}}
+
+/* ---------- patterns, chains ---------- */
+function setPat(t,i,now_){if(isDrum(t)&amp;&amp;t===0)proj().drum.cur=i;else trk(t).cur=i;mapCache.clear&amp;&amp;0;emit(`pattern:${t}:${i}`);dirty();
+ const pc=curPatPC(t);if(pc!=null&amp;&amp;S.globals[pcId(t)])midiPC(t,pc)}
+function curPatPC(t){const p=curPat(t);return p.pc==null?null:p.pc}
+function choosePat(t,i){const tr=trk(t);if(t===0&amp;&amp;isDrum(0))proj().drum.chain=[];else tr.chain=[];
+ if(S.playing&amp;&amp;S.waitLoad)P[t].pend=i;else setPat(t,i,true)}
+
+/* ---------- recording ---------- */
+function curDefaults(t=S.cur){const d=isDrum(t)?S.drumDefs:S.defs[t];return d}
+function noteFromDefaults(t,p,v){const d=curDefaults(t);const vel=S.globals[fvId(t)]?d.v:v;return {p,g:d.g,v:vel,t:d.t,r:d.r}}
+function recordNote(t,pitch,vel,time,gate){const pat=curPat(t),p=P[t],dur=stepDur(pat);
+ // position relative to the step that is playing now
+ const last=S.playIdx&amp;&amp;S.playIdx[t];let idx,ts;if(!last){idx=0;ts=0}else{const rel=(time-last.time)/dur;let k=Math.round(rel);ts=Math.round((rel-k)*100);idx=((last.idx+k)%pat.len+pat.len)%pat.len}
+ if(S.quant)ts=0;ts=clamp(ts,-49,50);
+ const st=pat.st[idx];if(!S.overdub&amp;&amp;!S.recTouched.has(idx)){st.n=[]}S.recTouched.add(idx);
+ if(st.n.length>=16){msg(&quot;16 notes limit in\na step reached&quot;);return null}
+ const n=noteFromDefaults(t,pitch,vel);n.t=ts;if(gate!=null)n.g=gate;if(!pat.poly)st.n=[];st.n.push(n);st.on=true;pat.valid=true;emit(&quot;recnote&quot;);dirty();return {n,time,dur}}
+
+/* ---------- step edits &amp; shift functions ---------- */
+function snapshotUndo(){S.undo={t:S.cur,drum:isDrum(),i:patIdx(),pat:deep(curPat())};}
+function doUndo(){if(!S.undo){msg(&quot;Nothing to undo&quot;);return}const u=S.undo;if(u.drum)proj().drum.pats[u.i]=u.pat;else proj().tracks[u.t].pats[u.i]=u.pat;S.undo=null;msg(&quot;Undo&quot;);dirty()}
+function shiftStep(i){const pat=curPat(),name=STEPFN[i],t=S.cur,dr=isDrum();
+ const lane=dr?pat.lanes[S.lane]:null,steps=dr?lane.st:pat.st,len=dr&amp;&amp;pat.poly?lane.len:pat.len;
+ const rot=d=>{const a=steps.slice(0,len);const b=d>0?[a[len-1],...a.slice(0,len-1)]:[...a.slice(1),a[0]];b.forEach((s,k)=>steps[k]=s)};
+ const eachNote=f=>{if(!dr)pat.st.slice(0,pat.len).forEach(s=>s.n.forEach(f))};
+ if(S.control&amp;&amp;[2,3,4,10].includes(i)){const cp=proj().ctrl.pats[proj().ctrl.cur],a=cp.st.slice(0,cp.len);let b;
+  if(i===2)b=[...a.slice(1),a[0]];else if(i===3)b=[a[cp.len-1],...a.slice(0,-1)];else if(i===4)b=a.slice().reverse();else b=a.slice().sort(()=>Math.random()-.5);b.forEach((s,k)=>cp.st[k]=s);msg(name);emit(&quot;shiftfn:&quot;+name);dirty();return}
+ switch(i){
+  case 0:snapshotUndo();if(dr)proj().drum.pats[proj().drum.cur]=newDrumPat();else trk().pats[trk().cur]=newPat();curPat().valid=true;break;
+  case 1:snapshotUndo();if(dr)lane.st=Array.from({length:64},newDStep);else pat.st=Array.from({length:64},newStep);break;
+  case 2:rot(-1);break;case 3:rot(1);break;
+  case 4:{const a=steps.slice(0,len).reverse();a.forEach((s,k)=>steps[k]=s);break}
+  case 5:eachNote(n=>n.p=scaleStep(t,n.p,1));break;case 6:eachNote(n=>n.p=scaleStep(t,n.p,-1));break;
+  case 7:eachNote(n=>n.p=clamp(n.p+12,0,127));break;case 8:eachNote(n=>n.p=clamp(n.p-12,0,127));break;
+  case 9:case 10:{const f=i===9?.5:0;if(dr)steps.forEach(s=>s.t=Math.round(s.t*f));else eachNote(n=>n.t=Math.round(n.t*f));break}
+  case 11:{const a=steps.slice(0,len).sort(()=>Math.random()-.5);a.forEach((s,k)=>steps[k]=s);break}
+  case 12:eachNote(n=>n.p=q(t,clamp(n.p+rnd(13)-6,0,127)));break;
+  case 13:eachNote(n=>n.p=clamp(n.p+12*(rnd(3)-1),0,127));break;
+  case 14:S.globalBpm=!S.globalBpm;msg(S.globalBpm?`Global BPM\n${S.gbpm.toFixed(2)}`:`Project BPM\n${proj().bpm.toFixed(2)}`);emit(&quot;shiftfn:&quot;+name);dirty();return;
+  case 15:S.waitLoad=!S.waitLoad;msg(S.waitLoad?&quot;Wait Load\nON&quot;:&quot;Wait Load\nOFF&quot;);emit(&quot;shiftfn:&quot;+name);dirty();return}
+ pat.valid=true;msg(name);emit(&quot;shiftfn:&quot;+name);dirty()}
+
+/* ---------- copy / paste ---------- */
+function copySteps(list){const pat=curPat(),dr=isDrum();const v=S.view[dr?4:S.cur];S.copy={kind:&quot;steps&quot;,drum:dr,base:Math.min(...list.map(i=>v*16+i)),items:list.map(i=>v*16+i).map(i=>({off:i,d:deep(dr?pat.lanes[S.lane].st[i]:pat.st[i])}))};S.copy.items.forEach(x=>x.off-=S.copy.base);msg(list.length>1?&quot;Steps\nCopied&quot;:&quot;Step\nCopied&quot;)}
+function pasteSteps(i){const c=S.copy,dr=isDrum();if(!c||c.kind!==&quot;steps&quot;){msg(&quot;Nothing to\npaste&quot;);return}if(c.drum!==dr){msg(&quot;Can't Paste step\nbetween\nSeq and Drum&quot;);return}
+ snapshotUndo();const pat=curPat(),at=S.view[dr?4:S.cur]*16+i;let part=false;
+ c.items.forEach(x=>{const k=at+x.off;if(k>63){part=true;return}if(dr)pat.lanes[S.lane].st[k]=deep(x.d);else pat.st[k]=deep(x.d)});pat.valid=true;msg(part?&quot;Steps partially\nPasted&quot;:c.items.length>1?&quot;Steps\nPasted&quot;:&quot;Step\nPasted&quot;);dirty()}
+
+/* ---------- projects ---------- */
+function loadProject(n){S.proj=n;mapCache.clear();P.forEach(p=>p.pend=null);S.sceneCur=-1;msg(&quot;Project\nLoaded&quot;);emit(&quot;project:&quot;+n);dirty()}
+function saveProject(){const p=S.proj,r=S.ram[p];r.tracks.forEach(t=>t.valid=true);const name=S.flash[p].name;S.flash[p]=deep(r);S.flash[p].name=name;r.name=name;msg(&quot;Project\nSaved&quot;);emit(&quot;save:project&quot;);dirty()}
+function eraseProject(){const p=S.proj;S.ram[p]=newProject();S.flash[p]=newProject();msg(&quot;Project\nErased&quot;);emit(&quot;erase:project&quot;);dirty()}
+function copyProject(){const src=S.proj,dst=(src+1)%16,name=S.flash[dst].name;S.flash[dst]=deep(S.ram[src]);S.flash[dst].name=name;S.ram[dst]=deep(S.flash[dst]);msg(&quot;Project\nCopied&quot;);emit(&quot;copy:project&quot;);dirty()}
+function recallProject(){S.ram[S.proj]=deep(S.flash[S.proj]);mapCache.clear();msg(&quot;Load Project\nfrom FLASH&quot;);emit(&quot;recall&quot;);dirty()}
+function savePattern(t,i){const fl=S.flash[S.proj];if(t===0&amp;&amp;isDrum(0)){fl.drum.pats[i]=deep(proj().drum.pats[i]);fl.drum.pats[i].valid=true;proj().drum.pats[i].valid=true}
+ else{fl.tracks[t].pats[i]=deep(trk(t).pats[i]);fl.tracks[t].pats[i].valid=true;trk(t).pats[i].valid=true}}
+function patDirty(t,i){const fl=S.flash[S.proj];const a=t===0&amp;&amp;isDrum(0)?proj().drum.pats[i]:trk(t).pats[i],b=t===0&amp;&amp;isDrum(0)?fl.drum.pats[i]:fl.tracks[t].pats[i];return JSON.stringify(a)!==JSON.stringify(b)}
+function patHasContent(t,i){const a=t===0&amp;&amp;isDrum(0)?proj().drum.pats[i]:trk(t).pats[i];return a.lanes?a.lanes.some(l=>l.st.some(s=>s.on)):a.st.some(s=>s.on&amp;&amp;s.n.length)}
+
+/* ---------- scenes ---------- */
+function saveScene(i){const pr=proj();pr.scenes[i]={pat:[0,1,2,3].map(t=>trk(t).cur),dpat:pr.drum.cur,chain:[0,1,2,3].map(t=>trk(t).chain.slice()),dchain:pr.drum.chain.slice(),mute:S.mute.slice(),solo:S.solo,track:S.cur,valid:true};msg(&quot;Scene\nSaved&quot;);emit(&quot;scene:save:&quot;+i);dirty()}
+function loadScene(i){const sc=proj().scenes[i];if(!sc)return;const pr=proj();[0,1,2,3].forEach(t=>{trk(t).cur=sc.pat[t];trk(t).chain=sc.chain[t].slice()});pr.drum.cur=sc.dpat;pr.drum.chain=sc.dchain.slice();
+ S.mute=sc.mute.slice();S.solo=sc.solo;S.cur=sc.track;S.sceneCur=i;P.forEach(p=>{p.idx=0;p.cnt=0;p.chainPos=0});emit(&quot;scene:load:&quot;+i);dirty()}
+
+/* ---------- transpose ---------- */
+function setTranspose(semi){const ts=new Set([S.cur,...S.tgroup]);for(const t of ts){if(isDrum(t)){msg(&quot;Drum Track can't\nbe transposed&quot;);continue}S.trans[t]={semi,on:semi!==0}}
+ msg(semi?`Transpose\n${semi>0?&quot;+&quot;:&quot;&quot;}${semi} semi`:&quot;Transpose\nNo Transposition&quot;);emit(`trans:${S.cur}:${semi}`);dirty()}
+/* ================= OLED and the Utility menu ================= */
+const GBY=Object.fromEntries(GLOBALS.map(g=>[g.id,g]));
+const L=(n,id,extra={})=>({n,id,...extra});
+const MENU_TS=()=>({n:&quot;Track Settings&quot;,c:[L(&quot;MIDI Channel IN&quot;,()=>isDrum()?74:70+S.cur),L(&quot;MIDI Channel OUT&quot;,()=>isDrum()?79:75+S.cur),
+ L(&quot;PC Send&quot;,()=>pcId(S.cur),{o:[[0,&quot;OFF&quot;],[1,&quot;ON&quot;]]}),{n:&quot;PC Assign&quot;,pc:1},L(&quot;Fixed Velocity&quot;,()=>fvId(S.cur),{o:[[0,&quot;OFF&quot;],[1,&quot;ON&quot;]]})]});
+const MENU=()=>({n:&quot;Utility&quot;,c:[MENU_TS(),
+ {n:&quot;Sync&quot;,c:[L(&quot;Source&quot;,122),L(&quot;Clock rate&quot;,123),L(&quot;Output&quot;,124)]},
+ {n:&quot;Metronome&quot;,c:[L(&quot;Count In&quot;,114),L(&quot;Time Div&quot;,116),L(&quot;Time Sig&quot;,115)]},
+ {n:&quot;Launch Quant&quot;,c:[L(&quot;Wait Load Project&quot;,3),L(&quot;Wait Load Scene&quot;,2),L(&quot;Wait Load Pattern&quot;,4)]},
+ {n:&quot;CV Settings&quot;,c:[...[0,1,2,3].map(v=>({n:&quot;Voice &quot;+(v+1),c:[L(&quot;Pitch format&quot;,6+v),L(&quot;Base note&quot;,10+v),L(&quot;Gate format&quot;,14+v),L(&quot;Mod type&quot;,18+v),L(&quot;Mod max Voltage&quot;,22+v),L(&quot;Pitch Bend range&quot;,138+v)]})),
+  {n:&quot;DrumGates&quot;,c:[...Array(8).keys()].map(i=>L(`Gate ${i+1} format`,128+i))}]},
+ {n:&quot;Controller&quot;,c:[L(&quot;Global MIDI chan&quot;,80),...[0,1,2,3,4].map(k=>({n:&quot;Knob &quot;+(k+1),c:[L(&quot;MIDI CC&quot;,28+k),L(&quot;Port&quot;,33+k),L(&quot;Channel&quot;,38+k),L(&quot;Min&quot;,48+k),L(&quot;Max&quot;,53+k)]}))]},
+ {n:&quot;MIDI Settings&quot;,c:[L(&quot;Knob Acceleration&quot;,59),L(&quot;Aftertouch Curve&quot;,60),L(&quot;Velocity Curve&quot;,61),L(&quot;Transport Send&quot;,62),L(&quot;Transport Receive&quot;,63),L(&quot;Clock Send&quot;,64),L(&quot;Clock Receive&quot;,65),L(&quot;MIDI Out 2&quot;,136)]},
+ {n:&quot;Touch Strip&quot;,c:[L(&quot;MIDI Send/Receive&quot;,67),L(&quot;MIDI CC&quot;,68)]},
+ {n:&quot;MIDI Channels&quot;,c:[0,1,2,3].map(t=>L(`Track ${t+1} input`,70+t)).concat([L(&quot;Drum input&quot;,74)],[0,1,2,3].map(t=>L(`Track ${t+1} output`,75+t)),[L(&quot;Drum output&quot;,79)])},
+ {n:&quot;Drum Map&quot;,c:[L(&quot;Mode&quot;,81),L(&quot;Chromatic Low Note&quot;,82),...Array(24).keys()].map((x,i)=>typeof x===&quot;object&quot;?x:L(`Custom Note ${x+1}`,83+x))},
+ {n:&quot;Misc&quot;,c:[L(&quot;Vegas mode time&quot;,108),L(&quot;Screen saver time&quot;,109),L(&quot;Step Listen&quot;,110),L(&quot;Transpose Latch&quot;,153,{o:[[1,&quot;OFF&quot;],[0,&quot;ON&quot;]]}),L(&quot;Brightness&quot;,152)]},
+ {n:&quot;FW version&quot;,info:&quot;Firmware version :\n2.5.20\nbuild 2085&quot;}]});
+const gidOf=it=>typeof it.id===&quot;function&quot;?it.id():it.id;
+function optsOf(it){const id=gidOf(it),g=GBY[id]||{};if(it.o)return it.o;if(g.o)return g.o;
+ if(g.ch)return [...Array(16).keys()].map(i=>[i,String(i+1)]).concat(g.ch);
+ if(g.note)return [...Array(128).keys()].map(i=>[i,nm(i)]);
+ const r=g.r||[0,127];return Array.from({length:r[1]-r[0]+1},(_,i)=>[r[0]+i,String(r[0]+i)])}
+function valStr(it){if(it.pc){const p=curPat();return p.pc==null?&quot;OFF&quot;:String(p.pc+1)}const id=gidOf(it),v=S.globals[id],o=optsOf(it).find(x=>x[0]===v);return o?o[1]:String(v)}
+function openMenu(root){S.menu={stack:[root],i:0,edit:false};emit(&quot;menu:&quot;+root.n);dirty()}
+function menuNode(){const m=S.menu;return m.stack[m.stack.length-1]}
+function menuTurn(d){const m=S.menu,node=menuNode(),it=node.c[m.i];
+ if(m.edit){if(it.pc){const p=curPat();p.pc=p.pc==null?(d>0?0:null):(p.pc+d<0?null:clamp(p.pc+d,0,127));p.valid=true;if(p.pc!=null)midiPC(S.cur,p.pc);dirty();return}
+  const o=optsOf(it),id=gidOf(it),k=o.findIndex(x=>x[0]===S.globals[id]);const nk=clamp((k<0?0:k)+d,0,o.length-1);S.globals[id]=o[nk][0];emit(&quot;global:&quot;+id);dirty();return}
+ m.i=clamp(m.i+d,0,node.c.length-1);dirty()}
+function menuPush(){const m=S.menu,node=menuNode(),it=node.c[m.i];
+ if(it.c){m.stack.push(it);m.i=0;emit(&quot;menu:&quot;+it.n)}else if(it.info){msg(it.info,2500)}else{m.edit=!m.edit;if(m.edit)emit(&quot;menu:item:&quot;+it.n)}dirty()}
+function menuExit(){const m=S.menu;if(m.edit){m.edit=false}else if(m.stack.length>1){const prev=m.stack.pop();m.i=Math.max(0,menuNode().c.indexOf(prev))}else S.menu=null;dirty()}
+
+/* ---------- OLED rendering (128x32 panel, drawn at 4x) ---------- */
+const OLED=$(&quot;#oledBig&quot;),octx=OLED.getContext(&quot;2d&quot;);
+let oledImg=&quot;&quot;;
+function oledLines(){
+ if(S.confirm)return {lines:S.confirm.text.split(&quot;\n&quot;)};
+ if(S.msg&amp;&amp;performance.now()<S.msgT)return {lines:S.msg.split(&quot;\n&quot;)};
+ if(S.menu){const m=S.menu,node=menuNode(),it=node.c[m.i];const path=m.stack.map(n=>n.n).join(&quot;/&quot;);
+  if(it.c||it.info)return {lines:[path,&quot;> &quot;+it.n],small:true};
+  return {lines:[path,it.n+&quot; :&quot;,(m.edit?&quot;[ &quot;:&quot;&quot;)+valStr(it)+(m.edit?&quot; ]&quot;:&quot;&quot;)],small:true,inv:m.edit?2:-1}}
+ if(S.userEdit!=null)return {lines:[`User ${S.userEdit+1} scale`,&quot;Toggle notes in the&quot;,&quot;lowest octave&quot;],small:true};
+ if(S.rootSel)return {lines:[&quot;Select Root&quot;,NN[curPat().root]]};
+ if(held(&quot;project&quot;)){const p=S.ram[S.proj];return {lines:[p.name||`Project ${S.proj+1}`,&quot;Hold + step: load&quot;],small:true}}
+ if(S.control)return {lines:[`CTRL ${S.ctrlTrack+1}`,`Ptn ${proj().ctrl.cur+1}`],big:true};
+ const t=S.cur,tr=trk(t),mode=isDrum()?&quot;DRUM&quot;:tr.mode===&quot;arp&quot;?&quot;ARP &quot;+(t+1):&quot;SEQ &quot;+(t+1);
+ const ch=outCh(t);return {lines:[mode,`PORT: USB`,`CHAN: ${ch==null?&quot;OFF&quot;:ch+1}`],home:true}}
+let oledSig=&quot;&quot;;
+function drawOLED(){const o=oledLines(),W=512,H=128,c=octx;
+ const sig=JSON.stringify(o)+(o.home?[S.trans[S.cur].semi,S.trans[S.cur].on,curPat().scale,curPat().root,trk().chordOn].join():&quot;&quot;);if(sig===oledSig)return;oledSig=sig;c.fillStyle=&quot;#000&quot;;c.fillRect(0,0,W,H);c.fillStyle=&quot;#e8f4ff&quot;;c.textBaseline=&quot;top&quot;;
+ if(o.home){c.font=&quot;bold 44px ui-monospace,monospace&quot;;c.fillText(o.lines[0],18,36);c.font=&quot;22px ui-monospace,monospace&quot;;c.fillText(o.lines[1],300,28);c.fillText(o.lines[2],300,62);
+  const tr=S.trans[S.cur];if(tr.on){c.font=&quot;18px ui-monospace,monospace&quot;;c.fillText(`T${tr.semi>0?&quot;+&quot;:&quot;&quot;}${tr.semi}`,18,92)}
+  const p=curPat();if(!isDrum()&amp;&amp;p.scale){c.font=&quot;18px ui-monospace,monospace&quot;;c.fillText(`${NN[p.root]} ${SCALES[p.scale][0]}`,90,92)}
+  if(trk().chordOn){c.font=&quot;18px ui-monospace,monospace&quot;;c.fillText(&quot;CHORD&quot;,300,96)}}
+ else{const n=o.lines.length,fs=o.small?(n>2?26:30):(n>2?28:36),lh=fs*1.15,y0=(H-lh*n)/2+2;c.font=`${o.big?&quot;bold &quot;:&quot;&quot;}${fs}px ui-monospace,monospace`;
+  o.lines.forEach((l,i)=>{const w=c.measureText(l).width,x=o.small?12:Math.max(8,(W-w)/2);if(o.inv===i){c.fillRect(x-6,y0+i*lh-2,w+12,lh);c.fillStyle=&quot;#000&quot;;c.fillText(l,x,y0+i*lh);c.fillStyle=&quot;#e8f4ff&quot;}else c.fillText(l,x,y0+i*lh)})}
+ const url=OLED.toDataURL();if(url!==oledImg){oledImg=url;const im=document.getElementById(&quot;oledSvg&quot;);if(im)im.setAttribute(&quot;href&quot;,url)}}
+/* ================= front panel ================= */
+const svg=$(&quot;#device&quot;),NS=&quot;http://www.w3.org/2000/svg&quot;,ctlEls={};
+function el(tag,a,parent){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);(parent||svg).appendChild(e);return e}
+function txt(x,y,s,a={},parent){const e=el(&quot;text&quot;,{x,y,&quot;font-size&quot;:a.fs||7,&quot;text-anchor&quot;:a.anchor||&quot;middle&quot;,fill:a.fill||&quot;#333&quot;,&quot;font-family&quot;:&quot;system-ui,sans-serif&quot;,&quot;font-weight&quot;:a.fw||400,&quot;pointer-events&quot;:&quot;none&quot;},parent);e.textContent=s;return e}
+let dirtyFlag=true;const dirty=()=>{dirtyFlag=true};
+function drawPanel(){svg.innerHTML=&quot;&quot;;
+ el(&quot;rect&quot;,{x:30,y:140,width:1250,height:458,rx:14,fill:&quot;#f1f0ec&quot;,stroke:&quot;#cfcdc6&quot;});
+ el(&quot;path&quot;,{d:&quot;M50 172 H665 V256 H50 Z&quot;,fill:&quot;#121214&quot;});
+ el(&quot;rect&quot;,{x:50,y:256,width:198,height:92,fill:&quot;#d8d7d3&quot;});el(&quot;rect&quot;,{x:255,y:256,width:96,height:92,fill:&quot;#e4e3df&quot;});
+ [357,434,511,588].forEach((x,t)=>{el(&quot;rect&quot;,{x,y:188,width:76,height:6,fill:TCOL[t]});el(&quot;rect&quot;,{x,y:256,width:76,height:92,fill:TCOL[t],opacity:.92})});
+ txt(60,190,&quot;KEYSTEP PRO&quot;,{fs:13,anchor:&quot;start&quot;,fill:&quot;#fff&quot;,fw:700});txt(60,200,&quot;Controller &amp; Sequencer&quot;,{fs:6,anchor:&quot;start&quot;,fill:&quot;#bbb&quot;});
+ txt(1188,197,&quot;ARTURIA&quot;,{fs:15,fill:&quot;#222&quot;,fw:600});
+ txt(99,250,&quot;Tempo / Fine&quot;,{fs:6,fill:&quot;#ccc&quot;});txt(202,250,&quot;Swing / Offset&quot;,{fs:6,fill:&quot;#ccc&quot;});
+ txt(1162,237,&quot;Extend&quot;,{fs:6,fill:&quot;#2f6fd6&quot;});
+ el(&quot;image&quot;,{id:&quot;oledSvg&quot;,x:258,y:208,width:54,height:30,preserveAspectRatio:&quot;none&quot;});
+ /* 7-seg track displays */
+ [378,455,532,609].forEach((x,t)=>{el(&quot;rect&quot;,{x,y:212,width:34,height:23,rx:2,fill:&quot;#000&quot;});const e=txt(x+17,231,&quot;1&quot;,{fs:17,fill:&quot;#fff&quot;,fw:600});e.id=&quot;seg&quot;+t;e.setAttribute(&quot;font-family&quot;,&quot;ui-monospace,monospace&quot;)});
+ /* key groups and shift labels above the keyboard */
+ KEYGRP.forEach(([a,b,n])=>{const x0=keyX(a)-10,x1=keyX(b)+10;el(&quot;line&quot;,{x1:x0,x2:x1,y1:351,y2:351,stroke:&quot;#2f6fd6&quot;,&quot;stroke-width&quot;:.6});txt(x0,349,n,{fs:5.5,anchor:&quot;start&quot;,fill:&quot;#2f6fd6&quot;})});
+ for(let k=0;k<37;k++){txt(keyX(k),362,KEYFN[k],{fs:5.2,fill:&quot;#2f6fd6&quot;});const d=el(&quot;circle&quot;,{cx:keyX(k),cy:372,r:2.6,fill:&quot;#ccc&quot;});d.id=&quot;kled&quot;+k}
+ /* octave leds */
+ [-2,-1,0,1,2].forEach((o,i)=>{txt(86+i*17,350,o>0?&quot;+&quot;+o:String(o),{fs:5.5});const d=el(&quot;circle&quot;,{cx:86+i*17,cy:358,r:2.4,fill:&quot;#ccc&quot;});d.id=&quot;oled_&quot;+i});
+ txt(119,371,&quot;Octave&quot;,{fs:6});txt(119,398,&quot;Reset&quot;,{fs:5.5,fill:&quot;#2f6fd6&quot;});
+ for(let r=0;r<4;r++)for(let c=0;c<6;c++)el(&quot;circle&quot;,{cx:196+c*4,cy:366+r*4,r:1,fill:&quot;#777&quot;});
+ /* strip leds */
+ [&quot;pb&quot;,&quot;md&quot;].forEach((s,j)=>{for(let i=0;i<9;i++){const d=el(&quot;circle&quot;,{cx:j?183:55,cy:412+i*14,r:2,fill:&quot;#ccc&quot;});d.id=s+&quot;led&quot;+i}});
+ C.forEach(drawCtl);
+}
+function drawCtl(c){const g=el(&quot;g&quot;,{class:&quot;ctl&quot;,&quot;data-id&quot;:c.id,tabindex:-1});ctlEls[c.id]=g;
+ if(c.t===&quot;knob&quot;){if(c.ring)for(let i=0;i<15;i++){const a=(-135+i*270/14)*Math.PI/180;el(&quot;circle&quot;,{cx:c.cx+Math.sin(a)*(c.r+7),cy:c.cy-Math.cos(a)*(c.r+7),r:1.9,fill:&quot;#3a1010&quot;,class:&quot;ring&quot;},g)}
+  el(&quot;circle&quot;,{cx:c.cx,cy:c.cy,r:c.r,fill:&quot;#26272b&quot;,stroke:&quot;#555&quot;,&quot;stroke-width&quot;:1.5,class:&quot;face&quot;},g);el(&quot;line&quot;,{x1:c.cx,y1:c.cy-c.r+3,x2:c.cx,y2:c.cy-c.r+9,stroke:&quot;#ddd&quot;,&quot;stroke-width&quot;:2,class:&quot;ptr&quot;},g);
+  if(c.label&amp;&amp;c.ring)txt(c.cx,c.cy+c.r+19,c.label,{fs:6.2},g)}
+ else if(c.t===&quot;key&quot;){el(&quot;rect&quot;,{x:c.x+.4,y:c.y,width:c.w-.8,height:c.h,rx:2,fill:c.black?&quot;#1b1b1d&quot;:&quot;#fdfdfb&quot;,stroke:&quot;#999&quot;,&quot;stroke-width&quot;:.6,class:&quot;face&quot;},g);if(c.black)g.dataset.black=1}
+ else if(c.t===&quot;strip&quot;){el(&quot;rect&quot;,{x:c.x+4,y:c.y,width:c.w-8,height:c.h,rx:4,fill:&quot;#fafaf8&quot;,stroke:&quot;#bbb&quot;,class:&quot;face&quot;},g);if(c.id===&quot;pbend&quot;)el(&quot;line&quot;,{x1:c.x+16,x2:c.x+c.w-16,y1:c.y+c.h/2,y2:c.y+c.h/2,stroke:&quot;#333&quot;},g);
+  txt(c.x+c.w/2,c.y+10,&quot;↑&quot;,{fs:7},g);txt(c.x+c.w/2,c.y+c.h-4,&quot;↓&quot;,{fs:7},g)}
+ else if(c.t===&quot;looper&quot;){el(&quot;rect&quot;,{x:c.x,y:c.y,width:c.w,height:c.h,rx:4,fill:&quot;#f4f4f2&quot;,stroke:&quot;#bbb&quot;,class:&quot;face&quot;},g);[&quot;1/4&quot;,&quot;1/8&quot;,&quot;1/16&quot;,&quot;1/32&quot;].forEach((l,i)=>txt(c.x+c.w/8*(2*i+1),c.y+16,l,{fs:6,fill:&quot;#999&quot;},g))}
+ else{const dark=[&quot;shift&quot;].includes(c.id),big=c.t===&quot;step&quot;||[&quot;shift&quot;,&quot;rec&quot;,&quot;stop&quot;,&quot;play&quot;,&quot;tap&quot;].includes(c.id);
+  el(&quot;rect&quot;,{x:c.x,y:c.y,width:c.w,height:c.h,rx:big?4:3,fill:dark?&quot;#1e1e22&quot;:&quot;#e9e9e6&quot;,stroke:&quot;#8d8d8a&quot;,&quot;stroke-width&quot;:1,class:&quot;face&quot;},g);
+  el(&quot;rect&quot;,{x:c.x+2,y:c.y+2,width:c.w-4,height:c.h-4,rx:2,fill:&quot;transparent&quot;,class:&quot;lamp&quot;},g);
+  const lines=String(c.label).split(&quot;\n&quot;);lines.forEach((l,i)=>txt(c.x+c.w/2,c.y+c.h/2+(i-(lines.length-1)/2)*7.5+2.4,l,{fs:c.t===&quot;step&quot;?8:big?(c.id===&quot;tap&quot;?6.5:8):6,fill:dark?&quot;#5aa0ff&quot;:&quot;#222&quot;,fw:c.t===&quot;step&quot;?600:400},g).classList.add(&quot;lbl&quot;));
+  if(c.sec){txt(c.x+c.w/2,c.y+c.h+(c.t===&quot;step&quot;?9:7),c.sec,{fs:c.t===&quot;step&quot;?5.6:5.6,fill:&quot;#2f6fd6&quot;},g)}
+  if(/^t\dmute$/.test(c.id)){const t=+c.id[1];const n=el(&quot;rect&quot;,{x:[373,450,527,603][t],y:299,width:12,height:7,rx:1.5,fill:&quot;#555&quot;});n.id=&quot;note&quot;+t;txt([379,456,533,609][t],313,&quot;Note&quot;,{fs:5.5,fill:&quot;#222&quot;})}}
+}
+
+/* ---------- LEDs ---------- */
+const setA=(e,k,v)=>{if(e&amp;&amp;e.getAttribute(k)!==String(v))e.setAttribute(k,v)};
+const lamp=(id,col)=>{const g=ctlEls[id];if(!g)return;const l=g.querySelector(&quot;.lamp&quot;);setA(l,&quot;fill&quot;,col||&quot;transparent&quot;)};
+const blink=(ms=500)=>Math.floor(performance.now()/ms)%2===0;
+const dim=(hex,a=.35)=>hex+Math.round(a*255).toString(16).padStart(2,&quot;0&quot;);
+function render(){
+ const n=now(),t=S.cur,col=TCOL[t],pat=curPat(),dr=isDrum(),tr=trk();
+ /* steps */
+ const v=S.view[dr?4:t],play=S.playIdx&amp;&amp;S.playIdx[t];
+ for(let i=0;i<16;i++){const idx=v*16+i;let c=null;
+  if(held(&quot;project&quot;))c=i===S.proj?&quot;#ffffff&quot;:S.ram[i].tracks.some((x,j)=>x.pats.some(p=>p.valid))||S.flash[i].tracks.some(x=>x.valid)?dim(&quot;#3b82f6&quot;,.6):null;
+  else if(held(&quot;pattern&quot;)||S.patMode&amp;&amp;!S.patMode.scene||held(&quot;save&quot;)&amp;&amp;!held(&quot;scene&quot;)){const cur=patIdx();c=i===cur?col:patDirty(t,i)?&quot;#ef4444&quot;:patHasContent(t,i)?&quot;#3b82f6&quot;:null;if(S.patMode&amp;&amp;blink(300)&amp;&amp;c)c=dim(c.slice(0,7),.4)}
+  else if(held(&quot;scene&quot;)||S.patMode&amp;&amp;S.patMode.scene)c=proj().scenes[i]?(i===S.sceneCur?&quot;#ffffff&quot;:&quot;#3b82f6&quot;):null;
+  else if(held(&quot;chain&quot;)){const ch=dr?proj().drum.chain:tr.chain;c=ch.includes(i)?(blink(250)?col:null):null}
+  else if(S.control){const cp=proj().ctrl.pats[proj().ctrl.cur];c=cp.st[idx].cc.some(x=>x!=null)?col:null;if(idx>=cp.len)c=null;if(S.sel===idx&amp;&amp;blink(250))c=&quot;#fff&quot;}
+  else if(dr){const lane=pat.lanes[S.lane],st=lane.st[idx],len=pat.poly?lane.len:pat.len;c=idx<len&amp;&amp;st.on?col:null;if(S.stepEdit&amp;&amp;S.sel===idx&amp;&amp;blink(250))c=&quot;#fff&quot;}
+  else{const st=pat.st[idx];c=idx<pat.len?(st.on&amp;&amp;st.n.length?(st.skip.every(x=>x)?dim(col,.3):col):null):null;
+   if(S.stepEdit&amp;&amp;S.sel===idx&amp;&amp;blink(250))c=&quot;#fff&quot;;if(S.rec===&quot;step&quot;&amp;&amp;S.stepRecPos===idx&amp;&amp;blink(250))c=&quot;#fff&quot;}
+  if(S.playing&amp;&amp;!S.paused&amp;&amp;play&amp;&amp;play.idx===idx&amp;&amp;!held(&quot;project&quot;)&amp;&amp;!held(&quot;pattern&quot;)&amp;&amp;!held(&quot;scene&quot;)&amp;&amp;!S.control)c=&quot;#ffffff&quot;;
+  if(held(&quot;shift&quot;)&amp;&amp;c&amp;&amp;c.length===7)c=dim(c,.35);
+  if(S.confirm&amp;&amp;S.confirm.kind===&quot;save&quot;)c=null;
+  lamp(&quot;s&quot;+i,c)}
+ /* key LEDs */
+ const kled=Array(37).fill(null),base=48+12*tr.oct;
+ if(held(&quot;shift&quot;)){const on=[pat.dir,pat.poly?4:3,5+(pat.arp||0),12+(pat.arpOct||0),17+(pat.div),pat.trip?21:-1];if(!dr){const sk=Object.entries(KEYSCALE).find(([k,s])=>s===pat.scale);if(sk)on.push(+sk[0])}
+  [0,1,2,3].forEach(c=>{if(S.cvr[t]>>c&amp;1)on.push(32+c)});on.forEach(k=>{if(k>=0)kled[k]=&quot;#3b82f6&quot;})}
+ else if(S.rootSel){kled[curPat().root]=&quot;#3b82f6&quot;}
+ else if(S.userEdit!=null){const m=proj().user[S.userEdit];for(let k=0;k<12;k++)kled[k]=m>>k&amp;1?&quot;#3b82f6&quot;:null}
+ else if(held(&quot;tap&quot;)){kled[17+Math.floor(S.globals[116]/2)]=&quot;#3b82f6&quot;;if(S.globals[116]%2)kled[21]=&quot;#3b82f6&quot;}
+ else if(dr){for(let l=0;l<24;l++){if(pat.lanes[l].st.some(s=>s.on))kled[l]=dim(col,.35);if(S.drumMute[l])kled[l]=&quot;#ef4444&quot;}kled[S.lane]=col}
+ else if((S.stepEdit&amp;&amp;S.sel!=null)||heldStep()!=null){const st=pat.st[S.stepEdit&amp;&amp;S.sel!=null?S.sel:v*16+heldStep()];st.n.forEach(nt=>{const k=nt.p-base;if(k>=0&amp;&amp;k<37)kled[k]=col})}
+ for(const f of NOTEFLASH){if(f.t0>n||f.t1<n)continue;if(f.drum!=null){if(dr&amp;&amp;f.drum<37)kled[f.drum]=&quot;#ffffff&quot;;continue}if(f.t!==t)continue;const k=f.midi-base;if(k>=0&amp;&amp;k<37)kled[k]=TCOL[f.t]}
+ for(const [k] of S.keysDown){if(!kled[k])kled[k]=col}
+ for(let k=0;k<37;k++)setA($(&quot;#kled&quot;+k),&quot;fill&quot;,kled[k]||&quot;#d6d6d2&quot;);
+ /* buttons */
+ lamp(&quot;play&quot;,S.playing?(S.paused?(blink()?&quot;#22c55e&quot;:null):&quot;#22c55e&quot;):null);lamp(&quot;rec&quot;,S.rec?(S.rec===&quot;step&quot;&amp;&amp;blink()?null:&quot;#ef4444&quot;):null);lamp(&quot;stop&quot;,null);
+ lamp(&quot;shift&quot;,held(&quot;shift&quot;)?&quot;#2f6fd6&quot;:null);lamp(&quot;stepedit&quot;,S.stepEdit?&quot;#ffffff&quot;:null);lamp(&quot;overdub&quot;,S.overdub?&quot;#ef4444&quot;:null);
+ lamp(&quot;hold&quot;,S.hold[t]?col:null);lamp(&quot;trans&quot;,S.transMode?(blink(300)?&quot;#fff&quot;:null):S.trans[t].on?(S.globals[153]===0&amp;&amp;blink()?null:col):null);
+ lamp(&quot;tie&quot;,tr.chordOn?(blink(1000)?col:null):null);lamp(&quot;control&quot;,S.control?&quot;#ffffff&quot;:null);
+ lamp(&quot;pattern&quot;,(dr?proj().drum.chain:tr.chain).length>1?null:&quot;#ffffff&quot;);lamp(&quot;chain&quot;,(dr?proj().drum.chain:tr.chain).length>1?&quot;#ffffff&quot;:null);lamp(&quot;scene&quot;,S.sceneCur>=0?dim(&quot;#ffffff&quot;,.5):null);
+ lamp(&quot;exit&quot;,S.undo&amp;&amp;blink(700)?&quot;#ffffff&quot;:null);lamp(&quot;lst&quot;,S.follow?dim(&quot;#ffffff&quot;,.5):null);
+ for(let p=0;p<4;p++){const len=dr&amp;&amp;pat.poly?pat.lanes[S.lane].len:pat.len;let c=p*16<len?dim(col,.4):null;if(S.playing&amp;&amp;play&amp;&amp;Math.floor(play.idx/16)===p)c=col;if(p===v&amp;&amp;!S.follow)c=&quot;#ffffff&quot;;lamp(&quot;pg&quot;+p,c)}
+ for(let i=0;i<4;i++){const ti=trk(i);const ci=TCOL[i];
+  lamp(`t${i}trk`,S.control&amp;&amp;S.ctrlTrack===i?(blink(800)?&quot;#fff&quot;:null):i===t?&quot;#ffffff&quot;:S.tgroup.has(i)?dim(&quot;#ffffff&quot;,.6):null);
+  lamp(`t${i}seq`,ti.mode===&quot;seq&quot;?(i===t?&quot;#fff&quot;:dim(&quot;#ffffff&quot;,.45)):null);lamp(`t${i}alt`,ti.mode!==&quot;seq&quot;?(i===t?&quot;#fff&quot;:dim(&quot;#ffffff&quot;,.45)):null);
+  lamp(`t${i}mute`,S.solo===i?&quot;#3b82f6&quot;:S.mute[i]?&quot;#ef4444&quot;:(i===0&amp;&amp;S.drumMute.some(x=>x)&amp;&amp;blink()?&quot;#ef4444&quot;:null));
+  const act=NOTEFLASH.some(f=>(f.t===i||(i===0&amp;&amp;f.drum!=null))&amp;&amp;f.t0<=n&amp;&amp;f.t1>=n)||(i===t&amp;&amp;S.keysDown.size);setA($(&quot;#note&quot;+i),&quot;fill&quot;,act?&quot;#ff4040&quot;:&quot;#5a1a1a&quot;);
+  const seg=$(&quot;#seg&quot;+i),pi=i===0&amp;&amp;isDrum(0)?proj().drum.cur:ti.cur;seg.textContent=S.control&amp;&amp;S.ctrlTrack===i?&quot;--&quot;:String(pi+1);
+  const pend=P[i].pend;if(pend!=null&amp;&amp;blink(250))seg.textContent=String(pend+1)}
+ /* octave leds */
+ for(let i=0;i<5;i++){const o=tr.oct;setA($(&quot;#oled_&quot;+i),&quot;fill&quot;,(o===i-2||(o===-3&amp;&amp;i===0&amp;&amp;blink()))?&quot;#ef4444&quot;:&quot;#d6d6d2&quot;)}
+ /* encoder rings */
+ const vals=encFracs();for(let i=0;i<5;i++){const rings=ctlEls[&quot;enc&quot;+i].querySelectorAll(&quot;.ring&quot;),f=vals[i];rings.forEach((r,k)=>setA(r,&quot;fill&quot;,f==null?&quot;#3a1010&quot;:(k/14<=f?&quot;#ff3030&quot;:&quot;#3a1010&quot;)))}
+ /* strips */
+ const pb=Math.round((BEND/2+1)*4),md=Math.round(S.mod[t]/127*8);for(let i=0;i<9;i++){setA($(&quot;#pbled&quot;+i),&quot;fill&quot;,8-i===pb?&quot;#ef4444&quot;:&quot;#d6d6d2&quot;);setA($(&quot;#mdled&quot;+i),&quot;fill&quot;,8-i<=md&amp;&amp;md>0?&quot;#ef4444&quot;:&quot;#d6d6d2&quot;)}
+ drawOLED();
+ $(&quot;#ledInfo&quot;).innerHTML=statusLine()}
+function statusLine(){const p=curPat(),pr=proj();return `<b>${pr.name||&quot;Project &quot;+(S.proj+1)}</b> · ${bpm().toFixed(2)} BPM${S.globalBpm?&quot; (global)&quot;:&quot;&quot;} · swing ${pr.swing}% · ${TNAME[S.cur]} pattern ${patIdx()+1} · ${isDrum()?&quot;drum lane &quot;+(S.lane+1):`${NN[p.root]} ${SCALES[p.scale][0]}`} · ${DIVS[p.div][0]}${p.trip?&quot;T&quot;:&quot;&quot;} · len ${p.len}${S.waitLoad?&quot; · wait load&quot;:&quot;&quot;}`}
+const heldStep=()=>{for(const [id] of HELD){const m=id.match(/^s(\d+)$/);if(m)return +m[1]}return null};
+const heldSteps=()=>[...HELD.keys()].filter(id=>/^s\d+$/.test(id)).map(id=>+id.slice(1));
+
+/* ---------- encoder values ---------- */
+const G=raw=>clamp(.0625*Math.pow(2,raw/12.7),.06,64),Graw=g=>Math.round(12.7*Math.log2(g/.0625));
+function encTarget(){// what the five encoders edit right now
+ if(S.control)return {kind:&quot;cc&quot;};const t=S.cur;
+ if(isDrum()){const pat=curPat(),hs=heldStep();const idx=S.stepEdit&amp;&amp;S.sel!=null?S.sel:hs!=null?S.view[4]*16+hs:null;if(idx!=null)return {kind:&quot;dstep&quot;,st:pat.lanes[S.lane].st[idx]};return {kind:&quot;def&quot;,d:S.drumDefs}}
+ if(trk().mode===&quot;arp&quot;)return {kind:&quot;arp&quot;,a:S.arpP[t]};
+ const hs=heldStep(),pat=curPat(),idx=S.stepEdit&amp;&amp;S.sel!=null?S.sel:hs!=null?S.view[t]*16+hs:null;
+ if(idx!=null){const st=pat.st[idx];const notes=S.selNotes&amp;&amp;S.selNotes.size?st.n.filter(x=>S.selNotes.has(x.p)):st.n;return {kind:&quot;step&quot;,st,notes,idx}}
+ return {kind:&quot;def&quot;,d:S.defs[t]}}
+function encFracs(){const e=encTarget();const fr=o=>[o.p!=null?o.p/127:null,Graw(o.g)/127,o.v/127,(o.t+49)/99,o.r/100];
+ if(e.kind===&quot;cc&quot;)return S.cc.map(v=>v/127);if(e.kind===&quot;def&quot;)return fr(e.d);if(e.kind===&quot;dstep&quot;)return [null,...fr(e.st).slice(1)];
+ if(e.kind===&quot;arp&quot;)return [null,Graw(e.a.g)/127,(e.a.vo+127)/254,(e.a.t+49)/99,e.a.r/100];
+ if(e.kind===&quot;step&quot;&amp;&amp;e.notes.length)return fr(e.notes[0]);return [null,null,null,null,null]}
+function encShow(i){const e=encTarget(),n=e.kind===&quot;step&quot;&amp;&amp;e.notes.length?e.notes[0]:e.kind===&quot;dstep&quot;?e.st:e.kind===&quot;def&quot;?e.d:null;
+ if(e.kind===&quot;cc&quot;){msg(`Knob ${i+1} CC#${S.globals[28+i]}\n${S.cc[i]}`);return}
+ if(e.kind===&quot;arp&quot;){const a=e.a;msg([null,`Gate Length\n${a.g.toFixed(2)}`,`Velocity\n${a.vo>0?&quot;+&quot;:&quot;&quot;}${a.vo}`,`Time Shift\n${a.t}%`,`Randomness\n${a.r}%`][i]||&quot;Pitch\n(no effect in Arp)&quot;);return}
+ if(!n){msg(&quot;Step\nempty&quot;);return}
+ msg([`Pitch\n${e.kind===&quot;step&quot;?e.notes.map(x=>nm(x.p)).join(&quot; &quot;):nm(n.p)}`,`Gate Length\n${n.g.toFixed(2)}`,`Velocity\n${n.v}`,`Time Shift\n${n.t>0?&quot;+&quot;:&quot;&quot;}${n.t}%`,`Randomness\n${n.r}%`][i])}
+function turnEnc(i,d){for(const h of HELD.values())h.used=true;const t=S.cur;
+ if(S.control){S.cc[i]=clamp(S.cc[i]+d,0,127);midiCC(i,S.cc[i]);const cp=proj().ctrl.pats[proj().ctrl.cur];
+  if(held(&quot;erase&quot;)){if(S.stepEdit&amp;&amp;S.sel!=null)cp.st[S.sel].cc[i]=null;else cp.st.forEach(s=>s.cc[i]=null);msg(&quot;Automation\nErased&quot;)}
+  else if(S.stepEdit&amp;&amp;S.sel!=null){cp.st[S.sel].cc[i]=S.cc[i];cp.valid=true;emit(&quot;cc:step&quot;)}
+  else if(S.rec&amp;&amp;S.playing){const k=(P[4].idx-1+cp.len)%cp.len;for(let j=k;j<cp.len;j++)cp.st[j].cc[i]=S.cc[i];cp.valid=true}
+  encShow(i);emit(&quot;cc&quot;);dirty();return}
+ if(held(&quot;shift&quot;)){const pat=curPat();snapshotUndo();const name=[&quot;Pitch&quot;,&quot;Gate&quot;,&quot;Velocity&quot;,&quot;Time Shift&quot;,&quot;Randomness&quot;][i];
+  S.offs=S.offs||[0,0,0,0,0];S.offs[i]+=d;
+  if(isDrum()){if(i)pat.lanes.forEach(l=>l.st.forEach(s=>{if(s.on)edit(s,i,d)}))}else pat.st.forEach(s=>s.n.forEach(nt=>edit(nt,i,d,t)));
+  pat.valid=true;msg(`${name} Offset\n${S.offs[i]>0?&quot;+&quot;:&quot;&quot;}${S.offs[i]}${i===0?&quot; semi&quot;:&quot;&quot;}`);emit(&quot;enc:&quot;+&quot;enc&quot;+i);dirty();return}
+ const e=encTarget();
+ if(e.kind===&quot;arp&quot;){const a=e.a;if(i===1)a.g=G(Graw(a.g)+d);if(i===2)a.vo=clamp(a.vo+d,-127,127);if(i===3)a.t=clamp(a.t+d,-49,50);if(i===4)a.r=clamp(a.r+d,0,100)}
+ else if(e.kind===&quot;step&quot;){e.notes.forEach(nt=>edit(nt,i,d,t));curPat().valid=true}
+ else if(e.kind===&quot;dstep&quot;){if(i)edit(e.st,i,d);curPat().valid=true}
+ else edit(e.d,i,d,t);
+ encShow(i);emit(&quot;enc:enc&quot;+i);dirty()}
+function edit(o,i,d,t){if(i===0)o.p=t!=null?scaleStep(t,o.p,d):clamp(o.p+d,0,127);if(i===1)o.g=G(Graw(o.g)+d);if(i===2)o.v=clamp(o.v+d,0,127);if(i===3)o.t=clamp(o.t+d,-49,50);if(i===4)o.r=clamp(o.r+d,0,100)}
+
+/* ---------- keyboard ---------- */
+const keyMidi=k=>48+k+12*trk().oct;
+function keyDown(k,vel=100){for(const h of HELD.values())h.used=true;const t=S.cur,tr=trk();
+ if(held(&quot;shift&quot;)&amp;&amp;!S.chordEntry){keyShift(k);return}
+ if(held(&quot;tap&quot;)&amp;&amp;k>=17&amp;&amp;k<=21){const cur=S.globals[116];S.globals[116]=k===21?(cur%2?cur-1:cur+1):(k-17)*2;msg(`Metronome\n${[&quot;1/4&quot;,&quot;1/4 T&quot;,&quot;1/8&quot;,&quot;1/8 T&quot;,&quot;1/16&quot;,&quot;1/16 T&quot;,&quot;1/32&quot;,&quot;1/32 T&quot;][S.globals[116]]}`);dirty();return}
+ if(S.rootSel){if(k<12){curPat().root=k;curPat().valid=true;msg(`Root\n${NN[k]}`);emit(&quot;root:&quot;+k);S.rootChosen=true;if(!held(&quot;k29&quot;))S.rootSel=false}dirty();return}
+ if(S.userEdit!=null){if(k<12){proj().user[S.userEdit]^=1<<k;if(!proj().user[S.userEdit])proj().user[S.userEdit]=1;mapCache.clear();msg(`User ${S.userEdit+1}\n${maskIv(proj().user[S.userEdit]).map(i=>NN[i]).join(&quot; &quot;)}`)}dirty();return}
+ if(held(&quot;trans&quot;)||S.transMode){S.transUsed=true;setTranspose(keyMidi(k)-60-12*0);return}
+ const tracksHeld=[...HELD.keys()].filter(id=>/^t\dtrk$/.test(id)).map(id=>+id[1]);
+ if(tracksHeld.length>=2){S.split={up:tracksHeld[0],lo:tracksHeld[1],pt:keyMidi(k)};msg(`Split at ${nm(keyMidi(k))}\nT${tracksHeld[0]+1} up / T${tracksHeld[1]+1} low`);emit(&quot;split&quot;);dirty();return}
+ if(isDrum()){if(k>=24)return;if(held(&quot;t0alt&quot;)){S.lane=k;msg(`Drum ${k+1}\nselected`);emit(&quot;drum:lane:&quot;+k);dirty();return}
+  if(held(&quot;t0mute&quot;)||S.drumMuteMode){S.drumMute[k]=S.drumMute[k]?0:1;dirty();return}
+  S.lane=k;drum(k,vel,now());midiDrum(k,vel,now(),now()+.1);S.keysDown.set(k,{});emit(&quot;drum:lane:&quot;+k);
+  if(S.rec===&quot;rt&quot;&amp;&amp;S.playing){const pat=curPat(),last=S.playIdx&amp;&amp;S.playIdx[0];if(last){const dur=stepDur(pat),rel=(now()-last.time)/dur,kk=Math.round(rel),idx=((last.idx+kk)%pat.len+pat.len)%pat.len,st=pat.lanes[k].st[idx];
+   Object.assign(st,{on:true,v:S.globals[fvId(0)]?S.drumDefs.v:vel,g:S.drumDefs.g,t:S.quant?0:clamp(Math.round((rel-kk)*100),-49,50),r:S.drumDefs.r});pat.valid=true;emit(&quot;recnote&quot;)}}
+  dirty();return}
+ let note=keyMidi(k);S.lastNote=note;
+ if(S.split&amp;&amp;(S.split.up===t||S.split.lo===t)){const tt=note>=S.split.pt?S.split.up:S.split.lo;if(tt!==t){const qn=q(tt,note);S.keysDown.set(k,{v:[liveOn(tt,qn,vel)],tt,notes:[qn]});midiOn(tt,qn,vel);dirty();return}}
+ if(S.chordEntry){S.chordEntry.notes.push(note);const v2=liveOn(t,note,vel);S.keysDown.set(k,{v:[v2],notes:[note]});midiOn(t,note,vel);dirty();return}
+ /* filling a step: quick edit (step held), step edit (selected step), step record (cursor) */
+ const hs=heldStep();
+ const target=hs!=null&amp;&amp;!S.control?S.view[t]*16+hs:S.stepEdit&amp;&amp;S.sel!=null&amp;&amp;!S.control?S.sel:S.rec===&quot;step&quot;?S.stepRecPos:null;
+ const outNotes=liveNotes(t,note);
+ if(target!=null&amp;&amp;tr.mode===&quot;seq&quot;){const pat=curPat(),st=pat.st[target];S.fillGesture=S.fillGesture||new Set();
+  if(!S.fillGesture.has(target)){S.fillGesture.add(target);snapshotUndo();if(!S.overdub)st.n=[]}
+  for(const pn of outNotes){if(st.n.length>=16){msg(&quot;16 notes limit in\na step reached&quot;);break}if(!pat.poly)st.n=[];if(!st.n.some(x=>x.p===pn))st.n.push(noteFromDefaults(t,pn,vel))}
+  if(S.overdub&amp;&amp;!S.stepEdit)S.selNotes=new Set(outNotes);
+  st.on=true;pat.valid=true;emit(S.rec===&quot;step&quot;?&quot;steprec:note&quot;:hs!=null?&quot;quick:fill&quot;:&quot;stepedit:fill&quot;)}
+ if(tr.mode===&quot;arp&quot;){const list=S.hold[t]?S.arpLatched[t]:S.arpHeld[t];
+  if(S.hold[t]&amp;&amp;S.keysDown.size===0&amp;&amp;!S.arpAdding)S.arpLatched[t]=[];S.arpAdding=true;
+  const L2=S.hold[t]?S.arpLatched[t]:S.arpHeld[t];for(const pn of outNotes){if(L2.length>=16){msg(&quot;16 notes limit in\nan Arp reached&quot;);break}L2.push({p:pn,v:vel})}
+  S.keysDown.set(k,{arp:outNotes});emit(&quot;arp:note&quot;);emit(&quot;arp:note:&quot;+t);if(trk().chordOn)emit(&quot;chord:play&quot;);dirty();return}
+ const vs=outNotes.map(pn=>liveOn(t,pn,S.globals[fvId(t)]?S.defs[t].v:vel));outNotes.forEach(pn=>midiOn(t,pn,vel));
+ const rec=S.rec===&quot;rt&quot;&amp;&amp;S.playing&amp;&amp;tr.mode===&quot;seq&quot;?outNotes.map(pn=>recordNote(t,pn,vel,now())):null;
+ S.keysDown.set(k,{v:vs,notes:outNotes,rec,t0:now()});if(tr.chordOn)emit(&quot;chord:play&quot;);dirty()}
+function liveNotes(t,note){const tr=trk(t),base=q(t,note);if(!tr.chordOn||tr.chord.root==null)return [base];
+ return [base,...tr.chord.off.map(o=>q(t,base+o))].filter((x,i,a)=>a.indexOf(x)===i)}
+function keyUp(k){const t=S.cur,kd=S.keysDown.get(k);S.keysDown.delete(k);
+ if(kd){(kd.v||[]).forEach(liveOff);(kd.notes||[]).forEach(pn=>midiOff(kd.tt!=null?kd.tt:t,pn));
+  if(kd.arp&amp;&amp;!S.hold[t]){S.arpHeld[t]=S.arpHeld[t].filter(x=>!kd.arp.includes(x.p))}
+  if(kd.rec){const pat=curPat(),dur=stepDur(pat);kd.rec.forEach(r=>{if(r)r.n.g=clamp((now()-r.time)/dur,.06,64)})}}
+ if(S.keysDown.size===0){S.arpAdding=false;
+  if(S.rec===&quot;step&quot;&amp;&amp;S.fillGesture&amp;&amp;S.fillGesture.size){S.stepRecPos=(S.stepRecPos+1)%curPat().len}
+  S.fillGesture=null;if(S.chordEntry)chordEntryCheck()}
+ dirty()}
+function keyShift(k){const pat=curPat(),t=S.cur,f=KEYFN[k];S.shiftUsed=true;pat.valid=true;
+ if(k<=2){pat.dir=k;msg(`Seq Pattern\n${SEQDIRS[k]}`);emit(&quot;seqdir:&quot;+k)}
+ else if(k<=4){pat.poly=k===4;msg(isDrum()?`Drum Mode\n${k===4?&quot;Poly&quot;:&quot;Mono&quot;}`:`Seq Mode\n${k===4?&quot;Poly&quot;:&quot;Mono&quot;}`);emit(&quot;poly:&quot;+pat.poly)}
+ else if(k<=11){if(isDrum())return;pat.arp=k-5;msg(`Arp Pattern\n${ARPS[k-5]}`);emit(&quot;arpmode:&quot;+ARPS[k-5])}
+ else if(k<=16){if(isDrum())return;pat.arpOct=k-12;msg(`Arp Octave\n${f}`);emit(&quot;arpoct:&quot;+(k-13))}
+ else if(k<=20){pat.div=k-17;msg(`Time Division\n${DIVS[pat.div][0]}${pat.trip?&quot; T&quot;:&quot;&quot;}`);emit(`div:${t}:${pat.div}`)}
+ else if(k===21){pat.trip=!pat.trip;msg(`Time Division\n${DIVS[pat.div][0]}${pat.trip?&quot; T&quot;:&quot;&quot;}`);emit(&quot;trip&quot;)}
+ else if(KEYSCALE[k]!=null){if(isDrum())return;pat.scale=KEYSCALE[k];msg(`Scale\n${SCALES[pat.scale][0]}`);emit(&quot;scale:&quot;+pat.scale);
+  if(k===30||k===31){S.userEdit=k-30;msg(`User ${k-29} scale\nedit: lowest octave`,1800)}}
+ else if(k===29){if(isDrum())return;S.rootSel=true;S.rootChosen=false;emit(&quot;rootsel&quot;)}
+ else if(k>=32&amp;&amp;k<=35){const b=1<<(k-32);S.cvr.forEach((m,i)=>{if(i!==t&amp;&amp;m&amp;b)S.cvr[i]&amp;=~b});S.cvr[t]^=b;msg(`CV Routing\nVoices ${[0,1,2,3].filter(i=>S.cvr[t]>>i&amp;1).map(i=>i+1).join(&quot; &quot;)||&quot;-&quot;}`)}
+ dirty()}
+function chordEntryCheck(){if(!S.chordEntry||held(&quot;shift&quot;)||held(&quot;tie&quot;)||S.keysDown.size)return;const n=S.chordEntry.notes,tr=trk();S.chordEntry=null;
+ if(n.length){tr.chord={root:n[0],off:n.slice(1).map(x=>x-n[0])};tr.chordOn=true;tr.valid=true;msg(`Chord\n${n.map(nm).join(&quot; &quot;)}`);emit(&quot;chord:stored&quot;)}
+ else{tr.chordOn=!tr.chordOn&amp;&amp;tr.chord.root!=null;msg(tr.chordOn?&quot;Chord\nON&quot;:&quot;Chord\nOFF&quot;);emit(tr.chordOn?&quot;chord:on&quot;:&quot;chord:off&quot;)}dirty()}
+
+/* ---------- button dispatch ---------- */
+function down(id){const t=S.cur;for(const h of HELD.values())h.used=true;HELD.set(id,{t0:performance.now(),used:false});ensureAC();
+ let m;
+ if((m=id.match(/^k(\d+)$/))){keyDown(+m[1],S.padVel||100);S.padVel=null;return}
+ if((m=id.match(/^s(\d+)$/))){stepDown(+m[1]);return}
+ if((m=id.match(/^pg(\d)$/))){pageDown(+m[1]);return}
+ if((m=id.match(/^t(\d)(dn|up|seq|alt|mute|trk)$/))){trackDown(+m[1],m[2]);return}
+ if(/^enc\d$/.test(id)){encShow(+id[3]);return}
+ switch(id){
+  case &quot;shift&quot;:if(held(&quot;project&quot;)){S.confirm={text:&quot;Load Project\nfrom FLASH&quot;,fn:recallProject,kind:&quot;recall&quot;};HELD.get(&quot;project&quot;).used=true}break;
+  case &quot;play&quot;:if(held(&quot;shift&quot;))restart();else if(held(&quot;rec&quot;)){HELD.get(&quot;rec&quot;).used=true;S.rec=&quot;rt&quot;;S.recTouched=new Set();if(!S.playing||S.paused)play();emit(&quot;rec:rt&quot;)}else play();break;
+  case &quot;rec&quot;:if(held(&quot;shift&quot;)){S.quant=!S.quant;msg(S.quant?&quot;Quantize\nON&quot;:&quot;Quantize\nOFF&quot;);HELD.get(&quot;rec&quot;).used=true}
+   else if(S.playing&amp;&amp;!S.paused){S.rec=S.rec===&quot;rt&quot;?false:&quot;rt&quot;;S.recTouched=new Set();emit(S.rec?&quot;rec:rt&quot;:&quot;rec:off&quot;);HELD.get(&quot;rec&quot;).used=true}break;
+  case &quot;stop&quot;:if(S.rec===&quot;step&quot;)S.rec=false;stop();break;
+  case &quot;tap&quot;:if(held(&quot;shift&quot;)){S.metro=!S.metro;msg(S.metro?&quot;Metronome\nON&quot;:&quot;Metronome\nOFF&quot;)}else{const tn=performance.now();S.taps=S.taps.filter(x=>tn-x<2000).slice(-7);S.taps.push(tn);
+   if(S.taps.length>=2){const iv=(S.taps[S.taps.length-1]-S.taps[0])/(S.taps.length-1);const b=clamp(60000/iv,30,240);if(S.globalBpm)S.gbpm=b;else proj().bpm=Math.round(b*100)/100;msg(`${bpm().toFixed(2)} BPM`)}}break;
+  case &quot;project&quot;:if(held(&quot;shift&quot;)){openMenu(MENU());emit(&quot;utility:open&quot;)}
+   else if(held(&quot;save&quot;)){HELD.get(&quot;save&quot;).used=true;S.confirm={text:`Save Project ${S.proj+1}\nConfirm ?`,fn:saveProject,kind:&quot;save&quot;};emit(&quot;save:project:ask&quot;)}
+   else if(held(&quot;copy&quot;)){HELD.get(&quot;copy&quot;).used=true;const d=(S.proj+1)%16;S.confirm={text:`Copy Project\nfrom ${S.proj+1} to ${d+1}\nConfirm ?`,fn:copyProject,kind:&quot;copy&quot;}}
+   else if(held(&quot;erase&quot;)){HELD.get(&quot;erase&quot;).used=true;S.confirm={text:`Erase Project ${S.proj+1}\nConfirm ?`,fn:eraseProject,kind:&quot;erase&quot;}}break;
+  case &quot;exit&quot;:if(held(&quot;shift&quot;))doUndo();else if(S.confirm){S.confirm=null;msg(&quot;Cancelled&quot;,700)}else if(S.menu)menuExit();else{S.userEdit=null;S.rootSel=false;S.patMode=null;S.drumMuteMode=false;S.transMode=false}break;
+  case &quot;save&quot;:if(held(&quot;shift&quot;)){const i=patIdx();const fl=S.flash[S.proj];if(isDrum())proj().drum.pats[i]=deep(fl.drum.pats[i]);else trk().pats[i]=deep(fl.tracks[t].pats[i]);msg(&quot;Pattern\nReloaded&quot;);HELD.get(&quot;shift&quot;).used=true}break;
+  case &quot;pattern&quot;:case &quot;scene&quot;:{const sc=id===&quot;scene&quot;;if(held(&quot;copy&quot;))S.patMode={op:&quot;copy&quot;,scene:sc};else if(held(&quot;paste&quot;))S.patMode={op:&quot;paste&quot;,scene:sc};else if(held(&quot;erase&quot;))S.patMode={op:&quot;erase&quot;,scene:sc};else if(held(&quot;save&quot;))S.patMode={op:&quot;save&quot;,scene:sc};
+   if(S.patMode)msg(`Select ${sc?&quot;Scene&quot;:&quot;Pattern&quot;}\nto ${S.patMode.op[0].toUpperCase()+S.patMode.op.slice(1)}\nPress Exit to Cancel`,2500);break}
+  case &quot;chain&quot;:S.chainBuild={t,list:[]};break;
+  case &quot;control&quot;:S.control=!S.control;S.ctrlTrack=t;S.sel=null;emit(S.control?&quot;control:on&quot;:&quot;control:off&quot;);msg(S.control?&quot;Control\nmode&quot;:&quot;Control\nOFF&quot;);break;
+  case &quot;stepedit&quot;:S.stepEdit=!S.stepEdit;S.sel=null;S.selNotes=null;emit(S.stepEdit?&quot;stepedit:on&quot;:&quot;stepedit:off&quot;);break;
+  case &quot;overdub&quot;:S.overdub=!S.overdub;S.selNotes=null;break;
+  case &quot;lst&quot;:if(held(&quot;shift&quot;)){S.follow=!S.follow;msg(S.follow?&quot;Follow\nON&quot;:&quot;Follow\nOFF&quot;)}break;
+  case &quot;octdn&quot;:case &quot;octup&quot;:{const tr=trk();if(held(id===&quot;octdn&quot;?&quot;octup&quot;:&quot;octdn&quot;)){tr.oct=0;msg(&quot;Octave\n0&quot;)}else{tr.oct=clamp(tr.oct+(id===&quot;octup&quot;?1:-1),-3,2);msg(`Octave\n${tr.oct>0?&quot;+&quot;:&quot;&quot;}${tr.oct}`)}emit(&quot;oct&quot;);break}
+  case &quot;hold&quot;:if(held(&quot;shift&quot;)){S.hold=[0,0,0,0];S.arpLatched=[[],[],[],[]];msg(&quot;Arps\nCleared&quot;)}else{S.hold[t]=S.hold[t]?0:1;if(S.hold[t])S.arpLatched[t]=S.arpHeld[t].slice();else S.arpLatched[t]=[];emit(S.hold[t]?&quot;hold:on&quot;:&quot;hold:off&quot;)}break;
+  case &quot;trans&quot;:S.transUsed=false;if(held(&quot;shift&quot;)){S.trans.forEach(x=>{x.on=false;x.semi=0});S.tgroup.clear();S.transMode=false;msg(&quot;Transpose\nCleared&quot;);emit(&quot;trans:clear&quot;);S.transUsed=true}
+   else if(held(&quot;erase&quot;)){S.tgroup.clear();msg(&quot;Transpose group\ndeleted&quot;);S.transUsed=true}
+   else if(S.globals[153]===0){S.transMode=!S.transMode;S.transUsed=true;msg(S.transMode?&quot;Transpose\nlatched&quot;:&quot;Transpose\nmode off&quot;)}
+   else{const tr=S.trans[t];msg(`Track ${t+1}\n${tr.semi?(tr.semi>0?&quot;+&quot;:&quot;&quot;)+tr.semi+&quot; semi&quot;:&quot;No Transposition&quot;}`)}break;
+  case &quot;tie&quot;:if(held(&quot;shift&quot;)){S.chordEntry={notes:[]};HELD.get(&quot;shift&quot;).used=true;msg(&quot;Chord\nPlay notes&quot;);emit(&quot;chord:entry&quot;)}else tieDown();break;
+  case &quot;pbend&quot;:case &quot;modw&quot;:case &quot;looper&quot;:break;
+ }
+ dirty()}
+function up(id){const h=HELD.get(id);HELD.delete(id);if(!h)return;let m;
+ if((m=id.match(/^k(\d+)$/))){keyUp(+m[1]);if(+m[1]===29&amp;&amp;S.rootSel&amp;&amp;S.rootChosen)S.rootSel=false;dirty();return}
+ if((m=id.match(/^s(\d+)$/))){stepUp(+m[1],h);return}
+ if((m=id.match(/^t(\d)(mute|trk)$/))){if(m[2]===&quot;mute&quot;&amp;&amp;!h.used&amp;&amp;!h.sh){const t=+m[1];S.mute[t]=S.mute[t]?0:1;if(S.solo===t){S.solo=-1}emit(&quot;mute:&quot;+t)}dirty();return}
+ switch(id){
+  case &quot;rec&quot;:if(!h.used&amp;&amp;!S.playing){S.rec=S.rec===&quot;step&quot;?false:&quot;step&quot;;S.stepRecPos=0;emit(S.rec?&quot;rec:step&quot;:&quot;rec:off&quot;)}break;
+  case &quot;trans&quot;:if(!S.transUsed&amp;&amp;S.globals[153]!==0){const ts=new Set([S.cur,...S.tgroup]);let any=false;for(const t of ts){if(S.trans[t].semi){S.trans[t].on=!S.trans[t].on;any=true}}if(any)emit(&quot;transtoggle&quot;)}break;
+  case &quot;copy&quot;:if(S.copySel&amp;&amp;S.copySel.length){copySteps(S.copySel)}S.copySel=null;break;
+  case &quot;shift&quot;:case &quot;tie&quot;:chordEntryCheck();break;
+  case &quot;chain&quot;:if(S.chainBuild&amp;&amp;S.chainBuild.list.length)emit(&quot;chain:set&quot;);S.chainBuild=null;break;
+  case &quot;pbend&quot;:setBend(0);midiBend(0);break;
+  case &quot;looper&quot;:S.looper=null;break;
+ }
+ dirty()}
+function tieDown(){const pat=curPat(),t=S.cur;
+ if(S.rec===&quot;step&quot;){if(S.keysDown.size){const prev=(S.stepRecPos-1+pat.len)%pat.len;pat.st[prev].n.forEach(n=>n.g=Math.min(64,Math.floor(n.g)+1))}else{if(!S.overdub)pat.st[S.stepRecPos]=newStep();S.stepRecPos=(S.stepRecPos+1)%pat.len}pat.valid=true;emit(&quot;steprec:rest&quot;);return}
+ if(S.stepEdit&amp;&amp;S.sel!=null){if(S.keysDown.size||S.overdub){pat.st[S.sel].n.forEach(n=>{if(!S.selNotes||S.selNotes.has(n.p))n.g=Math.min(64,Math.floor(n.g)+1)})}else{snapshotUndo();pat.st[S.sel]=newStep();S.sel=(S.sel+1)%pat.len}pat.valid=true;return}
+ if(heldStep()!=null){const st=pat.st[S.view[t]*16+heldStep()];st.n.forEach(n=>n.g=Math.min(64,Math.floor(n.g)+1));return}}
+function trackDown(t,k){const tr=trk(t);
+ if(k===&quot;dn&quot;||k===&quot;up&quot;){const pi=t===0&amp;&amp;isDrum(0)?proj().drum.cur:tr.cur;choosePat(t,(pi+(k===&quot;up&quot;?1:15))%16);emit(`pattern:${t}:${(pi+(k===&quot;up&quot;?1:15))%16}`);return}
+ if(k===&quot;seq&quot;){tr.mode=&quot;seq&quot;;S.cur=t;emit(`mode:${t}:seq`);emit(&quot;track:&quot;+t);return}
+ if(k===&quot;alt&quot;){if(t===0){if(held(&quot;shift&quot;)){S.drumMute.fill(0);msg(&quot;Drums\nunmuted&quot;);return}if(held(&quot;t0mute&quot;)){S.drumMuteMode=!S.drumMuteMode;HELD.get(&quot;t0mute&quot;).used=true;return}tr.mode=&quot;drum&quot;}else tr.mode=&quot;arp&quot;;
+  S.cur=t;emit(`mode:${t}:${tr.mode}`);emit(&quot;track:&quot;+t);return}
+ if(k===&quot;mute&quot;){if(held(&quot;shift&quot;)){S.solo=S.solo===t?-1:t;HELD.get(&quot;t&quot;+t+&quot;mute&quot;).sh=true;emit(&quot;solo:&quot;+t)}return}
+ if(k===&quot;trk&quot;){if(held(&quot;shift&quot;)){S.cur=t;openMenu(MENU_TS());return}
+  if(held(&quot;save&quot;)){HELD.get(&quot;save&quot;).used=true;for(let i=0;i<16;i++)savePattern(t,i);msg(&quot;Patterns\nSaved&quot;);emit(&quot;save:track&quot;);return}
+  if(held(&quot;trans&quot;)||S.transMode){S.transUsed=true;if(t!==S.cur){S.tgroup.has(t)?S.tgroup.delete(t):S.tgroup.add(t);emit(&quot;transgroup&quot;)}return}
+  if(S.control){S.control=false;emit(&quot;control:off&quot;);if(t===S.ctrlTrack)return}
+  if(S.split&amp;&amp;[...HELD.keys()].filter(id=>/^t\dtrk$/.test(id)).length>=2){const a=[...HELD.keys()].filter(id=>/^t\dtrk$/.test(id)).map(x=>+x[1]);if(a.includes(S.split.up)&amp;&amp;a.includes(S.split.lo)){S.split=null;msg(&quot;Split\nOFF&quot;)}}
+  if(S.chainBuild)S.chainBuild={t,list:[]};
+  S.cur=t;S.sel=null;emit(&quot;track:&quot;+t)}}
+function stepDown(i){const t=S.cur,dr=isDrum(),v=S.view[dr?4:t],idx=v*16+i,pat=curPat();
+ if(S.confirm){if(S.confirm.kind===&quot;save&quot;){S.confirm=null;loadProject(i);msg(&quot;Project\nLoaded\n(not saved!)&quot;,1800)}return}
+ if(held(&quot;shift&quot;)){HELD.get(&quot;shift&quot;).used=true;shiftStep(i);return}
+ if(held(&quot;project&quot;)){HELD.get(&quot;project&quot;).used=true;loadProject(i);return}
+ if(S.patMode){const pm=S.patMode;if(pm.scene){if(pm.op===&quot;save&quot;)saveScene(i);else if(pm.op===&quot;copy&quot;){S.copy={kind:&quot;scene&quot;,d:deep(proj().scenes[i])};msg(&quot;Scene\nCopied&quot;)}else if(pm.op===&quot;paste&quot;&amp;&amp;S.copy&amp;&amp;S.copy.kind===&quot;scene&quot;){proj().scenes[i]=deep(S.copy.d);msg(&quot;Scene\nPasted&quot;)}else if(pm.op===&quot;erase&quot;){proj().scenes[i]=null;msg(&quot;Scene\nErased&quot;)}}
+  else{const pats=dr?proj().drum.pats:trk().pats;if(pm.op===&quot;copy&quot;){S.copy={kind:&quot;pat&quot;,drum:dr,d:deep(pats[i])};msg(&quot;Pattern\nCopied&quot;)}else if(pm.op===&quot;paste&quot;){if(!S.copy||S.copy.kind!==&quot;pat&quot;||S.copy.drum!==dr){msg(&quot;Nothing to\npaste&quot;)}else{S.undo={t,drum:dr,i,pat:deep(pats[i])};pats[i]=deep(S.copy.d);pats[i].valid=true;msg(&quot;Pattern Pasted\nUndo possible&quot;)}}
+   else if(pm.op===&quot;erase&quot;){S.undo={t,drum:dr,i,pat:deep(pats[i])};pats[i]=dr?newDrumPat():newPat();pats[i].valid=true;msg(&quot;Pattern\nErased&quot;)}else if(pm.op===&quot;save&quot;){savePattern(t,i);msg(&quot;Pattern\nSaved&quot;)}}
+  if(!held(&quot;copy&quot;)&amp;&amp;!held(&quot;paste&quot;)&amp;&amp;!held(&quot;erase&quot;)&amp;&amp;!held(&quot;save&quot;))S.patMode=pm.op===&quot;copy&quot;||pm.op===&quot;paste&quot;?S.patMode:null;dirty();return}
+ if(held(&quot;pattern&quot;)){HELD.get(&quot;pattern&quot;).used=true;choosePat(t,i);return}
+ if(held(&quot;scene&quot;)){if(held(&quot;save&quot;))saveScene(i);else loadScene(i);return}
+ if(held(&quot;chain&quot;)&amp;&amp;S.chainBuild){const cb=S.chainBuild;cb.list.push(i);if(cb.list.length>16)cb.list.shift();if(dr)proj().drum.chain=cb.list.slice();else trk(cb.t).chain=cb.list.slice();P[cb.t].chainPos=0;msg(`Chain\n${cb.list.length} pattern${cb.list.length>1?&quot;s&quot;:&quot;&quot;}\nin the chain`);if(cb.list.length===1)setPat(cb.t,i,true);dirty();return}
+ if(held(&quot;save&quot;)){HELD.get(&quot;save&quot;).used=true;savePattern(t,patIdx());savePattern(t,i);msg(&quot;Pattern\nSaved&quot;);return}
+ if(held(&quot;lst&quot;)){HELD.get(&quot;lst&quot;).used=true;if(dr&amp;&amp;pat.poly)pat.lanes[S.lane].len=idx+1;else pat.len=idx+1;pat.valid=true;msg(`Last Step\n${idx+1}`);return}
+ if(held(&quot;copy&quot;)){S.copySel=S.copySel||[];S.copySel.push(i);return}
+ if(held(&quot;paste&quot;)){pasteSteps(i);return}
+ if(held(&quot;erase&quot;)){snapshotUndo();if(dr)pat.lanes[S.lane].st[idx]=newDStep();else pat.st[idx]=newStep();pat.valid=true;msg(&quot;Step\nErased&quot;);return}
+ if(S.control){S.sel=S.sel===idx?null:idx;return}
+ if(dr){if(S.stepEdit){S.sel=idx;return}const st=pat.lanes[S.lane].st[idx];if(st.on)st.on=false;else Object.assign(st,{on:true,g:S.drumDefs.g,v:S.drumDefs.v,t:S.drumDefs.t,r:S.drumDefs.r});pat.valid=true;emit(&quot;drum:step:&quot;+i);return}
+ if(S.stepEdit){S.sel=idx;S.selNotes=null;emit(&quot;stepedit:sel&quot;);if(!S.playing&amp;&amp;S.globals[110]===0){const st=pat.st[idx];const t0=now()+.01,dur=stepDur(pat);st.n.forEach(n=>playNote(t,q(t,n.p),n.v,t0+Math.max(0,n.t)/100*dur,t0+n.g*dur))}return}
+ if(S.rec===&quot;step&quot;){S.stepRecPos=idx;return}}
+function stepUp(i,h){const t=S.cur,dr=isDrum();if(dr||S.stepEdit||S.control||S.rec===&quot;step&quot;||h.used)return dirty();
+ const pat=curPat(),idx=S.view[t]*16+i,st=pat.st[idx];
+ if(st.n.length){st.on=!st.on}else{st.n=[noteFromDefaults(t,S.lastNote,S.defs[t].v)];st.on=true}pat.valid=true;emit(st.on?&quot;step:on:&quot;+i:&quot;step:off:&quot;+i);dirty()}
+function pageDown(n){const t=S.cur,dr=isDrum(),pat=curPat(),hs=heldSteps();
+ if(held(&quot;lst&quot;)){HELD.get(&quot;lst&quot;).used=true;if(dr&amp;&amp;pat.poly)pat.lanes[S.lane].len=(n+1)*16;else pat.len=(n+1)*16;S.view[dr?4:t]=n;pat.valid=true;msg(`Last Step\n${(n+1)*16}`);return}
+ if(held(&quot;shift&quot;)){HELD.get(&quot;shift&quot;).used=true;const steps=dr?pat.lanes[S.lane].st:pat.st;for(let i=0;i<16;i++)steps[n*16+i]=deep(steps[i]);if(dr&amp;&amp;pat.poly)pat.lanes[S.lane].len=Math.max(pat.lanes[S.lane].len,(n+1)*16);else pat.len=Math.max(pat.len,(n+1)*16);pat.valid=true;msg(&quot;Page\nPasted&quot;);return}
+ if(held(&quot;copy&quot;)){S.copySel=null;S.copy={kind:&quot;page&quot;,drum:dr,d:deep((dr?pat.lanes[S.lane].st:pat.st).slice(n*16,n*16+16))};msg(&quot;Page\nCopied&quot;);return}
+ if(held(&quot;paste&quot;)){if(!S.copy||S.copy.kind!==&quot;page&quot;){msg(&quot;Nothing to\npaste&quot;);return}snapshotUndo();const steps=dr?pat.lanes[S.lane].st:pat.st;S.copy.d.forEach((s,i)=>steps[n*16+i]=deep(s));pat.valid=true;msg(&quot;Page\nPasted&quot;);return}
+ if(held(&quot;erase&quot;)){snapshotUndo();const steps=dr?pat.lanes[S.lane].st:pat.st;for(let i=0;i<16;i++)steps[n*16+i]=dr?newDStep():newStep();pat.valid=true;msg(&quot;Page\nErased&quot;);return}
+ if(hs.length){hs.forEach(i=>{HELD.get(&quot;s&quot;+i).used=true;const st=dr?pat.lanes[S.lane].st[S.view[4]*16+i]:pat.st[S.view[t]*16+i];st.skip[n]=st.skip[n]?0:1});pat.valid=true;msg(`Step Skip\npage ${n+1}`);emit(&quot;skip&quot;);return}
+ S.view[dr?4:t]=n;S.follow=false;dirty()}
+function turnKnob(id,d){for(const h of HELD.values())h.used=true;
+ if(id===&quot;tempo&quot;){const f=held(&quot;shift&quot;)?.01:1;if(S.globalBpm)S.gbpm=clamp(Math.round((S.gbpm+d*f)*100)/100,30,240);else proj().bpm=clamp(Math.round(((held(&quot;shift&quot;)?proj().bpm:Math.round(proj().bpm))+d*f)*100)/100,30,240);msg(held(&quot;shift&quot;)?`${bpm().toFixed(2)} BPM`:`${Math.round(bpm())} BPM`);emit(&quot;tempo&quot;)}
+ else if(id===&quot;swing&quot;){if(held(&quot;shift&quot;)){const p=curPat();p.swOff=clamp((p.swOff||0)+d,-25,25);p.valid=true}else proj().swing=clamp(proj().swing+d,50,75);msg(`Swing\nGlobal : ${proj().swing}%\nTrack ${S.cur+1} : ${curPat().swOff>0?&quot;+&quot;:&quot;&quot;}${curPat().swOff||0}%`);emit(&quot;swing&quot;)}
+ else if(id===&quot;sel&quot;){if(S.menu)menuTurn(d);else if(held(&quot;project&quot;)){HELD.get(&quot;project&quot;).used=true;S.projPick=clamp((S.projPick==null?S.proj:S.projPick)+d,0,15);msg(`Load Project\n${S.ram[S.projPick].name||&quot;Project &quot;+(S.projPick+1)}`)}}
+ else if(/^enc\d$/.test(id))turnEnc(+id[3],d);
+ dirty()}
+function clickKnob(id){if(id===&quot;sel&quot;){if(S.confirm){const c=S.confirm;S.confirm=null;c.fn();emit(&quot;confirm:&quot;+c.kind)}else if(S.menu)menuPush();else if(S.projPick!=null&amp;&amp;held(&quot;project&quot;)){loadProject(S.projPick);S.projPick=null}dirty();return}
+ if(id===&quot;swing&quot;){msg(`Swing\nGlobal : ${proj().swing}%\nTrack ${S.cur+1} : ${curPat().swOff||0}%`)}else if(id===&quot;tempo&quot;)msg(`${bpm().toFixed(2)} BPM`);else encShow(+id[3]);dirty()}
+
+/* ---------- pointer input ---------- */
+let tipT=0;const tip=$(&quot;#tip&quot;);
+function showTip(id,e){const inf=infoFor(id);if(!inf){tip.hidden=true;return}tip.innerHTML=`<b>${inf[0]}</b>${inf[1]}${inf[2]?`<div class=&quot;s&quot;>${inf[2]}</div>`:&quot;&quot;}`;tip.hidden=false;
+ const x=Math.min(innerWidth-330,e.clientX+14),y=Math.min(innerHeight-tip.offsetHeight-8,e.clientY+14);tip.style.left=x+&quot;px&quot;;tip.style.top=y+&quot;px&quot;}
+function showInfo(id){const inf=infoFor(id);if(!inf)return;$(&quot;#info&quot;).innerHTML=`<div class=&quot;crumb&quot;>Manual <b>${inf[3]}</b></div><h2>${inf[0]}</h2><p>${inf[1]}</p>${inf[2]?`<p><b>Shift:</b> ${inf[2]}</p>`:&quot;&quot;}${inf[4]?`<div class=&quot;fw&quot;><b>Firmware:</b> ${inf[4]}</div>`:&quot;&quot;}`}
+function toggleLatch(id){if(LATCH.has(id)){LATCH.delete(id);ctlEls[id].classList.remove(&quot;latched&quot;);up(id)}else{LATCH.add(id);ctlEls[id].classList.add(&quot;latched&quot;);down(id)}}
+const stripVal=(c,e)=>{const r=svg.getScreenCTM().inverse(),p=new DOMPoint(e.clientX,e.clientY).matrixTransform(r);return c.t===&quot;looper&quot;?clamp((p.x-c.x)/c.w,0,.999):clamp(1-(p.y-c.y)/c.h,0,1)};
+function stripInput(c,e){const v=stripVal(c,e);if(c.id===&quot;pbend&quot;){const b=(v-.5)*2;const bb=Math.abs(b)<.08?0:b;setBend(bb*2);midiBend(bb)}else if(c.id===&quot;modw&quot;){S.mod[S.cur]=Math.round(v*127);midiCC(-1,S.mod[S.cur])}
+ else if(c.id===&quot;looper&quot;){if(held(&quot;shift&quot;)){S.looperOn=!S.looperOn;msg(S.looperOn?&quot;Touch Strip\nON&quot;:&quot;Touch Strip\nOFF&quot;);HELD.get(&quot;shift&quot;).used=true;return}if(!S.looperOn||!S.playing)return;const z=Math.floor(v*4),beats=[1,.5,.25,.125][z];
+  if(!S.looper||S.looper.beats!==beats){S.looper={beats,start:P.map(p=>p.cnt),idx:P.map(p=>p.idx)};emit(&quot;looper&quot;)}}dirty()}
+function bindInput(){
+ let drag=null,lp=null;
+ svg.addEventListener(&quot;contextmenu&quot;,e=>e.preventDefault());
+ svg.addEventListener(&quot;pointerdown&quot;,e=>{const g=e.target.closest(&quot;.ctl&quot;);if(!g)return;const id=g.dataset.id,c=CI[id];e.preventDefault();tip.hidden=true;showInfo(id);
+  if(e.button===2){toggleLatch(id);return}
+  if(c.t===&quot;knob&quot;){drag={id,y:e.clientY,moved:false,acc:0};svg.setPointerCapture(e.pointerId);return}
+  if(c.t===&quot;strip&quot;||c.t===&quot;looper&quot;){down(id);drag={id,strip:c};stripInput(c,e);svg.setPointerCapture(e.pointerId);return}
+  if(LATCH.has(id)){toggleLatch(id);return}
+  if(e.pointerType===&quot;touch&quot;){lp=setTimeout(()=>{lp=null;if(HELD.has(id)){LATCH.add(id);ctlEls[id].classList.add(&quot;latched&quot;)}},HOLDMS)}
+  if(c.t===&quot;key&quot;){const pt=new DOMPoint(e.clientX,e.clientY).matrixTransform(svg.getScreenCTM().inverse());S.padVel=clamp(Math.round(45+82*(pt.y-c.y)/c.h),1,127)}
+  down(id);drag={id,btn:true};svg.setPointerCapture(e.pointerId)});
+ svg.addEventListener(&quot;pointermove&quot;,e=>{if(drag&amp;&amp;drag.strip){stripInput(drag.strip,e);return}
+  if(drag&amp;&amp;!drag.btn){const dy=drag.y-e.clientY;drag.acc+=dy;drag.y=e.clientY;const step=held(&quot;shift&quot;)||e.shiftKey?6:4;while(Math.abs(drag.acc)>=step){const d=Math.sign(drag.acc);drag.acc-=d*step;drag.moved=true;turnKnob(drag.id,d)}return}
+  if(!drag){const g=e.target.closest(&quot;.ctl&quot;);if(g){const id=g.dataset.id;g.classList.add(&quot;hl&quot;);if(svg._hl&amp;&amp;svg._hl!==g)svg._hl.classList.remove(&quot;hl&quot;);svg._hl=g;showTip(id,e)}else{tip.hidden=true;if(svg._hl){svg._hl.classList.remove(&quot;hl&quot;);svg._hl=null}}}});
+ const end=e=>{if(lp){clearTimeout(lp);lp=null}if(!drag)return;const d=drag;drag=null;
+  if(d.strip){up(d.id);return}if(!d.btn){if(!d.moved)clickKnob(d.id);return}if(!LATCH.has(d.id))up(d.id)};
+ svg.addEventListener(&quot;pointerup&quot;,end);svg.addEventListener(&quot;pointercancel&quot;,end);
+ svg.addEventListener(&quot;pointerleave&quot;,()=>{tip.hidden=true});
+ svg.addEventListener(&quot;wheel&quot;,e=>{const g=e.target.closest(&quot;.ctl&quot;);if(!g)return;const c=CI[g.dataset.id];if(c.t!==&quot;knob&quot;)return;e.preventDefault();turnKnob(c.id,e.deltaY<0?1:-1)},{passive:false});
+ /* computer keyboard */
+ const KMAP=&quot;awsedftgyhujk&quot;;
+ const kmDown=new Set();
+ addEventListener(&quot;keydown&quot;,e=>{if(e.target.closest(&quot;input,select,textarea&quot;))return;const k=e.key.toLowerCase();
+  if(e.key===&quot;Shift&quot;){if(!held(&quot;shift&quot;))down(&quot;shift&quot;);return}
+  if(e.repeat)return;
+  if(k===&quot; &quot;){e.preventDefault();down(&quot;play&quot;);up(&quot;play&quot;);return}if(k===&quot;.&quot;){down(&quot;stop&quot;);up(&quot;stop&quot;);return}if(k===&quot;r&quot;){down(&quot;rec&quot;);up(&quot;rec&quot;);return}
+  if(k===&quot;z&quot;){down(&quot;octdn&quot;);up(&quot;octdn&quot;);return}if(k===&quot;x&quot;){down(&quot;octup&quot;);up(&quot;octup&quot;);return}
+  const i=KMAP.indexOf(k);if(i>=0){const key=&quot;k&quot;+(12+i);kmDown.add(key);down(key)}});
+ addEventListener(&quot;keyup&quot;,e=>{const k=e.key.toLowerCase();if(e.key===&quot;Shift&quot;){if(!LATCH.has(&quot;shift&quot;))up(&quot;shift&quot;);return}const i=KMAP.indexOf(k);if(i>=0){const key=&quot;k&quot;+(12+i);if(kmDown.delete(key))up(key)}});
+ addEventListener(&quot;blur&quot;,()=>{for(const id of [...HELD.keys()])if(!LATCH.has(id))up(id)});
+}
+
+/* ---------- Web MIDI mirror (notes out, keyboard in) ---------- */
+let MOUT=null,MIN=null;
+async function toggleMidi(){const b=$(&quot;#midiBtn&quot;);if(MOUT||MIN){MOUT=null;if(MIN)MIN.onmidimessage=null;MIN=null;b.setAttribute(&quot;aria-pressed&quot;,&quot;false&quot;);b.textContent=&quot;MIDI&quot;;return}
+ if(!navigator.requestMIDIAccess){alert(&quot;This browser has no Web MIDI.&quot;);return}
+ try{const acc=await navigator.requestMIDIAccess();const outs=[...acc.outputs.values()],ins=[...acc.inputs.values()];
+  MOUT=outs.find(o=>!/keystep/i.test(o.name))||outs[0]||null;MIN=ins.find(i=>!/keystep/i.test(i.name))||ins[0]||null;
+  if(MIN)MIN.onmidimessage=ev=>{const [s,d1,d2]=ev.data;const ty=s&amp;0xF0;const k=d1-48-12*trk().oct;if(k<0||k>36)return;if(ty===0x90&amp;&amp;d2>0){keyDown(k,d2)}else if(ty===0x80||ty===0x90){keyUp(k)}};
+  b.setAttribute(&quot;aria-pressed&quot;,&quot;true&quot;);b.textContent=`MIDI: ${MOUT?MOUT.name:&quot;no out&quot;}`}catch(e){alert(&quot;MIDI access was refused.&quot;)}}
+const tms=t=>t==null?undefined:Math.max(performance.now(),t*1000);
+function midiNote(t,midi,vel,t0,t1){if(!MOUT)return;const ch=outCh(t);if(ch==null)return;MOUT.send([0x90|ch,midi,vel],tms(t0));MOUT.send([0x80|ch,midi,0],tms(t1))}
+function midiDrum(l,vel,t0,t1){if(!MOUT)return;const ch=S.globals[79];if(ch>15)return;const n=S.globals[81]?S.globals[83+l]:S.globals[82]+36+l;MOUT.send([0x90|ch,n&amp;127,vel],tms(t0));MOUT.send([0x80|ch,n&amp;127,0],tms(t1))}
+function midiOn(t,midi,vel){if(!MOUT)return;const ch=outCh(t);if(ch!=null)MOUT.send([0x90|ch,midi,vel])}
+function midiOff(t,midi){if(!MOUT)return;const ch=outCh(t);if(ch!=null)MOUT.send([0x80|ch,midi,0])}
+function midiCC(i,v){if(!MOUT)return;if(i<0){const ch=outCh(S.cur);if(ch!=null)MOUT.send([0xB0|ch,1,v]);return}const c=S.globals[38+i],ch=c>15?S.globals[80]:c;MOUT.send([0xB0|(ch&amp;15),S.globals[28+i]&amp;127,v])}
+function midiPC(t,pc){if(!MOUT)return;const ch=outCh(t);if(ch!=null)MOUT.send([0xC0|ch,pc&amp;127])}
+function midiBend(b){if(!MOUT)return;const ch=outCh(S.cur);if(ch==null)return;const v=clamp(Math.round(8192+b*8191),0,16383);MOUT.send([0xE0|ch,v&amp;127,v>>7])}
+function midiAllOff(){if(!MOUT)return;for(let c=0;c<16;c++)MOUT.send([0xB0|c,123,0])}
+
+/* ---------- tours ---------- */
+let tour=null;
+function startTour(i){tour={i,k:0};renderTour()}
+function renderTour(){const box=$(&quot;#tourBox&quot;);document.querySelectorAll(&quot;.tourTarget&quot;).forEach(e=>e.classList.remove(&quot;tourTarget&quot;));
+ if(!tour){box.hidden=true;return}const T=TOURS[tour.i];box.hidden=false;
+ if(tour.k>=T.steps.length){box.innerHTML=`<h2>${T.n}</h2><p class=&quot;done&quot;>Done. Pick another tour or keep playing.</p><div class=&quot;nav&quot;><button id=&quot;tourClose&quot;>Close</button></div>`;$(&quot;#tourClose&quot;).onclick=()=>{tour=null;renderTour()};return}
+ const st=T.steps[tour.k];box.innerHTML=`<div class=&quot;crumb&quot;>Tour · step ${tour.k+1} of ${T.steps.length}</div><h2>${T.n}</h2><p class=&quot;step&quot;>${st.s}</p><div class=&quot;nav&quot;><button id=&quot;tourSkip&quot;>Skip step</button><button id=&quot;tourClose&quot;>End tour</button></div>`;
+ if(st.t&amp;&amp;ctlEls[st.t])ctlEls[st.t].classList.add(&quot;tourTarget&quot;);$(&quot;#tourSkip&quot;).onclick=()=>{tour.k++;renderTour()};$(&quot;#tourClose&quot;).onclick=()=>{tour=null;renderTour()}}
+LISTEN.push(ev=>{if(!tour)return;const st=TOURS[tour.i].steps[tour.k];if(!st)return;if(st.ev instanceof RegExp?st.ev.test(ev):st.ev===ev){tour.k++;renderTour()}});
+
+/* ---------- chapters ---------- */
+const SHOW={
+ trackSettings(){S.cur=1;openMenu(MENU_TS());return &quot;<p>Firmware 2.5 added a per-track settings page: <b>Shift + Track button</b>. It holds MIDI Channel IN/OUT, Program Change Send and Assign, and Fixed Velocity. Transpose Latch lives in <b>Utility &amp;gt; Misc</b>.</p><div class='fw'><b>Firmware:</b> PC Send and Fixed Velocity are global settings 142–146 and 154–158 (track 1 has separate Seq and Drum entries). MCC does not list them; the Device tools tab can read and set them.</div>&quot;},
+ recordBasics(){S.cur=1;trk(1).mode=&quot;seq&quot;;return &quot;<p>Three ways to fill a pattern: <b>Quick Record</b> (hold a step and play keys, Record and Step Edit off), <b>Step Record</b> (press Record while stopped; each key press fills a step and advances; Tie/Rest = rest) and <b>Real-time Record</b> (hold Record, press Play). Overdub decides whether notes add to or replace a step. Shift + Record toggles quantized recording.</p>&quot;},
+ arpBasics(){S.cur=2;trk(2).mode=&quot;arp&quot;;return &quot;<p>Tracks 2–4 have arpeggiators. Press <b>Arp</b>, hold a chord, and it plays even when the sequencer is stopped. <b>Hold</b> latches it; while one key is held you can add notes (up to 16). Shift + the Arp Pattern keys pick Up, Down, Exclu, Inclu, Rand, Order or Poly; Shift + Arp Octave −1…+3 sets the range. Gate, Velocity (bipolar), Time Shift and Randomness act on the whole arpeggio.</p>&quot;},
+ scaleBasics(){S.cur=1;return &quot;<p>Shift + a Scale key (Chrom, Major, Minor, Dorian, Mixo, H.Min, Blues, User 1, User 2) sets the scale of the current pattern. The keyboard, the sequence and the arpeggio of that track all play in the scale. Shift + Root, then a key in the lowest octave, sets the root. Shift + User 1/2 lets you toggle notes in the lowest octave to build your own scale.</p><div class='fw'><b>Firmware:</b> the scale is a 12-bit mask; out-of-scale notes snap to the nearest scale note and ties snap <b>down</b> (in C major C# plays C, F# plays F). The masks are Major 0xAB5, Minor 0x5AD (natural minor), Dorian 0x6AD, Mixolydian 0x6B5, Harmonic minor 0x9AD (C D Eb F G Ab B), Blues 0x4E9. Quantizing happens at play time, so recorded steps keep their raw pitch.</div>&quot;},
+ tempo(){return &quot;<p>Tempo 30–240 BPM (Shift = fine, 0.01 BPM). Tap Tempo: tap at least twice. Swing 50–75% for all tracks; Shift + Swing sets an offset for the selected track. Shift + step 15 switches between the project tempo and a global tempo.</p>&quot;},
+ encoders(){S.cur=1;return &quot;<p>The five encoders edit Pitch, Gate, Velocity, Time Shift and Randomness. With no step held they set the <b>track defaults</b> used for new notes. Hold a step (or select it in Step Edit) to edit that step. Shift + turn offsets every step of the pattern.</p>&quot;},
+ looper(){return &quot;<p>Touch the looper strip while playing to loop all tracks from that moment: 1/4 at the left is the longest loop, 1/32 at the right the shortest. Shift + touch disables or enables the strip.</p>&quot;},
+ shiftFns(){return &quot;<p>Hold <b>Shift</b>: the LEDs above the keys show what is active (sequence direction, mono/poly, arp pattern and octave, time division, scale, CV routing). Shift + a step runs the blue step functions: Clr Ptn, Clr Steps, Nudge, Invert, Semi Up/Down (scale-aware), Oct Up/Down, Qnt 50%/100%, Rand Order/Notes/Oct, Global BPM, Wait Load.</p>&quot;},
+ seqLength(){return &quot;<p>Lst Step + a step sets the length within the viewed page; Lst Step + 16/32/48/64 sets it in pages. Shift + a page button extends the pattern by copying page 1 there. Shift + Lst Step toggles Follow. Shift + Mono/Poly keys set whether a step plays all its notes or only the lowest; Shift + Fwd/Rand/Walk sets the direction.</p>&quot;},
+ stepEdit(){S.cur=1;S.stepEdit=true;return &quot;<p><b>Step Edit</b> on: press a step to select it (it blinks). Play keys to replace its notes, or with Overdub on to add notes. Encoders edit the step; Tie/Rest clears it. When the sequencer is stopped, pressing a step plays it (step listen). <b>Quick Edit</b> (Step Edit off): press steps to toggle them, or hold one and play keys / turn encoders.</p>&quot;},
+ copyPaste(){return &quot;<p>Copy + steps, then Paste + a step. Copy + a page button, then Paste + another page. Erase + steps or a page. Copy/Paste/Erase + Pattern opens pattern mode: press steps to pick patterns. Shift + Exit undoes the last paste or erase.</p>&quot;},
+ saving(){return &quot;<p>Edits live in working memory. Hold <b>Save</b>: unsaved patterns of the track show red, saved ones blue. Save + step saves that pattern; Save + Track button saves the whole track; Save + Project saves everything (confirm with the encoder). Shift + Save reloads the current pattern.</p>&quot;},
+ drum(){trk(0).mode=&quot;drum&quot;;S.cur=0;return &quot;<p>Track 1 → Drum: 24 lanes on the lowest 24 keys. Press a key to select (and hear) a lane, then press steps to toggle hits. Hold the Drum button and press a key to select a lane silently. Hold Mute + a key to mute lanes; Shift + Drum unmutes all. Shift + Poly lets each lane have its own length (Lst Step + step while a lane is selected).</p>&quot;},
+ chordMode(){S.cur=2;return &quot;<p>Hold <b>Shift + Tie/Rest</b> and play a chord (or play it legato): its intervals from the first note are stored. Then any key plays that chord. Shift + Tie/Rest turns chord mode off and on again; the shape stays stored. One chord per track.</p><div class='fw'><b>Firmware:</b> each chord note is snapped through the scale map individually, so a shape becomes diatonic in a scale. The shape and chord-mode flag are part of the track data that Save Project writes, so a saved chord survives a power cycle even though the manual says it doesn't.</div>&quot;},
+ projects(){return &quot;<p>16 projects. Hold Project + a step to load one (or hold Project and turn the encoder). Save + Project, Copy + Project (to the next slot) and Erase + Project all ask for confirmation: push the selection encoder. Hold Project and press Shift to recall the saved version from flash.</p><div class='fw'><b>Firmware:</b> all 16 projects are loaded into RAM at boot and edits stay in RAM until saved. At “Save Project / Confirm ?”, a step pad does <b>not</b> confirm: it loads that project and discards the edits. The simulation reproduces this.</div>&quot;},
+ tracks(){return &quot;<p>Mute a track with its Mute button; Shift + Mute solos it (exclusive). Hold two track buttons and press a key to split the keyboard (first button = upper part). Press the two track buttons again to remove the split.</p>&quot;},
+ patterns(){return &quot;<p>16 patterns per track. Use the track arrows, or hold Pattern + a step. With Wait Load on (Shift + step 16) the change happens at the end of the current pattern; the track display blinks the pending number.</p>&quot;},
+ arranging(){return &quot;<p><b>Chain</b>: hold Chain and press steps in order (up to 16). <b>Scene</b>: Save + Scene + step stores the pattern, chain and mute of all tracks; Scene + step loads it. <b>Step skip</b>: hold a step and press page buttons to skip it on those pages/bars.</p>&quot;},
+ controlMode(){S.cur=3;return &quot;<p>Press <b>Control</b>: the selected track becomes the Live Track and its button blinks. The encoders send their CC (Utility &amp;gt; Controller &amp;gt; Knob 1–5). In Step Edit, select a step and turn an encoder to store a value; record while playing to capture moves. Erase + turn clears an encoder's automation.</p>&quot;},
+ utility(){openMenu(MENU());return &quot;<p>Shift + Project opens the Utility menu: turn the selection encoder to move, push to enter or edit, Exit to go back. Settings are global and saved when you leave.</p><div class='fw'><b>Firmware:</b> every Utility setting is one of 158 global IDs, readable and writable over SysEx. Misc also has Brightness (ID 152) and Transpose Latch (ID 153, stored inverted).</div>&quot;},
+ deviceTools(){selectTab(&quot;dev&quot;);return &quot;<p>The Device tools tab sends SysEx to a real KeyStep Pro through Web MIDI, or to this simulation. It only contains features already tested on hardware.</p>&quot;},
+};
+function renderChapters(){const ul=$(&quot;#chapList&quot;);ul.innerHTML=&quot;&quot;;CHAPTERS.forEach(([sec,t,fn])=>{const li=document.createElement(&quot;li&quot;);li.innerHTML=`<i>${sec}</i><span>${t}</span><button>Show</button>`;
+ li.querySelector(&quot;button&quot;).onclick=()=>{const html=SHOW[fn]();$(&quot;#info&quot;).innerHTML=`<div class=&quot;crumb&quot;>Manual <b>${sec}</b></div><h2>${t}</h2>${html}`;dirty();$(&quot;#info&quot;).scrollIntoView({block:&quot;nearest&quot;})};ul.appendChild(li)})}
+
+/* ---------- demos ---------- */
+const DEMOS={
+ &quot;Quick tour&quot;:()=>{const pr=newProject();pr.bpm=112;pr.name=null;
+  const dp=pr.drum.pats[0];[[0,[0,4,8,12]],[2,[4,12]],[6,[2,6,10,14]],[8,[15]]].forEach(([l,st])=>st.forEach(i=>Object.assign(dp.lanes[l].st[i],{on:true,v:l===6?80:110})));dp.valid=true;pr.tracks[0].mode=&quot;drum&quot;;
+  const bp=pr.tracks[1].pats[0];bp.scale=2;bp.root=9;[[0,45],[3,45],[6,52],[8,48],[11,50],[14,52]].forEach(([i,p])=>{bp.st[i]={n:[{p,g:.6,v:100,t:0,r:100}],on:true,skip:[0,0,0,0]}});bp.valid=true;
+  const bp2=pr.tracks[1].pats[1];Object.assign(bp2,deep(bp));bp2.st[14]={n:[{p:55,g:1.5,v:110,t:0,r:100}],on:true,skip:[0,0,0,0]};bp2.st[6].n[0].p=57;
+  const ap=pr.tracks[2].pats[0];ap.scale=2;ap.root=9;ap.div=2;ap.arp=3;pr.tracks[2].mode=&quot;seq&quot;;[[0,[69,72,76]],[4,[67,71,74]],[8,[65,69,72]],[12,[64,67,71]]].forEach(([i,ch])=>{ap.st[i]={n:ch.map(p=>({p,g:3.5,v:80,t:0,r:100})),on:true,skip:[0,0,0,0]}});ap.valid=true;
+  const lp=pr.tracks[3].pats[0];lp.scale=2;lp.root=9;lp.div=1;[[0,81],[2,79],[3,76],[5,72],[6,74]].forEach(([i,p])=>{lp.st[i]={n:[{p,g:.9,v:90,t:i%2?20:0,r:i===6?60:100}],on:true,skip:[0,0,0,0]}});lp.len=8;lp.valid=true;
+  pr.tracks.forEach(t=>t.valid=true);return pr},
+ &quot;Polymeter drums&quot;:()=>{const pr=newProject();pr.bpm=120;pr.tracks[0].mode=&quot;drum&quot;;const dp=pr.drum.pats[0];dp.poly=true;
+  [[0,3,[0]],[6,4,[0,2]],[2,5,[2]],[4,6,[0,3]],[8,16,[4,12]]].forEach(([l,len,st])=>{dp.lanes[l].len=len;st.forEach(i=>Object.assign(dp.lanes[l].st[i],{on:true,v:100}))});dp.valid=true;return pr},
+ &quot;Three arpeggiators&quot;:()=>{const pr=newProject();pr.bpm=100;[1,2,3].forEach(t=>{pr.tracks[t].mode=&quot;arp&quot;;const p=pr.tracks[t].pats[0];p.scale=3;p.root=2;p.div=[2,1,3][t-1];p.arp=[0,3,4][t-1];p.valid=true});return pr},
+};
+function loadDemo(name){const pr=DEMOS[name]();stop();S.ram[S.proj]=pr;S.flash[S.proj]=deep(pr);
+ if(name===&quot;Three arpeggiators&quot;){S.hold=[0,1,1,1];S.arpLatched=[[],[{p:62,v:90},{p:65,v:80},{p:69,v:85}],[{p:50,v:100},{p:57,v:90}],[{p:74,v:70},{p:77,v:70},{p:81,v:70},{p:84,v:70}]]}
+ S.cur=1;msg(name);dirty()}
+
+/* ---------- tabs, buttons, boot ---------- */
+function selectTab(w){$(&quot;#tabMan&quot;).setAttribute(&quot;aria-selected&quot;,w===&quot;man&quot;);$(&quot;#tabDev&quot;).setAttribute(&quot;aria-selected&quot;,w===&quot;dev&quot;);$(&quot;#paneMan&quot;).hidden=w!==&quot;man&quot;;$(&quot;#paneDev&quot;).hidden=w!==&quot;dev&quot;;if(w===&quot;dev&quot;){renderDevice();emit(&quot;tab:dev&quot;)}try{localStorage.setItem(&quot;ksp.tab&quot;,w)}catch(e){}}
+function boot(){baseState();drawPanel();bindInput();renderChapters();
+ const ex=$(&quot;#exSel&quot;);Object.keys(DEMOS).forEach(n=>ex.add(new Option(n,n)));ex.onchange=()=>{if(ex.value)loadDemo(ex.value);ex.value=&quot;&quot;};
+ const ts=$(&quot;#tourSel&quot;);TOURS.forEach((t,i)=>ts.add(new Option(t.n,i)));ts.onchange=()=>{if(ts.value!==&quot;&quot;){startTour(+ts.value);selectTab(&quot;man&quot;)}ts.value=&quot;&quot;};
+ $(&quot;#soundBtn&quot;).onclick=e=>{SOUND=!SOUND;e.target.setAttribute(&quot;aria-pressed&quot;,SOUND);if(!SOUND)allOff()};
+ $(&quot;#midiBtn&quot;).onclick=toggleMidi;$(&quot;#resetBtn&quot;).onclick=()=>{stop();const keep=SIMDEV&amp;&amp;SIMDEV.namesFw;baseState();if(SIMDEV)SIMDEV.namesFw=keep;LATCH.forEach(id=>ctlEls[id]&amp;&amp;ctlEls[id].classList.remove(&quot;latched&quot;));dirty();msg(&quot;Reset&quot;)};
+ document.querySelectorAll(&quot;.vsw button&quot;).forEach(b=>b.onclick=()=>{svg.setAttribute(&quot;viewBox&quot;,b.dataset.vb);document.querySelectorAll(&quot;.vsw button&quot;).forEach(x=>x.setAttribute(&quot;aria-pressed&quot;,x===b))});
+ $(&quot;#tabMan&quot;).onclick=()=>selectTab(&quot;man&quot;);$(&quot;#tabDev&quot;).onclick=()=>selectTab(&quot;dev&quot;);
+ $(&quot;#info&quot;).innerHTML=`<h2>Start here</h2><p>Hover any control for a short description; click it for the details on this card. Load the <b>Quick tour</b> demo and press Play (or <kbd>Space</kbd>), or pick a guided tour.</p><p>Right-click (long-press on touch) <b>latches</b> a button as if you were holding it, so two-handed combos like Shift + key or Save + Project work with a mouse.</p>`;
+ loadDemo(&quot;Quick tour&quot;);
+ try{if(localStorage.getItem(&quot;ksp.tab&quot;)===&quot;dev&quot;)selectTab(&quot;dev&quot;)}catch(e){}
+ const w=new Worker(URL.createObjectURL(new Blob([&quot;setInterval(()=>postMessage(0),10)&quot;],{type:&quot;text/javascript&quot;})));w.onmessage=advance;
+ const loop=()=>{advance();if(S.msg&amp;&amp;performance.now()>S.msgT){S.msg=null;dirtyFlag=true}if(dirtyFlag||S.playing||NOTEFLASH.length||S.msg||ARP.some(a=>a.running)||S.trans.some(x=>x.on)||trk().chordOn||S.stepEdit||S.rec||S.patMode||S.control||P.some(p=>p.pend!=null)||S.undo||HELD.size){render();dirtyFlag=false}requestAnimationFrame(loop)};requestAnimationFrame(loop);
+}
+/* ================= Device tools: SysEx to a real KeyStep Pro (Web MIDI) or to this simulation =================
+   Protocol notes are from the firmware 2.5.20 study (~/keysteppro/findings.md) and were checked on hardware.
+   Frame: F0 00 20 6B <dev 7F> 42 <cmd> <project 0=current|1..16> <param> ...
+   To add a feature once it is solved: append an entry to FEATURES (title, verified, needs, render). */
+const PREFIX=[0xF0,0x00,0x20,0x6B,0x7F,0x42];
+const frame=(...b)=>[...PREFIX,...b,0xF7];
+const hex=a=>[...a].map(x=>x.toString(16).padStart(2,&quot;0&quot;).toUpperCase()).join(&quot; &quot;);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const TRACK_ITEMS=[0x7B,0x7C,0x7D,0x7E],STATE_ITEMS=[0x7A,...TRACK_ITEMS];
+const P_PATTERN_STATE=0x28,P_MODE=0x56,P_CHORD=0x57,SCENE_ITEM=0x79,P_SCENE_STATE=0x26,CHORD_MODE_BIT=0x10,P_ROOT=0x6B,P_SCALE=0x6C,PROJECT_ITEM=0x78,P_USER1=[0x65,0x66,0x67],P_NAME=0x7C;
+const SCALE_IDS={chromatic:0,major:1,minor:2,dorian:3,mixolydian:4,harmonic:5,blues:6,user1:8,user2:9};
+/* pattern parameters a default pattern needs before it is marked valid (index shapes from 08009102 / 080093e6) */
+const PSINGLE={0x7B:[0x14,0x15,0x16,0x17,0x19,0x1A,0x1B,0x1C,0x61,0x62,0x63,0x64,0x6D,0x6E,0x6F,0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,0x78,0x79],other:[0x14,0x15,0x16,0x17,0x61,0x62,0x63,0x64,0x6D,0x6E,0x6F,0x70,0x71]};
+const PSTEP={0x7B:[0x30,0x31,0x33,0x34,0x35,0x36],other:[0x30,0x31]},PVOICESTEP=[0x32,0x6D,0x6E,0x6F,0x70,0x71];
+
+class Link{
+ async open(p){await this.send(frame(0x05,p))}
+ async commit(p){await this.send(frame(0x06,p),{commit:true})}
+ async set(p,param,item,idx,data){data=[...data];await this.send(frame(0x0C,p,param,1,item,idx,data.length,...data))}
+ async setMany(p,param,item,idxs,data){await this.send(frame(0x0C,p,param,idxs.length,item,...idxs,data.length,...data))}
+ async get(p,param,item,idx){const r=await this.getMany(p,param,item,[idx],1);return r?r[0]:null}
+ async getMany(p,param,item,idxs,n){const k=idxs.length;for(let tr=0;tr<3;tr++){const rs=await this.send(frame(0x0B,p,param,k,item,...idxs,n),{reply:r=>r[6]===0x0C&amp;&amp;r[7]===p&amp;&amp;r[8]===param&amp;&amp;r[9]===k&amp;&amp;r[10]===item});
+   for(const r of rs)if(r[6]===0x0C&amp;&amp;r[7]===p&amp;&amp;r[8]===param&amp;&amp;r[9]===k&amp;&amp;r[10]===item&amp;&amp;idxs.every((x,i)=>r[11+i]===x)&amp;&amp;r[11+k]===n)return [...r.slice(12+k,12+k+n)]}return null}
+ async getGlobal(id){const hi=id>=128,cmd=hi?0x31:0x01,ix=hi?id-128:id;for(let tr=0;tr<3;tr++){const rs=await this.send(frame(cmd,0x00,0x41,ix),{reply:r=>r[6]===cmd+1&amp;&amp;r[8]===0x41&amp;&amp;r[9]===ix});
+   const r=rs.find(r=>r[6]===cmd+1&amp;&amp;r[8]===0x41&amp;&amp;r[9]===ix);if(r)return r[10]}return null}
+ async setGlobal(id,v){const hi=id>=128;await this.send(frame(hi?0x32:0x02,0x00,0x41,hi?id-128:id,v&amp;127))}
+ async setName(p,name){const b=[...name].map(c=>c.charCodeAt(0));while(b.length<16)b.push(0);await this.open(p);await this.send(frame(0x0C,p,P_NAME,0x01,PROJECT_ITEM,0x01,0x10,...b))}
+ async identity(){const rs=await this.send([0xF0,0x7E,0x7F,0x06,0x01,0xF7],{reply:r=>r[1]===0x7E&amp;&amp;r[3]===0x06&amp;&amp;r[4]===0x02});return rs.find(r=>r[1]===0x7E&amp;&amp;r[4]===0x02)||null}
+}
+class WebMidiLink extends Link{
+ constructor(out,inp){super();this.out=out;this.inp=inp;this.inbox=[];this.part=[];this.sim=false;
+  inp.onmidimessage=e=>{const d=e.data;for(const b of d){if(b===0xF0)this.part=[b];else if(this.part.length){this.part.push(b);if(b===0xF7){this.inbox.push(this.part);this.part=[]}}}}}
+ async send(bytes,o={}){this.inbox=[];devLog(&quot;→ &quot;+hex(bytes),&quot;tx&quot;);this.out.send(bytes);
+  if(o.commit){await sleep(3000);return this.inbox}
+  if(o.reply){const t0=performance.now();while(performance.now()-t0<500){if(this.inbox.some(o.reply))break;await sleep(5)}this.inbox.forEach(r=>devLog(&quot;← &quot;+hex(r),&quot;tx&quot;));return this.inbox}
+  await sleep(12);return this.inbox}
+ close(){this.inp.onmidimessage=null}
+}
+class SimLink extends Link{constructor(){super();this.sim=true}
+ async send(bytes,o={}){devLog(&quot;→ &quot;+hex(bytes),&quot;tx&quot;);const out=SIMDEV.handle(bytes);out.forEach(r=>devLog(&quot;← &quot;+hex(r),&quot;tx&quot;));if(o.commit)await sleep(150);dirty();return out}}
+const chordRaw=tr=>{const c=tr.chord;return c.root==null?Array(16).fill(0x7F):[c.root,...c.off.map(o=>o&amp;127),...Array(15-c.off.length).fill(0x7F)]};
+
+/* ---------- the simulated device: answers the same frames from the panel's state ---------- */
+const SIMDEV={namesFw:true,sess:null,
+ handle(b){const out=[];
+  if(b[1]===0x7E&amp;&amp;b[3]===0x06&amp;&amp;b[4]===0x01)return [[0xF0,0x7E,0x7F,0x06,0x02,0x00,0x20,0x6B,0x02,0x00,0x09,0x00,0x25,0x14,0x05,0x02,0xF7]];
+  if(b.slice(0,6).some((x,i)=>i!==4&amp;&amp;x!==PREFIX[i]))return out;
+  const cmd=b[6],p=b[7];
+  if((cmd===0x01||cmd===0x31)&amp;&amp;b[8]===0x41){const id=b[9]+(cmd===0x31?128:0);out.push([...PREFIX,cmd+1,0x00,0x41,b[9],S.globals[id]&amp;127,0xF7],[...PREFIX,0x1C,0x00,0xF7]);return out}
+  if((cmd===0x02||cmd===0x32)&amp;&amp;b[8]===0x41){const id=b[9]+(cmd===0x32?128:0);if(id>=1&amp;&amp;id<=158){S.globals[id]=b[10];emit(&quot;global:&quot;+id)}return out}
+  const pn=p===0?S.proj:p-1;
+  if(cmd===0x05){this.sess={p:pn,buf:deep(S.flash[pn]),touched:new Set()};return out}
+  if(cmd===0x06){this.commit(pn);return out}
+  if(cmd===0x0B||cmd===0x0C){const param=b[8],k=b[9],item=b[10],idxs=[...b.slice(11,11+k)],n=b[11+k];
+   if(item===PROJECT_ITEM&amp;&amp;param===P_NAME&amp;&amp;cmd===0x0C){if(this.namesFw){const s=String.fromCharCode(...b.slice(12+k,12+k+16)).replace(/\0+$/,&quot;&quot;);S.flash[pn].name=s||null;S.ram[pn].name=s||null;emit(&quot;dev:name&quot;);dirty()}return out}
+   if(!this.sess||this.sess.p!==pn)this.sess={p:pn,buf:deep(S.flash[pn]),touched:new Set()};
+   const buf=this.sess.buf;
+   if(cmd===0x0B){const vals=[];for(let j=0;j<n;j++){const ix=idxs.slice();ix[k-1]+=j;vals.push(this.getv(buf,item,param,ix)&amp;127)}out.push([...PREFIX,0x0C,p,param,k,item,...idxs,n,...vals,0xF7],[...PREFIX,0x1C,0x00,0xF7]);return out}
+   const data=[...b.slice(12+k,12+k+n)];data.forEach((v,j)=>{const ix=idxs.slice();ix[k-1]+=j;this.setv(buf,item,param,ix,v);this.sess.touched.add(`${item}/${param}/${ix.join(&quot;,&quot;)}`)});return out}
+  return out},
+ track(buf,item){return buf.tracks[TRACK_ITEMS.indexOf(item)]},
+ /* p0x57: root, then semitone offsets from the root, 0x7F padding (16 bytes) */
+ getv(buf,item,param,ix){const [i0]=ix;
+  if(item===PROJECT_ITEM){if(P_USER1.includes(param)){const m=buf.user[0],j=P_USER1.indexOf(param);return [m&amp;127,m>>7,0][j]}if([0x68,0x69,0x6A].includes(param)){const m=buf.user[1],j=param-0x68;return [m&amp;127,m>>7,0][j]}return buf.raw[param]||0}
+  if(item===SCENE_ITEM&amp;&amp;param===P_SCENE_STATE)return buf.scenes[i0-1]?3:2;
+  if(item===0x7A&amp;&amp;param===P_PATTERN_STATE)return buf.ctrl.pats[i0-1].valid?3:2;
+  const tr=this.track(buf,item);if(!tr)return 0;
+  if(param===0x27)return tr.valid?3:2;
+  if(param===P_MODE)return (clamp(tr.oct+3,0,7))|(tr.chordOn?CHORD_MODE_BIT:0);
+  if(param===P_CHORD)return chordRaw(tr)[i0-1];
+  const pat=tr.pats[i0-1];if(!pat)return 0;
+  if(param===P_PATTERN_STATE)return pat.valid?3:2;if(param===P_ROOT)return pat.root;if(param===P_SCALE)return pat.scale;
+  const key=param+&quot;/&quot;+ix.join(&quot;,&quot;);return pat.raw[key]!=null?pat.raw[key]:0},
+ setv(buf,item,param,ix,v){const [i0]=ix;
+  if(item===PROJECT_ITEM){if(P_USER1.includes(param)){const j=P_USER1.indexOf(param),m=buf.user[0];buf.user[0]=j===0?(m&amp;~127)|v:j===1?(m&amp;127)|((v&amp;31)<<7):m}else if([0x68,0x69,0x6A].includes(param)){const j=param-0x68,m=buf.user[1];buf.user[1]=j===0?(m&amp;~127)|v:j===1?(m&amp;127)|((v&amp;31)<<7):m}else buf.raw[param]=v;return}
+  if(item===SCENE_ITEM&amp;&amp;param===P_SCENE_STATE){if(v===3&amp;&amp;!buf.scenes[i0-1])buf.scenes[i0-1]={pat:[0,0,0,0],dpat:0,chain:[[],[],[],[]],dchain:[],mute:[0,0,0,0],solo:-1,track:0};if(v===2)buf.scenes[i0-1]=null;return}
+  if(item===0x7A&amp;&amp;param===P_PATTERN_STATE){buf.ctrl.pats[i0-1].valid=v===3;return}
+  const tr=this.track(buf,item);if(!tr)return;
+  if(param===0x27){tr.valid=v===3;return}
+  if(param===P_MODE){tr.oct=clamp((v&amp;7)-3,-3,2);tr.chordOn=!!(v&amp;CHORD_MODE_BIT);tr.valid=true;return}
+  if(param===P_CHORD){const raw=chordRaw(tr);raw[i0-1]=v;const end=raw.indexOf(0x7F,1);tr.chord=raw[0]===0x7F?{root:null,off:[]}:{root:raw[0],off:raw.slice(1,end<0?16:end).map(o=>o>63?o-128:o)};tr.valid=true;return}
+  const pat=tr.pats[i0-1];if(!pat)return;
+  if(param===P_PATTERN_STATE){pat.valid=v===3;return}if(param===P_ROOT){pat.root=v%12;return}if(param===P_SCALE){pat.scale=v;return}
+  pat.raw[param+&quot;/&quot;+ix.join(&quot;,&quot;)]=v},
+ /* cmd 06: stock firmware decides every scene/pattern marker from the session header bits, so each marker
+    the session did not set flips (valid <-> default). Then the project is reloaded from flash. */
+ commit(pn){const s=this.sess&amp;&amp;this.sess.p===pn?this.sess:{p:pn,buf:deep(S.flash[pn]),touched:new Set()},buf=s.buf,T=s.touched;
+  for(let i=1;i<=16;i++){const k=`${SCENE_ITEM}/${P_SCENE_STATE}/${i}`;if(!T.has(k))this.setv(buf,SCENE_ITEM,P_SCENE_STATE,[i],buf.scenes[i-1]?2:3)}
+  for(const item of STATE_ITEMS)for(let i=1;i<=16;i++){const k=`${item}/${P_PATTERN_STATE}/${i}`;if(T.has(k))continue;
+   if(item===0x7A)buf.ctrl.pats[i-1].valid=!buf.ctrl.pats[i-1].valid;else{const pat=this.track(buf,item).pats[i-1];pat.valid=!pat.valid}}
+  for(const tr of buf.tracks)tr.pats.forEach((pt,i)=>{if(!pt.valid){const d=newPat();d.raw=pt.raw;tr.pats[i]=d}});
+  buf.name=S.flash[pn].name;S.flash[pn]=buf;S.ram[pn]=deep(buf);this.sess=null;mapCache.clear();emit(&quot;dev:commit&quot;);dirty()}};
+
+/* ---------- write one project: name, chord shape + chord mode, root/scale on all patterns (port of ksp_setlist.py) ---------- */
+function chordBytes(shape){const root=shape[0],offs=shape.slice(1).map(n=>n-root);if(root<0||root>127||offs.some(o=>!(o>0&amp;&amp;o<0x7F))||shape.length>16)throw new Error(&quot;bad chord shape &quot;+shape.join(&quot; &quot;));return [root,...offs,...Array(16-shape.length).fill(0x7F)]}
+function userMaskParts(iv){const mask=[...new Set(iv)].reduce((m,i)=>m|1<<i,0);if(!(mask>0&amp;&amp;mask<0x1000&amp;&amp;mask&amp;1))throw new Error(&quot;bad user scale&quot;);return [mask&amp;0x7F,mask>>7,0]}
+async function readStates(link,p){const keys=[];for(let i=1;i<=16;i++)keys.push([SCENE_ITEM,P_SCENE_STATE,i]);for(const it of STATE_ITEMS)for(let i=1;i<=16;i++)keys.push([it,P_PATTERN_STATE,i]);
+ const m=new Map();for(const k of keys)m.set(k.join(&quot;/&quot;),await link.get(p,k[1],k[0],k[2]));return m}
+async function readPatternDefaults(link,p,item,pat){const key=item===0x7B?0x7B:&quot;other&quot;,out=[];
+ for(const pr of PSINGLE[key])out.push([pr,[pat],await link.getMany(p,pr,item,[pat],1)]);
+ for(const pr of PSTEP[key])out.push([pr,[pat,1],await link.getMany(p,pr,item,[pat,1],64)]);
+ for(const pr of PVOICESTEP)for(let v=1;v<=3;v++)out.push([pr,[pat,v,1],await link.getMany(p,pr,item,[pat,v,1],64)]);
+ return out.some(x=>x[2]==null)?null:out}
+async function writeProject(link,song){const p=song.project,problems=[],tracks=song.tracks.map(t=>t.n),chord=song.shape?chordBytes(song.shape):null;
+ await link.open(p);const states=await readStates(link,p);if([...states.values()].includes(null))return [&quot;no reply reading pattern states&quot;];
+ const modes={};for(const t of tracks){modes[t]=await link.get(p,P_MODE,TRACK_ITEMS[t-1],1);if(modes[t]==null)return [&quot;no reply reading track modes&quot;]}
+ const keyed=song.tracks.filter(t=>t.scale&amp;&amp;t.scale!==&quot;chromatic&quot;),defaults={};
+ for(const t of keyed){const item=TRACK_ITEMS[t.n-1];const pat=[...Array(16).keys()].map(i=>i+1).find(i=>states.get(`${item}/${P_PATTERN_STATE}/${i}`)===2);
+  if(pat!=null){defaults[item]=await readPatternDefaults(link,p,item,pat);if(!defaults[item])return [`no reply reading default pattern content (track ${t.n})`]}}
+ if(chord)for(const t of tracks){const item=TRACK_ITEMS[t-1];for(let i=0;i<16;i++)await link.set(p,P_CHORD,item,i+1,[chord[i]]);await link.set(p,P_MODE,item,1,[modes[t]|CHORD_MODE_BIT])}
+ const target=new Map(states);
+ for(const t of keyed){const item=TRACK_ITEMS[t.n-1];for(let pat=1;pat<=16;pat++){if(states.get(`${item}/${P_PATTERN_STATE}/${pat}`)===2&amp;&amp;defaults[item])for(const [pr,path,vals] of defaults[item])await link.setMany(p,pr,item,[pat,...path.slice(1)],vals);
+   await link.set(p,P_ROOT,item,pat,[t.root]);await link.set(p,P_SCALE,item,pat,[SCALE_IDS[t.scale]]);target.set(`${item}/${P_PATTERN_STATE}/${pat}`,3)}
+  if(t.scale===&quot;user1&quot;){const parts=userMaskParts(t.userMask);for(let j=0;j<3;j++)await link.set(p,P_USER1[j],PROJECT_ITEM,1,[parts[j]])}}
+ for(const [k,v] of target){const [item,param,i]=k.split(&quot;/&quot;).map(Number);await link.set(p,param,item,i,[v])}
+ await link.commit(p);
+ await link.open(p);
+ if(chord)for(const t of tracks){const item=TRACK_ITEMS[t-1];const got=[];for(let i=1;i<=16;i++)got.push(await link.get(p,P_CHORD,item,i));if(got.join()!==chord.join())problems.push(`track ${t} chord reads ${got.join(&quot; &quot;)}`);
+  const md=await link.get(p,P_MODE,item,1);if(md==null||!(md&amp;CHORD_MODE_BIT))problems.push(`track ${t} chord mode reads ${md}`)}
+ for(const t of keyed){const item=TRACK_ITEMS[t.n-1];for(let pat=1;pat<=16;pat++){const r=await link.get(p,P_ROOT,item,pat),s=await link.get(p,P_SCALE,item,pat);if(r!==t.root||s!==SCALE_IDS[t.scale])problems.push(`track ${t.n} pattern ${pat} root/scale reads ${r}/${s}`)}}
+ const after=await readStates(link,p);for(const [k,v] of after)if(v!==target.get(k))problems.push(`state ${k} reads ${v}, expected ${target.get(k)}`);
+ if(song.title)await link.setName(p,displayName(song.title));
+ return problems}
+const NAME_OVERRIDES={&quot;Friday I'm in Love&quot;:&quot;Friday In Love&quot;,&quot;World Loves Violence&quot;:&quot;World Loves Viol&quot;};
+function displayName(t){const n=NAME_OVERRIDES[t]||t;if(n.length<1||n.length>16||!/^[\x20-\x7E]+$/.test(n))throw new Error(`name “${n}” must be 1–16 printable ASCII characters`);return n}
+
+/* ---------- feature registry ---------- */
+const FEATURES=[
+ {id:&quot;globals&quot;,title:&quot;Global settings (all 158 IDs)&quot;,verified:&quot;2026-10-18: full read of all globals on hardware; writes tested with Brightness (152).&quot;,needs:null,
+  about:&quot;Every Utility setting, including the ones MCC does not show: Program Change Send and Fixed Velocity per track, Brightness and Transpose Latch. A SET gets no reply, so the tool reads the value back.&quot;,
+  render(el){el.innerHTML=`<div class=&quot;row&quot;><button class=&quot;sm&quot; data-a=&quot;readall&quot;>Read all</button><label><input type=&quot;checkbox&quot; data-a=&quot;hid&quot;> only the settings MCC hides</label></div><div class=&quot;gtab&quot;><table class=&quot;t&quot;><thead><tr><th>ID</th><th>Setting</th><th>Value</th></tr></thead><tbody></tbody></table></div>`;
+   const tb=el.querySelector(&quot;tbody&quot;),hidBox=el.querySelector(&quot;[data-a=hid]&quot;);
+   const draw=()=>{tb.innerHTML=&quot;&quot;;let grp=&quot;&quot;;for(const g of GLOBALS){if(hidBox.checked&amp;&amp;!g.hidden)continue;if(g.g!==grp){grp=g.g;tb.insertAdjacentHTML(&quot;beforeend&quot;,`<tr><th colspan=&quot;3&quot;>${grp}</th></tr>`)}
+     const tr=document.createElement(&quot;tr&quot;);const v=DEV.gvals[g.id];const opts=optsOf({id:g.id});
+     tr.innerHTML=`<td>${g.id}</td><td>${g.n}</td><td><select ${v==null?&quot;disabled&quot;:&quot;&quot;}>${v==null?&quot;<option>–</option>&quot;:opts.map(o=>`<option value=&quot;${o[0]}&quot; ${o[0]===v?&quot;selected&quot;:&quot;&quot;}>${o[1]}</option>`).join(&quot;&quot;)}</select></td>`;
+     tr.querySelector(&quot;select&quot;).onchange=async e=>{const nv=+e.target.value;await busy(async()=>{await DEV.link.setGlobal(g.id,nv);const rb=await DEV.link.getGlobal(g.id);DEV.gvals[g.id]=rb;devLog(`global ${g.id} ${g.n} = ${rb}${rb===nv?&quot;&quot;:&quot; (expected &quot;+nv+&quot;)&quot;}`,rb===nv?&quot;ok&quot;:&quot;bad&quot;)});draw()};tb.appendChild(tr)}};
+   hidBox.onchange=draw;el.querySelector(&quot;[data-a=readall]&quot;).onclick=()=>busy(async()=>{let n=0;for(const g of GLOBALS){if(hidBox.checked&amp;&amp;!g.hidden)continue;DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}devLog(`read ${n} settings`,&quot;ok&quot;);emit(&quot;dev:read&quot;);draw()});draw()}},
+ {id:&quot;names&quot;,title:&quot;Project names&quot;,verified:&quot;2026-10-19: the name shows on the device, survives a power cycle and Save Project; Erase Project clears it.&quot;,needs:&quot;the project-names firmware (KeyStepPro_2.5.20_project_names.kspf). Stock 2.5.20 ignores this message.&quot;,
+  about:&quot;Writes a 1–16 character name for one project slot. The name belongs to the slot: saving another project into it keeps the slot's name.&quot;,
+  render(el){el.innerHTML=`<div class=&quot;row&quot;>Project <select data-a=&quot;p&quot;>${[...Array(16).keys()].map(i=>`<option value=&quot;${i+1}&quot;>${i+1}</option>`).join(&quot;&quot;)}</select><input type=&quot;text&quot; data-a=&quot;n&quot; maxlength=&quot;16&quot; placeholder=&quot;Name (16 max)&quot;><button class=&quot;sm&quot; data-a=&quot;go&quot;>Send</button></div>`;
+   el.querySelector(&quot;[data-a=go]&quot;).onclick=()=>busy(async()=>{const p=+el.querySelector(&quot;[data-a=p]&quot;).value,n=displayName(el.querySelector(&quot;[data-a=n]&quot;).value.trim());await DEV.link.setName(p,n);devLog(`project ${p} named “${n}”`,&quot;ok&quot;);if(!DEV.link.sim)emit(&quot;dev:name&quot;)})}},
+ {id:&quot;trackkey&quot;,title:&quot;Chord and key per track&quot;,verified:&quot;2026-10-19: chords, chord mode and root/scale written and read back on projects 2–15; played by ear on project 15.&quot;,needs:null,
+  about:&quot;Writes a track's chord shape and turns chord mode on, and sets root and scale on all 16 of its patterns. It re-sends every pattern's state first, because a stock SysEx commit flips every state it was not given, and fills default patterns with clean default content before marking them valid. Then it reads everything back. The device reloads the project from flash afterwards, so save any panel edits on that project first.&quot;,
+  render(el){el.innerHTML=`<div class=&quot;row&quot;>Project <select data-a=&quot;p&quot;>${[...Array(16).keys()].map(i=>`<option value=&quot;${i+1}&quot;>${i+1}</option>`).join(&quot;&quot;)}</select> Track <select data-a=&quot;t&quot;><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div>
+   <div class=&quot;row&quot;>Chord <input type=&quot;text&quot; data-a=&quot;c&quot; value=&quot;E3 G#3 B3&quot; title=&quot;Note names, the first is the root; empty = leave the chord alone&quot;> Root <select data-a=&quot;r&quot;>${NN.map((n,i)=>`<option value=&quot;${i}&quot; ${i===4?&quot;selected&quot;:&quot;&quot;}>${n}</option>`).join(&quot;&quot;)}</select> Scale <select data-a=&quot;s&quot;>${[&quot;chromatic&quot;,&quot;major&quot;,&quot;minor&quot;,&quot;dorian&quot;,&quot;mixolydian&quot;,&quot;harmonic&quot;,&quot;blues&quot;].map(s=>`<option ${s===&quot;major&quot;?&quot;selected&quot;:&quot;&quot;}>${s}</option>`).join(&quot;&quot;)}</select></div>
+   <div class=&quot;row&quot;><button class=&quot;sm&quot; data-a=&quot;go&quot;>Write and verify</button><button class=&quot;sm&quot; data-a=&quot;rd&quot;>Read saved chord</button></div>`;
+   const parse=s=>s.trim()?s.trim().split(/[\s,]+/).map(x=>{const m=x.match(/^([A-Ga-g])(#|b)?(-?\d)$/);if(!m)throw new Error(&quot;note “&quot;+x+&quot;” (use e.g. E3, G#3)&quot;);return 12*(+m[3]+1)+NN.indexOf(m[1].toUpperCase())+(m[2]===&quot;#&quot;?1:m[2]===&quot;b&quot;?-1:0)}):null;
+   el.querySelector(&quot;[data-a=go]&quot;).onclick=()=>busy(async()=>{const p=+el.querySelector(&quot;[data-a=p]&quot;).value,t=+el.querySelector(&quot;[data-a=t]&quot;).value,shape=parse(el.querySelector(&quot;[data-a=c]&quot;).value),sc=el.querySelector(&quot;[data-a=s]&quot;).value;
+    const song={project:p,shape,tracks:[{n:t,root:+el.querySelector(&quot;[data-a=r]&quot;).value,scale:sc}]};const pr=await writeProject(DEV.link,song);
+    devLog(pr.length?&quot;PROBLEM: &quot;+pr.join(&quot;; &quot;):`project ${p} track ${t}: written and verified`,pr.length?&quot;bad&quot;:&quot;ok&quot;);if(!pr.length)emit(&quot;dev:trackkey&quot;)});
+   el.querySelector(&quot;[data-a=rd]&quot;).onclick=()=>busy(async()=>{const p=+el.querySelector(&quot;[data-a=p]&quot;).value,t=+el.querySelector(&quot;[data-a=t]&quot;).value,item=TRACK_ITEMS[t-1];await DEV.link.open(p);
+    const c=[];for(let i=1;i<=16;i++)c.push(await DEV.link.get(p,P_CHORD,item,i));const md=await DEV.link.get(p,P_MODE,item,1);
+    const notes=c[0]===0x7F||c[0]==null?&quot;none&quot;:[c[0],...c.slice(1).filter(x=>x!==0x7F).map(o=>c[0]+(o>63?o-128:o))].map(nm).join(&quot; &quot;);devLog(`saved chord P${p} T${t}: ${notes}; chord mode ${md!=null&amp;&amp;md&amp;CHORD_MODE_BIT?&quot;ON&quot;:&quot;OFF&quot;} (bytes ${c.map(x=>x==null?&quot;--&quot;:x.toString(16)).join(&quot; &quot;)})`,&quot;ok&quot;)})}},
+ {id:&quot;setlist&quot;,title:&quot;Set list writer&quot;,verified:&quot;2026-10-19: 14 Band Keys songs written to projects 1–14 (names, chords, keys) and verified by readback.&quot;,needs:&quot;names need the project-names firmware; chords and keys work on stock 2.5.20.&quot;,
+  about:&quot;Paste or load a plan exported by tools/bandkeys_plans.js (a list of {project, title, shape, tracks:[{n, root, scale}]}) and write every project in it.&quot;,
+  render(el){el.innerHTML=`<div class=&quot;row&quot;><input type=&quot;file&quot; accept=&quot;.json,application/json&quot; data-a=&quot;f&quot;><button class=&quot;sm&quot; data-a=&quot;go&quot;>Write all</button></div><textarea data-a=&quot;j&quot; placeholder='[{&quot;project&quot;:15,&quot;title&quot;:&quot;Test&quot;,&quot;shape&quot;:[64,68,71],&quot;tracks&quot;:[{&quot;n&quot;:1,&quot;root&quot;:4,&quot;scale&quot;:&quot;major&quot;}]}]'></textarea>`;
+   el.querySelector(&quot;[data-a=f]&quot;).onchange=async e=>{const f=e.target.files[0];if(f)el.querySelector(&quot;[data-a=j]&quot;).value=await f.text()};
+   el.querySelector(&quot;[data-a=go]&quot;).onclick=()=>busy(async()=>{const songs=JSON.parse(el.querySelector(&quot;[data-a=j]&quot;).value||&quot;[]&quot;);let bad=0;
+    for(const s of songs){if(!(s.project>=1&amp;&amp;s.project<=16))throw new Error(`${s.title}: project ${s.project} out of range`);const pr=await writeProject(DEV.link,s);bad+=!!pr.length;devLog(`P${s.project} ${s.title?displayName(s.title):&quot;&quot;}: ${pr.length?&quot;PROBLEM: &quot;+pr.join(&quot;; &quot;):&quot;OK&quot;}`,pr.length?&quot;bad&quot;:&quot;ok&quot;)}
+    devLog(bad?`${bad} project(s) had problems`:`${songs.length} project(s) written and verified`,bad?&quot;bad&quot;:&quot;ok&quot;)})}},
+];
+
+/* ---------- the tab ---------- */
+const DEV={link:null,gvals:{},busy:false,ports:null};
+function devLog(s,cls=&quot;&quot;){const box=$(&quot;#devLog&quot;);if(!box)return;const d=document.createElement(&quot;div&quot;);d.className=cls;d.textContent=s;box.appendChild(d);while(box.childNodes.length>400)box.firstChild.remove();box.scrollTop=box.scrollHeight}
+async function busy(fn){if(!DEV.link){devLog(&quot;Connect first.&quot;,&quot;bad&quot;);return}if(DEV.busy)return;DEV.busy=true;document.querySelectorAll(&quot;#paneDev button.sm&quot;).forEach(b=>b.disabled=true);
+ try{await fn()}catch(e){devLog(&quot;Error: &quot;+e.message,&quot;bad&quot;)}finally{DEV.busy=false;document.querySelectorAll(&quot;#paneDev button.sm&quot;).forEach(b=>b.disabled=false)}}
+async function devConnect(){const sel=$(&quot;#devPort&quot;).value;if(DEV.link&amp;&amp;DEV.link.close)DEV.link.close();DEV.link=null;DEV.gvals={};
+ if(sel===&quot;sim&quot;){DEV.link=new SimLink();SIMDEV.namesFw=$(&quot;#simNames&quot;).checked}
+ else{const [oi,ii]=sel.split(&quot;|&quot;);const out=[...DEV.ports.outputs.values()].find(o=>o.id===oi),inp=[...DEV.ports.inputs.values()].find(i=>i.id===ii);if(!out||!inp){devLog(&quot;Port not found.&quot;,&quot;bad&quot;);return}DEV.link=new WebMidiLink(out,inp)}
+ const id=await DEV.link.identity();if(id){const v=id.slice(12,16);devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?&quot; — simulated&quot;:&quot;&quot;}`,&quot;ok&quot;);$(&quot;#devState&quot;).innerHTML=DEV.link.sim?'<span class=&quot;pill sim&quot;>simulation</span>':'<span class=&quot;pill real&quot;>KeyStep Pro</span>';emit(&quot;dev:connect&quot;)}
+ else{devLog(&quot;No identity reply. Check the ports and that SysEx permission was granted.&quot;,&quot;bad&quot;);DEV.link=null}}
+async function devScan(){const s=$(&quot;#devPort&quot;);s.innerHTML='<option value=&quot;sim&quot;>Simulated KeyStep Pro (this page)</option>';
+ if(!navigator.requestMIDIAccess){devLog(&quot;This browser has no Web MIDI (use Chrome or Edge; Firefox needs the site permission add-on).&quot;,&quot;bad&quot;);return}
+ try{DEV.ports=await navigator.requestMIDIAccess({sysex:true})}catch(e){devLog(&quot;SysEx access was refused: &quot;+e.message,&quot;bad&quot;);return}
+ const outs=[...DEV.ports.outputs.values()],ins=[...DEV.ports.inputs.values()];
+ for(const o of outs){const i=ins.find(x=>x.name===o.name)||ins.find(x=>/keystep/i.test(x.name))||ins[0];if(!i)continue;const opt=new Option(`${o.name} (out) ⇄ ${i.name} (in)`,o.id+&quot;|&quot;+i.id);s.add(opt);if(/keystep/i.test(o.name))s.value=opt.value}
+ devLog(`${outs.length} MIDI output(s) found`)}
+function renderDevice(){const pane=$(&quot;#paneDev&quot;);if(pane.dataset.built)return;pane.dataset.built=1;
+ pane.innerHTML=`<div class=&quot;card&quot;><h2>Device tools <span id=&quot;devState&quot;></span></h2>
+  <p class=&quot;pg&quot;>Talks SysEx to a KeyStep Pro on USB (Chrome/Edge, Web MIDI with SysEx permission) or to the simulated one in this page. Everything here was worked out from firmware 2.5.20 and tested on hardware; new tools are added as they are solved. Unofficial: back up your projects with MIDI Control Center before writing.</p>
+  <div class=&quot;feat&quot;><div class=&quot;row&quot;><select id=&quot;devPort&quot;><option value=&quot;sim&quot;>Simulated KeyStep Pro (this page)</option></select><button class=&quot;sm&quot; id=&quot;devScanBtn&quot;>Find MIDI ports</button><button class=&quot;sm&quot; id=&quot;devConnBtn&quot;>Connect</button></div>
+  <div class=&quot;row&quot;><label><input type=&quot;checkbox&quot; id=&quot;simNames&quot; checked> simulation runs the project-names firmware</label></div></div>
+  <div id=&quot;featList&quot;></div><h3>Log</h3><div id=&quot;devLog&quot;></div></div>`;
+ $(&quot;#devScanBtn&quot;).onclick=devScan;$(&quot;#devConnBtn&quot;).onclick=()=>devConnect().catch(e=>devLog(&quot;Error: &quot;+e.message,&quot;bad&quot;));$(&quot;#simNames&quot;).onchange=e=>{SIMDEV.namesFw=e.target.checked};
+ const list=$(&quot;#featList&quot;);for(const f of FEATURES){const box=document.createElement(&quot;div&quot;);box.className=&quot;feat&quot;;box.innerHTML=`<h3>${f.title}</h3><div class=&quot;meta&quot;><b>Verified</b> ${f.verified}${f.needs?` <span class=&quot;need&quot;>Needs ${f.needs}</span>`:&quot;&quot;}</div><p class=&quot;pg&quot;>${f.about}</p><div class=&quot;body&quot;></div>`;list.appendChild(box);f.render(box.querySelector(&quot;.body&quot;))}}
+boot();
+</script>
+</body>
+</html>
+"></iframe>
 <script>
 "use strict";
 // how each manual stops its own transport when its tab is hidden
-const STOP={squid:w=>{w.press("stop");w.release("stop")},blackbox:w=>w.transportStop(),hapax:w=>w.stop()};
+const STOP={squid:w=>{w.press("stop");w.release("stop")},blackbox:w=>w.transportStop(),hapax:w=>w.stop(),keystep:w=>w.stop()};
 const tabs=[...document.querySelectorAll('[role=tab]')];
 function show(id){
   if(!document.getElementById("f-"+id))id=tabs[0].id.slice(2);

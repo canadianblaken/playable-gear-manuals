@@ -1,0 +1,1333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeyStep Pro Interactive Manual</title>
+<style>
+:root{
+  --bg:#f4f3ef; --fg:#1d1d1f; --muted:#5b5b60; --card:#ffffff; --line:#d9d7d0; --accent:#2f6fd6; --accent-fg:#fff;
+  --ok:#15803d; --warn:#b45309; --bad:#b91c1c; --blue:#2563eb;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141416; --fg:#ececef; --muted:#a1a1aa; --card:#1e1e22; --line:#33333a; --accent:#6fa8ff; --accent-fg:#111;
+    --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; --blue:#6fa8ff;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141416; --fg:#ececef; --muted:#a1a1aa; --card:#1e1e22; --line:#33333a; --accent:#6fa8ff; --accent-fg:#111;
+  --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; --blue:#6fa8ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:14px 16px 8px;max-width:1700px;margin:0 auto}
+h1{font-size:20px;margin:0}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:1700px;margin:0 auto;padding:6px 16px}
+.bar button,.bar select{font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+.bar button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.bar .hint{color:var(--muted);font-size:12px;margin-left:auto}
+.vsw{display:none;gap:4px}
+@media (max-width:700px){.vsw{display:inline-flex}}
+.hint .touch{display:none}
+@media (pointer:coarse){.hint .desk{display:none}.hint .touch{display:inline}}
+main{max-width:1700px;margin:0 auto;padding:4px 16px 40px;display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){main{grid-template-columns:minmax(0,1fr)}.bar .hint{margin-left:0}
+  #tourBox:not([hidden]){position:fixed;left:8px;right:8px;bottom:8px;z-index:15;max-height:38vh;overflow:auto;box-shadow:0 6px 24px rgba(0,0,0,.3)}
+  main{padding-bottom:40vh}}
+/* wide screens: the device stays put, only the right column scrolls */
+@media (min-width:901px){html,body{height:100%;overflow:hidden}body{display:flex;flex-direction:column}
+  main{flex:1;min-height:0;width:100%;grid-template-rows:100%;padding-bottom:12px}
+  #devCol{overflow:auto;height:100%}#sideCol{overflow-y:auto;height:100%;padding-right:4px}}
+#device{width:100%;height:auto;display:block;touch-action:pan-y pinch-zoom;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.screenRow{display:flex;gap:12px;align-items:center;margin-top:8px;flex-wrap:wrap}
+#oledBig{width:384px;max-width:100%;height:auto;aspect-ratio:4/1;background:#000;border-radius:8px;border:6px solid #111;display:block}
+.screenRow .ledinfo{font-size:12px;color:var(--muted);flex:1;min-width:200px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.card h2{font-size:16px;margin:0 0 6px}
+.card h3{font-size:14px;margin:10px 0 4px}
+.card p{margin:6px 0}
+.card a{color:var(--blue)}
+.pg{font-size:12px;color:var(--muted)}
+.crumb{font-size:12px;color:var(--muted);margin-bottom:4px}
+.crumb b{color:var(--accent)}
+kbd{font:12px ui-monospace,monospace;border:1px solid var(--line);border-radius:4px;padding:0 4px}
+code{font:12px ui-monospace,monospace}
+ul.tight{margin:4px 0;padding-left:18px}
+ul.tight li{margin:3px 0}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+.fw{border-left:3px solid var(--accent);padding:4px 8px;margin:8px 0;font-size:13px;background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:0 6px 6px 0}
+.fw b{color:var(--accent)}
+#tourBox .step{font-size:14px}
+#tourBox .nav{display:flex;gap:8px;margin-top:8px}
+#tourBox button,.chap button,.card button.sm{font:inherit;font-size:12px;padding:3px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.card button.sm:disabled{opacity:.5;cursor:default}
+#tourBox .done{color:var(--ok)}
+.chap{list-style:none;margin:0;padding:0;max-height:420px;overflow:auto}
+.chap li{display:flex;gap:8px;align-items:baseline;padding:4px 6px;border-radius:6px;font-size:13px}
+.chap li:hover{background:var(--bg)}
+.chap li span{flex:1}
+.chap li i{font-size:11px;color:var(--muted);white-space:nowrap;font-style:normal}
+table.t{border-collapse:collapse;font-size:12.5px;width:100%;margin:6px 0}
+table.t td,table.t th{border-bottom:1px solid var(--line);padding:3px 6px;text-align:left;vertical-align:top}
+table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
+.tabs{display:flex;gap:4px;margin-bottom:10px}
+.tabs button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+/* device tools */
+.feat{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}
+.feat h3{margin:0 0 2px;font-size:14px}
+.feat .meta{font-size:11.5px;color:var(--muted)}
+.feat .meta b{color:var(--ok);font-weight:600}
+.feat .need{color:var(--warn)}
+.feat .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0}
+.feat select,.feat input{font:inherit;font-size:12.5px;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.feat input[type=text]{width:12em}
+.feat textarea{width:100%;font:12px ui-monospace,monospace;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);min-height:4em}
+#devLog{font:11.5px/1.45 ui-monospace,monospace;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;max-height:180px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+#devLog .tx{color:var(--muted)}#devLog .ok{color:var(--ok)}#devLog .bad{color:var(--bad)}
+.gtab{max-height:340px;overflow:auto}
+.gtab td:last-child{white-space:nowrap}
+.pill{display:inline-block;font-size:11px;border-radius:999px;padding:0 7px;border:1px solid var(--line);color:var(--muted)}
+.pill.sim{border-color:var(--accent);color:var(--accent)}
+.pill.real{border-color:var(--ok);color:var(--ok)}
+/* device */
+.ctl{cursor:pointer}
+.ctl:focus{outline:none}
+.ctl .face{transition:stroke .1s}
+.hl .face{stroke:#2f6fd6!important;stroke-width:2.5!important}
+.latched .face{stroke:#facc15!important;stroke-width:3!important;stroke-dasharray:5 3}
+.tourTarget .face{stroke:#06b6d4!important;stroke-width:3!important;animation:pulse 1s infinite}
+@keyframes pulse{50%{stroke-opacity:.25}}
+@media (prefers-reduced-motion:reduce){.tourTarget .face{animation:none}}
+#tip{position:fixed;z-index:20;max-width:320px;padding:8px 10px;border-radius:8px;background:var(--card);color:var(--fg);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.18);font-size:12.5px;line-height:1.4;pointer-events:none}
+#tip b{display:block;font-size:13px;margin-bottom:2px}
+#tip .s{color:var(--muted);margin-top:4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>KeyStep Pro interactive manual</h1>
+  <p class="sub">Unofficial, playable recreation of the Arturia KeyStep Pro (firmware 2.5), built from the 2.5.1 user manual, the MIDI Control Center device definition and a reverse-engineering study of firmware 2.5.20. All sounds are synthesized stand-ins. The Device tools tab talks to a real KeyStep Pro over Web MIDI, or to this simulation. Not affiliated with Arturia.</p>
+</header>
+<div class="bar">
+  <select id="exSel" aria-label="Load a demo project"><option value="">Load demo…</option></select>
+  <select id="tourSel" aria-label="Guided tours"><option value="">Guided tours…</option></select>
+  <button id="soundBtn" aria-pressed="true">Sound</button>
+  <button id="midiBtn" aria-pressed="false" title="Mirror notes to MIDI gear and accept a MIDI keyboard (Web MIDI)">MIDI</button>
+  <button id="resetBtn">Reset</button>
+  <span class="vsw" role="group" aria-label="Zoom the panel"><button data-vb="30 140 1250 460" aria-pressed="true">Whole</button><button data-vb="30 160 650 220" aria-pressed="false">Left</button><button data-vb="650 160 630 220" aria-pressed="false">Steps</button><button data-vb="230 340 1050 260" aria-pressed="false">Keys</button></span>
+  <span class="hint"><span class="touch">Tap = press · long-press = hold (latches) · drag an encoder up/down = turn · tap anything for help</span><span class="desk">Hover for help · right-click = hold a button (latch) · drag/wheel an encoder, click = touch · <kbd>Shift</kbd> = Shift · <kbd>Space</kbd> play · <kbd>.</kbd> stop · <kbd>R</kbd> rec · <kbd>A W S E D F T G Y H U J K</kbd> keys · <kbd>Z</kbd>/<kbd>X</kbd> octave</span></span>
+</div>
+<main>
+  <div id="devCol">
+    <svg id="device" viewBox="30 140 1250 460" role="application" aria-label="KeyStep Pro front panel"></svg>
+    <div class="screenRow"><canvas id="oledBig" width="512" height="128" aria-label="OLED display, enlarged"></canvas><div class="ledinfo" id="ledInfo"></div></div>
+  </div>
+  <div id="sideCol">
+    <div class="tabs" role="tablist"><button role="tab" id="tabMan" aria-selected="true">Manual</button><button role="tab" id="tabDev" aria-selected="false">Device tools</button></div>
+    <div id="paneMan">
+      <div class="card" id="tourBox" hidden></div>
+      <section class="card" id="info" aria-live="polite"></section>
+      <div class="card">
+        <h2>The manual, chapter by chapter</h2>
+        <p class="pg">Show jumps the simulation to that part of the KeyStep Pro and explains it here.</p>
+        <ul class="chap" id="chapList"></ul>
+      </div>
+      <div class="card">
+        <h2>About this simulation</h2>
+        <p>Four tracks with 16 patterns of up to 64 steps (up to 16 notes per step), the drum sequencer with 24 lanes, three arpeggiators, scales and user scales, chord mode, transpose (with groups and latch), quick edit, step edit, step and real-time recording, overdub, the Shift step functions, step skip, pages, chains, scenes, projects with save/copy/erase/recall, the looper strip, control mode, the Utility menu, tempo, swing, metronome and Web MIDI in/out all work.</p>
+        <details><summary>Firmware notes</summary>
+          <p class="pg">Some behaviour here follows the decoded 2.5.20 firmware rather than the manual. Those places are marked with a blue “Firmware” note in the help text.</p>
+        </details>
+        <details><summary>Simplified or not simulated</summary>
+          <ul class="tight">
+            <li>Sounds are stand-ins; CV/Gate outputs, clock in/out, sync and pedal are settings only.</li>
+            <li>Arpeggiator randomness, keyboard splits and the Program Change assign page are simplified.</li>
+            <li>Copy/paste of individual notes inside a step and the Chroma colour sets are not simulated.</li>
+            <li>Multi-touch is replaced by holding with right-click (or long-press on touch) and then pressing other controls.</li>
+          </ul>
+        </details>
+        <p class="pg">Sources: KeyStep Pro user manual 2.5.1 (14 March 2024), MIDI Control Center device file, firmware 2.5.20 reverse-engineering notes. Section numbers refer to the manual.</p>
+      </div>
+    </div>
+    <div id="paneDev" hidden></div>
+  </div>
+</main>
+<div id="tip" hidden></div>
+<script>
+"use strict";
+/* ================= reference data ================= */
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const NN=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const nm=m=>NN[((m%12)+12)%12]+(Math.floor(m/12)-1); // middle C (60) = C4
+const hz=m=>440*Math.pow(2,(m-69)/12);
+const rnd=n=>Math.floor(Math.random()*n);
+const deep=o=>JSON.parse(JSON.stringify(o));
+const HOLDMS=450;
+const TCOL=["#22b573","#f26b21","#f2c418","#e5175e"];      // track 1-4 default colours
+const TNAME=["Track 1","Track 2","Track 3","Track 4"];
+
+/* Scales: index = the pattern's scale value in firmware (masks at 0x0805CB60; bit n = n semitones above the root).
+   7 is an unused slot; 8 and 9 are User 1 / User 2, read from the project. */
+const SCALES=[["Chromatic",0xFFF],["Major",0xAB5],["Minor",0x5AD],["Dorian",0x6AD],["Mixolydian",0x6B5],["Harmonic minor",0x9AD],["Blues",0x4E9],["(unused)",0],["User 1",0xFFF],["User 2",0xFFF]];
+const maskIv=m=>[...Array(12).keys()].filter(i=>m>>i&1);
+/* Firmware note map (0800e3a8): in-scale notes map to themselves; an out-of-scale note snaps to the nearest
+   in-scale note, checking DOWN before UP at each distance, so ties resolve down. */
+function buildMap(mask,root){const m=new Int16Array(128);if(!mask){for(let n=0;n<128;n++)m[n]=n;return m}
+ const inS=n=>(mask>>(((n-root)%12+12)%12))&1;
+ for(let n=0;n<128;n++){if(inS(n)){m[n]=n;continue}let r=n;for(let d=1;d<12;d++){if(n-d>=0&&inS(n-d)){r=n-d;break}if(n+d<128&&inS(n+d)){r=n+d;break}}m[n]=r}
+ return m}
+
+const DIVS=[["1/4",96],["1/8",48],["1/16",24],["1/32",12]]; // ticks at 96 per quarter
+const ARPS=["Up","Down","Exclu","Inclu","Rand","Order","Poly"];
+const SEQDIRS=["Fwd","Rand","Walk"];
+
+/* key shift functions above the keyboard (left to right, 37 keys; 36 = top C has none) */
+const KEYFN=["Fwd","Rand","Walk","Mono","Poly","Up","Down","Exclu","Inclu","Rand","Order","Poly","-1","0","+1","+2","+3","1/4","1/8","1/16","1/32","Triplet","Chrom","Major","Minor","Dorian","Mixo","H.Min","Blues","Root","User 1","User 2","1","2","3","4",""];
+const KEYGRP=[[0,2,"Seq Pattern"],[3,4,"Seq / Drum Mode"],[5,11,"Arp Pattern"],[12,16,"Arp Octave"],[17,21,"Time Division"],[22,31,"Scale"],[32,35,"CV Routing"]];
+/* scale keys -> firmware scale value */
+const KEYSCALE={22:0,23:1,24:2,25:3,26:4,27:5,28:6,30:8,31:9};
+const STEPFN=["Clr Ptn","Clr Steps","‹Nudge","Nudge›","Invert","Semi Up","Semi Down","Oct Up","Oct Down","Qnt 50%","Qnt 100%","Rand Order","Rand Notes","Rand Oct","Global BPM","Wait Load"];
+
+/* ---------- panel controls (coordinates from the MCC panel layout) ---------- */
+const C=[];
+const btn=(id,x,y,w,h,label,sec,kind="btn")=>C.push({id,t:kind,x,y,w,h,label,sec});
+const knob=(id,cx,cy,r,label,sec,ring)=>C.push({id,t:"knob",cx,cy,r,label,sec,ring});
+knob("tempo",99,223,18,"Tempo","Fine");btn("tap",135,207,32,32,"Tap\nTempo","Metronome");knob("swing",202,223,18,"Swing","Offset");
+knob("sel",336,223,17,"","");
+btn("shift",68,280,32,32,"Shift","");btn("rec",113,280,32,32,"●","Quant");btn("stop",158,280,32,32,"■","");btn("play",202,280,40,32,"▶❙❙","Restart");
+btn("project",273,259,31,15,"Project","Utility");btn("exit",307,259,31,15,"Exit","Undo");
+btn("copy",273,282,31,15,"Copy","");btn("paste",307,282,31,15,"Paste","");btn("save",273,298,31,15,"Save","");btn("erase",307,298,31,15,"Erase","");
+btn("control",273,323,65,15,"Control","");
+[362,439,516,592].forEach((x,t)=>{btn(`t${t}dn`,x,259,30,15,"←","");btn(`t${t}up`,x+35,259,30,15,"→","");
+ btn(`t${t}seq`,x,275,30,15,"Seq","");btn(`t${t}alt`,x+35,275,30,15,t?"Arp":"Drum","");btn(`t${t}mute`,x+35,298,30,15,"Mute","");btn(`t${t}trk`,x,323,65,14,TNAME[t],"")});
+btn("scene",678,193,34,15,"Scene","");btn("chain",678,216,34,15,"Chain","");btn("pattern",678,238,34,15,"Pattern","");
+const ENCN=["Pitch","Gate","Velocity","Time Shift","Randomness"];
+[754,822,890,958,1026].forEach((cx,i)=>knob("enc"+i,cx,223,18,ENCN[i],"",1));
+btn("lst",1079,216,30,14,"Lst Step","Follow");["16","32","48","64"].forEach((l,i)=>btn("pg"+i,[1115,1147,1180,1212][i],216,30,14,l,""));
+btn("stepedit",670,289,34,15,"Step Edit","");
+for(let i=0;i<16;i++)btn("s"+i,707+34*i,280,26,32,String(i+1),STEPFN[i],"step");
+btn("octdn",79,375,34,14,"←","");btn("octup",125,375,34,14,"→","");
+btn("hold",191,405,30,14,"Hold","Clear");btn("trans",191,442,30,14,"Trans","Clear");btn("tie",191,478,30,14,"Tie/Rest","Chord");btn("overdub",191,515,30,14,"Overdub","");
+C.push({id:"pbend",t:"strip",x:62,y:405,w:55,h:127},{id:"modw",t:"strip",x:120,y:405,w:55,h:127},{id:"looper",t:"looper",x:62,y:542,w:165,h:26});
+const KX0=255,KX1=1258,WW=(KX1-KX0)/22,KY=382,KH=206;
+const BLK=[1,3,6,8,10];
+{let wi=0;for(let k=0;k<37;k++){const pc=k%12;if(BLK.includes(pc)){C.push({id:"k"+k,t:"key",k,black:1,x:KX0+wi*WW-13,y:KY,w:26,h:122})}else{C.push({id:"k"+k,t:"key",k,black:0,x:KX0+wi*WW,y:KY,w:WW,h:KH});wi++}}}
+const CI=Object.fromEntries(C.map(c=>[c.id,c]));
+const keyX=k=>{const c=CI["k"+k];return c.x+c.w/2};
+
+/* ---------- help text: [name, what it does, Shift function, manual section, firmware note] ---------- */
+const INFO={
+ tempo:["Tempo / Fine","Sets the tempo from 30 to 240 BPM, rounded to whole BPM.","Shift + turn: fine tempo in 0.01 BPM steps.","4.2.1, 7.1"],
+ tap:["Tap Tempo / Metronome","Tap at least twice to set the tempo; after 4 taps it estimates, after 8 it averages. Hold Tap and press a Time Division key to set the metronome division.","Shift + Tap: metronome on/off.","4.2.1, 7.1.3"],
+ swing:["Swing / Offset","Swing from 50% (straight) to 75%, for all tracks at once. Press or touch it to see the global and track values.","Shift + turn: swing offset for the selected track only.","4.2.1, 7.1.1"],
+ sel:["Selection encoder","Turn to scroll menus and values on the OLED; push to enter a submenu or confirm. Confirming Save, Copy and Erase Project is a push of this encoder.","","4.2.5.1, 6.1.3","On hardware, pressing a step pad at the “Save Project / Confirm ?” screen does not confirm: it loads that project and the unsaved edits are gone. Push this encoder."],
+ shift:["Shift","Gives access to the blue functions printed under buttons, under the steps and above the keys. While held, the LEDs above the keys show which key functions are active and the steps dim.","","4.2.4, 4.2.14"],
+ rec:["Record / Quantize","Stopped: Step Record (each key press fills a step and advances). Hold Record and press Play: Real-time Record.","Shift + Rec: quantized recording on/off.","5.3.2"],
+ stop:["Stop","Stops all sequencers and returns them to step 1. Press three times quickly to send All Notes Off.","","4.2.2"],
+ play:["Play / Pause","Starts the sequencers; press again to pause and again to resume.","Shift + Play: restart from step 1.","4.2.2, 5.3.1.1"],
+ project:["Project / Utility","Hold Project and press a step to load that project (1–16), or hold and turn the selection encoder. Save + Project saves, Copy + Project copies to the next slot, Erase + Project erases.","Shift + Project: the Utility menu. Hold Project and press Shift: recall the project from flash.","6.1, 9.1"],
+ exit:["Exit / Undo","Leaves menus and cancels confirmations. Blinks when an undo is available.","Shift + Exit: undo the last paste, erase or recording.","4.2.5.2, 6.3.6"],
+ copy:["Copy","Copy + step(s): copy steps. Copy + page button: copy a page. Copy + Pattern, then a step: copy a pattern. Copy + Scene, then a step: copy a scene. Copy + Project: copy the project to the next slot.","","5.3.7, 6.3.3"],
+ paste:["Paste","Paste + step: paste the copied steps from that step. Paste + page: paste a page. Paste + Pattern, then steps: paste a pattern.","","5.3.7, 6.3.3"],
+ save:["Save","Hold Save: unsaved patterns of this track show red, saved ones blue. Save + step: save that pattern. Save + Track button: save all patterns of the track. Save + Scene + step: save a scene. Save + Project: save the whole project (confirm with the encoder).","Shift + Save: reload the current pattern from memory (“Pattern Reloaded”).","5.3.9, 6.1.3, 6.3.2"],
+ erase:["Erase","Erase + step: erase steps. Erase + page: erase a page. Erase + Pattern, then steps: erase patterns. Erase + Scene, then a step. Erase + Project: erase the project (confirm). Erase + Trans: delete the transpose group.","","5.3.7, 6.3.5"],
+ control:["Control","Control mode: the five main encoders send MIDI CC instead of editing steps, and the selected track's patterns can record and play CC automation. Press the blinking track button to leave.","","8"],
+ scene:["Scene","Hold Scene and press a step to load a scene: the pattern, chain and mute state of every track. Save + Scene + step stores one.","","6.5.2"],
+ chain:["Chain","Hold Chain and press steps in order to build a chain of up to 16 patterns for the selected track. Leave the chain with the track arrows.","","6.5.1"],
+ pattern:["Pattern","Hold Pattern and press a step to choose one of the 16 patterns of the selected track.","","6.3.1"],
+ lst:["Lst Step / Follow","Hold Lst Step and press a step to set the pattern length, or a page button (16/32/48/64) to set it in whole pages.","Shift + Lst Step: follow the playing page.","4.2.15, 5.3.1.2"],
+ pg0:["Page 16","Shows steps 1–16. Hold a step and press page buttons to skip that step on those pages.","Shift + page: extend the pattern by copying page 1 to it.","4.2.15, 6.5.4"],
+ stepedit:["Step Edit","Step Edit mode: press a step to select it (it blinks), play keys to replace its notes and use the encoders to edit it. When stopped, pressing a step also plays it (step listen).","","5.3.3.1"],
+ enc0:["Pitch encoder","Step Edit / holding a step: moves the step's notes up or down along the current scale. In Control mode: sends Knob 1 CC.","Shift + turn: offset all steps of the pattern.","4.2.10.1"],
+ enc1:["Gate encoder","Gate length from 0.06 to 64 steps (default 0.5). No step held: sets the track default for new notes. Arp mode: gate of the whole arpeggio.","Shift + turn: offset all steps.","4.2.10.2, 5.3.5.1"],
+ enc2:["Velocity encoder","Velocity 0–127 (default 100). Arp mode: bipolar offset added to the played velocity. With Fixed Velocity ON for the track, new notes use this value.","Shift + turn: offset all steps.","4.2.10.3"],
+ enc3:["Time Shift encoder","Moves notes from −49% to +50% of a step. Arp mode: shifts the whole held arpeggio in time.","Shift + turn: offset all steps.","4.2.10.4"],
+ enc4:["Randomness encoder","Probability that a note plays, 0–100%. Arp mode: inserts random notes.","Shift + turn: offset all steps.","4.2.10.5"],
+ octdn:["Octave −","Keyboard octave down (to −3). Press both octave buttons to reset.","","4.2.11.2"],
+ octup:["Octave +","Keyboard octave up (to +2). Press both octave buttons to reset.","","4.2.11.2"],
+ hold:["Hold / Clear","Arpeggio keeps playing after you lift your fingers; while one key is down you can add notes (up to 16). In chord mode it acts as a sustain pedal.","Shift + Hold: release all held arpeggios.","4.2.11.3, 5.2.2"],
+ trans:["Trans / Clear","Hold Trans and press a key: transpose the selected track's sequence or arpeggio (middle C = no transposition). Press Trans to toggle the transposition off and on. While holding Trans, press other track buttons to build a transpose group. With Utility > Misc > Transpose Latch ON, Trans latches.","Shift + Trans: clear all transpositions.","4.2.11.4, 4.2.14.1"],
+ tie:["Tie / Rest / Chord","Step Record: enter a rest or extend the last notes. Real-time record: hold to erase the steps you pass. Step Edit: clear the selected step.","Shift + Tie: chord mode. Hold Shift + Tie and play notes to store a chord; then each key plays that chord. Shift + Tie again turns chord mode off.","4.2.11.5, 5.5.2","Each chord note is snapped through the track's scale on its own (ties snap down), so one stored shape turns diatonic: in E major an E-G#-B shape plays F#m on F#, G#m on G# and D#dim on D#. The chord shape and chord-mode state are part of the track block written by Save Project, so they survive a power cycle (the manual says they don't)."],
+ overdub:["Overdub","ON: notes you record are added to the step. OFF: they replace it. With a step held, pressing keys of its chord selects those notes for editing.","","4.2.11.6, 5.3.4"],
+ pbend:["Pitch strip","Pitch bend, springs back to the centre. Range 2 semitones by default.","","4.2.11.1"],
+ modw:["Mod strip","Mod wheel (CC 1). Holds its value, remembered per track.","","4.2.11.1"],
+ looper:["Looper touch strip","Touch during playback to loop all tracks from that moment: 1/4 (left, longest) to 1/32 (right, shortest). Release to continue.","Shift + strip: disable / enable the strip.","4.2.12"],
+ key:["Keyboard","37 velocity-sensitive keys. Plays the selected track; with Shift, the blue functions printed above each key.","","4.2.13"],
+ step:["Step button","Quick Edit: toggle the step, or hold it and play keys to fill it. Step Edit: select the step. Hold Pattern/Scene/Project/Chain and press a step to choose that item.","","4.2.9"],
+ trk:["Track button","Selects the track: keyboard, encoders and steps now act on it. Hold two track buttons and press a key to make a split.","Shift + Track: Track Settings (MIDI channels, Program Change, Fixed Velocity).","4.2.6.1, 1.3.1"],
+ seq:["Seq","Sequencer mode for this track.","","4.2.6.4"],
+ arp:["Arp","Arpeggiator mode (tracks 2–4).","","4.2.6.6, 5.2"],
+ drum:["Drum","Drum sequencer on track 1: 24 lanes on the lowest 24 keys, lowest 8 also on the Drum Gate outputs.","Shift + Drum: unmute all drum lanes.","4.2.6.7, 5.4"],
+ mute:["Mute","Mutes the track's sequencer/arpeggio (the keyboard still plays it).","Shift + Mute: solo (exclusive).","4.2.6.2, 6.2.3"],
+ dn:["Previous pattern","Selects the previous pattern of the track (and leaves a chain).","","6.3.1"],
+ up:["Next pattern","Selects the next pattern of the track (and leaves a chain).","","6.3.1"],
+};
+const infoFor=id=>{if(INFO[id])return INFO[id];if(/^k\d+$/.test(id))return INFO.key;if(/^s\d+$/.test(id))return INFO.step;
+ if(/^pg\d$/.test(id))return [`Page ${["16","32","48","64"][+id[2]]}`,...INFO.pg0.slice(1)];
+ const m=id.match(/^t(\d)(dn|up|seq|alt|mute|trk)$/);if(m){const k=m[2]==="alt"?(m[1]==="0"?"drum":"arp"):m[2];const i=INFO[k];return [`${TNAME[m[1]]} ${i[0]}`,...i.slice(1)]}return null};
+
+/* ---------- chapters ---------- */
+const CHAPTERS=[
+ ["1.3","What's new in 2.5: Track Settings, Program Change, Transpose Latch, Fixed Velocity","trackSettings"],
+ ["3.2","Record and play a sequence","recordBasics"],
+ ["3.3","Using the arpeggiator","arpBasics"],
+ ["3.4","Scales and chords","scaleBasics"],
+ ["4.2.1","Tempo, tap tempo, swing","tempo"],
+ ["4.2.10","The five main encoders and track defaults","encoders"],
+ ["4.2.12","The looper touch strip","looper"],
+ ["4.2.14","Shift functions (keys and steps)","shiftFns"],
+ ["5.2","The three arpeggiators","arpBasics"],
+ ["5.3.1","Sequence length, pages, mono/poly, directions","seqLength"],
+ ["5.3.2","Recording: quick, step and real-time","recordBasics"],
+ ["5.3.3","Step Edit and Quick Edit","stepEdit"],
+ ["5.3.7","Copy, paste and erase steps and pages","copyPaste"],
+ ["5.3.9","Saving patterns","saving"],
+ ["5.4","The drum sequencer","drum"],
+ ["5.5.1","Scales, roots and user scales","scaleBasics"],
+ ["5.5.2","Chord mode","chordMode"],
+ ["6.1","Projects: load, save, copy, erase, recall","projects"],
+ ["6.2","Tracks: mute, solo, splits","tracks"],
+ ["6.3","Patterns","patterns"],
+ ["6.5","Arranging: chains, scenes, wait to load, step skip","arranging"],
+ ["8","Control mode","controlMode"],
+ ["9.1","The Utility menu","utility"],
+ ["Device","Device tools: talk to a real KeyStep Pro","deviceTools"],
+];
+
+/* ---------- guided tours: each step waits for an emitted event (string or RegExp) ---------- */
+const TOURS=[
+ {n:"First sequence (real-time recording)",steps:[
+  {s:"Select Track 2.",t:"t1trk",ev:"track:1"},
+  {s:"Make sure it is in Seq mode.",t:"t1seq",ev:/^mode:1:seq|^track:1/},
+  {s:"Hold Record (right-click to latch it) and press Play: real-time recording starts.",t:"rec",ev:"rec:rt"},
+  {s:"Play a few notes on the keyboard (mouse or A S D F… keys). They are added to the loop.",t:"k12",ev:/^recnote/},
+  {s:"Press Record again to stop recording; the pattern keeps playing.",t:"rec",ev:"rec:off"},
+  {s:"Hold Shift and press step 6 (Semi Up) to transpose the pattern a semitone.",t:"s5",ev:"shiftfn:Semi Up"},
+  {s:"Press Stop. Done: that is the basic recording loop.",t:"stop",ev:"stop"}]},
+ {n:"Step recording",steps:[
+  {s:"Select Track 3 and Seq.",t:"t2trk",ev:"track:2"},
+  {s:"With the sequencer stopped, press Record: Step Record mode.",t:"rec",ev:"rec:step"},
+  {s:"Play a note: it fills step 1 and the cursor moves on.",t:"k12",ev:"steprec:note"},
+  {s:"Press Tie/Rest to leave a rest.",t:"tie",ev:"steprec:rest"},
+  {s:"Play two or three more notes.",t:"k16",ev:"steprec:note"},
+  {s:"Press Record to leave Step Record, then Play.",t:"play",ev:"play"}]},
+ {n:"Quick edit: hold a step, play a chord",steps:[
+  {s:"Select Track 4.",t:"t3trk",ev:"track:3"},
+  {s:"Hold step 1 (right-click latches it) and play a chord: all notes go into the step with the current encoder values.",t:"s0",ev:"quick:fill"},
+  {s:"Still holding the step, turn the Gate encoder: only that step changes.",t:"enc1",ev:"enc:enc1"},
+  {s:"Release the step, then press steps 5, 9 and 13 to switch them on (an empty step gets the last note).",t:"s4",ev:/^step:on/},
+  {s:"Press Play.",t:"play",ev:"play"}]},
+ {n:"Arpeggiator with Hold",steps:[
+  {s:"Select Track 2.",t:"t1trk",ev:"track:1"},
+  {s:"Press Arp.",t:"t1alt",ev:"mode:1:arp"},
+  {s:"Press Hold.",t:"hold",ev:"hold:on"},
+  {s:"Play a chord. It keeps playing after you let go (the arp runs even when the sequencer is stopped).",t:"k12",ev:"arp:note"},
+  {s:"Hold Shift and press the Inclu key (G# in the lower octave) to change the arp pattern.",t:"k8",ev:"arpmode:Inclu"},
+  {s:"Hold Shift and press +1 (D in the middle octave) for a two-octave arp.",t:"k14",ev:"arpoct:1"},
+  {s:"Turn the Gate encoder to shorten or lengthen the whole arpeggio.",t:"enc1",ev:"enc:enc1"}]},
+ {n:"Three arpeggiators at once",steps:[
+  {s:"Track 2 → Arp → Hold → play a chord.",t:"t1alt",ev:/arp:note:1/},
+  {s:"Track 3 → Arp → Hold → play another chord.",t:"t2alt",ev:/arp:note:2/},
+  {s:"On Track 3, hold Shift and press 1/8 (F# middle octave): it runs at half the speed of Track 2.",t:"k18",ev:/^div:2/},
+  {s:"Mute Track 2 for a moment.",t:"t1mute",ev:"mute:1"}]},
+ {n:"Scales and the root note",steps:[
+  {s:"Load the “Quick tour” demo (or record a pattern on Track 2) and press Play.",t:"play",ev:"play"},
+  {s:"Select Track 2. Hold Shift and press the Major key (B in the middle octave).",t:"k23",ev:"scale:1"},
+  {s:"Notice the black keys now play scale notes too. Hold Shift and press Minor (top octave C).",t:"k24",ev:"scale:2"},
+  {s:"Hold Shift and keep holding the Root key (F, top octave), then press a key in the lowest octave to change the root.",t:"k29",ev:/^root:/}]},
+ {n:"Chord mode",steps:[
+  {s:"Select Track 3 and stop everything.",t:"t2trk",ev:"track:2"},
+  {s:"Hold Shift and Tie/Rest (right-click latches both) and play a chord, e.g. E G# B.",t:"tie",ev:"chord:stored"},
+  {s:"Release Shift and Tie: Tie/Rest blinks, chord mode is on. Play any single key.",t:"k16",ev:"chord:play"},
+  {s:"Hold Shift and press Major (B, middle octave): each chord note is now snapped into the scale, so the shape becomes diatonic.",t:"k23",ev:"scale:1"},
+  {s:"Play other keys: the chord quality follows the scale. Shift + Tie/Rest turns chord mode off.",t:"tie",ev:"chord:off"}]},
+ {n:"A drum pattern",steps:[
+  {s:"Select Track 1 and press Drum.",t:"t0alt",ev:"mode:0:drum"},
+  {s:"Press the lowest C to select drum lane 1 (kick).",t:"k0",ev:"drum:lane:0"},
+  {s:"Press steps 1, 5, 9 and 13.",t:"s0",ev:/^drum:step/},
+  {s:"Press D (lane 3, snare) and then steps 5 and 13.",t:"k2",ev:"drum:lane:2"},
+  {s:"Press F# (lane 7, hat) and some off-beat steps, then Play.",t:"play",ev:"play"}]},
+ {n:"Patterns and a chain",steps:[
+  {s:"Load the “Quick tour” demo and select Track 2.",t:"t1trk",ev:"track:1"},
+  {s:"Hold Pattern and press step 2: the second pattern of Track 2.",t:"pattern",ev:"pattern:1:1"},
+  {s:"Now hold Chain and press steps 1, 1, 2: a chain of three patterns.",t:"chain",ev:"chain:set"},
+  {s:"Press Play and watch the track display change pattern.",t:"play",ev:"play"},
+  {s:"Press a track arrow to jump off the chain.",t:"t1up",ev:/^pattern:1/}]},
+ {n:"Save a project (and confirm it properly)",steps:[
+  {s:"Make an edit (for example, toggle step 1).",t:"s0",ev:/^step:/},
+  {s:"Hold Save (right-click to latch) and press Project.",t:"project",ev:"save:project:ask"},
+  {s:"The OLED asks “Save Project / Confirm ?”. Push the selection encoder (click it). Do not press a step pad: that would load a project instead.",t:"sel",ev:"save:project"},
+  {s:"Saved. Change something, then hold Project, press Shift and push the encoder: the project is recalled from flash.",t:"project",ev:"recall"}]},
+ {n:"Transpose, groups and latch",steps:[
+  {s:"Load the “Quick tour” demo and press Play.",t:"play",ev:"play"},
+  {s:"Select Track 2. Hold Trans (right-click latches it) and press the G above middle C: +7 semitones.",t:"trans",ev:/^trans:1:/},
+  {s:"Press Trans: the transposition toggles off. Press again: back on.",t:"trans",ev:/^transtoggle/},
+  {s:"Hold Trans and press the Track 3 button: Track 3 joins the transpose group (white).",t:"t2trk",ev:"transgroup"},
+  {s:"Shift + Trans clears all transpositions.",t:"trans",ev:"trans:clear"}]},
+ {n:"Control mode: CC automation",steps:[
+  {s:"Select Track 4, then press Control. The track button blinks.",t:"control",ev:"control:on"},
+  {s:"Turn the Gate encoder: it sends Knob 2's CC (see Utility > Controller).",t:"enc1",ev:"cc"},
+  {s:"Press Step Edit, press step 1 and turn the Pitch encoder: that value is stored in step 1.",t:"stepedit",ev:"cc:step"},
+  {s:"Press the blinking Track 4 button to leave Control mode.",t:"t3trk",ev:"control:off"}]},
+ {n:"Hidden settings: Fixed Velocity",steps:[
+  {s:"Select Track 2. Hold Shift and press the Track 2 button: Track Settings.",t:"t1trk",ev:"menu:Track Settings"},
+  {s:"Turn the selection encoder to “Fixed Velocity” and push it.",t:"sel",ev:"menu:item:Fixed Velocity"},
+  {s:"Turn to ON and push. New notes on Track 2 now use the Velocity encoder value.",t:"sel",ev:"global:156"},
+  {s:"Open the Device tools tab: this setting is global ID 156, which MCC does not show. Read it from the simulated device.",t:null,ev:"dev:read"}]},
+ {n:"Device tools: write a song setup to the simulated KeyStep",steps:[
+  {s:"Open the Device tools tab (top of the right column).",t:null,ev:"tab:dev"},
+  {s:"Choose “Simulated KeyStep Pro” as the device and connect.",t:null,ev:"dev:connect"},
+  {s:"In “Project names”, name project 2 and send it (the simulation runs the project-names firmware).",t:null,ev:"dev:name"},
+  {s:"In “Chord and key per track”, write a chord and scale to project 2, track 2.",t:null,ev:"dev:trackkey"},
+  {s:"Load project 2 on the panel (hold Project, press step 2) and play a key on Track 2.",t:"project",ev:"project:1"}]},
+];
+/* generated by ~/keysteppro/tools/gen_globals_js.py from MCC KeyStepPro.json + firmware findings; do not edit */
+const GLOBALS=[{"id":70,"g":"MIDI Channel","n":"Track 1 input","d":0,"ch":[[127,"OFF"]]},{"id":75,"g":"MIDI Channel","n":"Track 1 output","d":0,"ch":[[127,"OFF"]]},{"id":71,"g":"MIDI Channel","n":"Track 2 input","d":1,"ch":[[127,"OFF"]]},{"id":76,"g":"MIDI Channel","n":"Track 2 output","d":1,"ch":[[127,"OFF"]]},{"id":72,"g":"MIDI Channel","n":"Track 3 input","d":2,"ch":[[127,"OFF"]]},{"id":77,"g":"MIDI Channel","n":"Track 3 output","d":2,"ch":[[127,"OFF"]]},{"id":73,"g":"MIDI Channel","n":"Track 4 input","d":3,"ch":[[127,"OFF"]]},{"id":78,"g":"MIDI Channel","n":"Track 4 output","d":3,"ch":[[127,"OFF"]]},{"id":74,"g":"MIDI Channel","n":"Drum input","d":10,"ch":[[127,"OFF"]]},{"id":79,"g":"MIDI Channel","n":"Drum output","d":10,"ch":[[127,"OFF"]]},{"id":122,"g":"Sync","n":"Input","d":0,"o":[[0,"Internal"],[1,"USB"],[2,"MIDI"],[3,"Clock"],[4,"Auto"]]},{"id":123,"g":"Sync","n":"Clock rate","d":6,"o":[[0,"1 PP16"],[5,"2 PPQ"],[6,"24 PPQ"],[7,"48 PPQ"]]},{"id":124,"g":"Sync","n":"Output","d":0,"o":[[4,"1 PP4Q"],[3,"1 PP2Q"],[2,"1 PPQ"],[1,"1 PP8"],[0,"1 PP16"],[5,"2 PPQ"],[6,"24 PPQ"],[7,"48 PPQ"]]},{"id":114,"g":"Metronome","n":"Count in","d":1,"o":[[0,"OFF"],[1,"1 bar"],[2,"2 bars"]]},{"id":116,"g":"Metronome","n":"Time division","d":4,"o":[[0,"1/4"],[1,"1/4 Triplet"],[2,"1/8"],[3,"1/8 Triplet"],[4,"1/16"],[5,"1/16 Triplet"],[6,"1/32"],[7,"1/32 Triplet"]]},{"id":115,"g":"Metronome","n":"Time signature","d":4,"o":[[0,"1"],[1,"2"],[2,"3"],[3,"4"],[4,"5"],[5,"6"],[6,"7"],[7,"8"],[8,"9"],[9,"10"],[10,"11"],[11,"12"],[12,"13"],[13,"14"],[14,"15"],[15,"16"]]},{"id":3,"g":"Launch Quantize","n":"Wait to Load Project","d":1,"o":[[0,"OFF"],[1,"1 bar"],[2,"2 bars"],[3,"4 bars"]]},{"id":2,"g":"Launch Quantize","n":"Wait to Load Scene","d":1,"o":[[0,"1 beat"],[1,"1 bar"],[2,"2 bars"],[3,"4 bars"]]},{"id":4,"g":"Launch Quantize","n":"Wait to Load Pattern","d":1,"o":[[1,"At end"],[2,"1 bar"]]},{"id":59,"g":"MIDI Settings","n":"Knob acceleration","d":1,"o":[[0,"Slow"],[1,"Medium"],[2,"Fast"]]},{"id":60,"g":"MIDI Settings","n":"Aftertouch curve","d":0,"o":[[0,"Linear"],[1,"Exponential"],[2,"Logarithmic"]]},{"id":61,"g":"MIDI Settings","n":"Velocity curve","d":0,"o":[[0,"Linear"],[1,"Exponential"],[2,"Logarithmic"]]},{"id":62,"g":"MIDI Settings","n":"Transport send","d":3,"o":[[0,"OFF"],[1,"MMC"],[2,"Real Time"],[3,"Both"]]},{"id":63,"g":"MIDI Settings","n":"Transport receive","d":3,"o":[[0,"OFF"],[1,"MMC"],[2,"Real Time"],[3,"Both"]]},{"id":64,"g":"MIDI Settings","n":"Clock send","d":1,"o":[[0,"OFF"],[1,"ON"]]},{"id":65,"g":"MIDI Settings","n":"Clock receive","d":1,"o":[[0,"OFF"],[1,"ON"]]},{"id":136,"g":"MIDI Settings","n":"MIDI Out 2","d":0,"o":[[0,"Out"],[1,"Thru"]]},{"id":6,"g":"CV/Gate Settings","n":"Voice 1 PITCH CV output","d":0,"o":[[0,"1 V/Oct"],[1,"1,2 V/Oct"],[2,"Hz/Volt"]]},{"id":10,"g":"CV/Gate Settings","n":"Voice 1 base note","d":36,"note":1},{"id":14,"g":"CV/Gate Settings","n":"Voice 1 GATE CV output","d":0,"o":[[0,"V-Trig 5 V"],[1,"V-Trig 12 V"],[2,"S-Trig"]]},{"id":18,"g":"CV/Gate Settings","n":"Voice 1 MOD CV source","d":0,"o":[[0,"Velocity"],[1,"Pressure"],[2,"Mod Wheel"]]},{"id":22,"g":"CV/Gate Settings","n":"Voice 1 MOD CV max voltage","d":4,"o":[[0,"1 V"],[1,"2 V"],[2,"3 V"],[3,"4 V"],[4,"5 V"],[5,"6 V"],[6,"7 V"],[7,"8 V"],[8,"9 V"],[9,"10 V"]]},{"id":138,"g":"CV/Gate Settings","n":"Voice 1 Pitch Bend range","d":0,"o":[[0,"1 semitone"],[1,"2 semitones"],[2,"3 semitones"],[3,"4 semitones"],[4,"5 semitones"],[5,"6 semitones"],[6,"7 semitones"],[7,"8 semitones"],[8,"9 semitones"],[9,"10 semitones"],[10,"11 semitones"],[11,"12 semitones"],[12,"13 semitones"],[13,"14 semitones"],[14,"15 semitones"],[15,"16 semitones"],[16,"17 semitones"],[17,"18 semitones"],[18,"19 semitones"],[19,"20 semitones"],[20,"21 semitones"],[21,"22 semitones"],[22,"23 semitones"],[23,"24 semitones"]]},{"id":7,"g":"CV/Gate Settings","n":"Voice 2 PITCH CV output","d":0,"o":[[0,"1 V/Oct"],[1,"1,2 V/Oct"],[2,"Hz/Volt"]]},{"id":11,"g":"CV/Gate Settings","n":"Voice 2 base note","d":36,"note":1},{"id":15,"g":"CV/Gate Settings","n":"Voice 2 GATE CV output","d":0,"o":[[0,"V-Trig 5 V"],[1,"V-Trig 12 V"],[2,"S-Trig"]]},{"id":19,"g":"CV/Gate Settings","n":"Voice 2 MOD CV source","d":0,"o":[[0,"Velocity"],[1,"Pressure"],[2,"Mod Wheel"]]},{"id":23,"g":"CV/Gate Settings","n":"Voice 2 MOD CV max voltage","d":4,"o":[[0,"1 V"],[1,"2 V"],[2,"3 V"],[3,"4 V"],[4,"5 V"],[5,"6 V"],[6,"7 V"],[7,"8 V"],[8,"9 V"],[9,"10 V"]]},{"id":139,"g":"CV/Gate Settings","n":"Voice 2 Pitch Bend range","d":0,"o":[[0,"1 semitone"],[1,"2 semitones"],[2,"3 semitones"],[3,"4 semitones"],[4,"5 semitones"],[5,"6 semitones"],[6,"7 semitones"],[7,"8 semitones"],[8,"9 semitones"],[9,"10 semitones"],[10,"11 semitones"],[11,"12 semitones"],[12,"13 semitones"],[13,"14 semitones"],[14,"15 semitones"],[15,"16 semitones"],[16,"17 semitones"],[17,"18 semitones"],[18,"19 semitones"],[19,"20 semitones"],[20,"21 semitones"],[21,"22 semitones"],[22,"23 semitones"],[23,"24 semitones"]]},{"id":8,"g":"CV/Gate Settings","n":"Voice 3 PITCH CV output","d":0,"o":[[0,"1 V/Oct"],[1,"1,2 V/Oct"],[2,"Hz/Volt"]]},{"id":12,"g":"CV/Gate Settings","n":"Voice 3 base note","d":36,"note":1},{"id":16,"g":"CV/Gate Settings","n":"Voice 3 GATE CV output","d":0,"o":[[0,"V-Trig 5 V"],[1,"V-Trig 12 V"],[2,"S-Trig"]]},{"id":20,"g":"CV/Gate Settings","n":"Voice 3 MOD CV source","d":0,"o":[[0,"Velocity"],[1,"Pressure"],[2,"Mod Wheel"]]},{"id":24,"g":"CV/Gate Settings","n":"Voice 3 MOD CV max voltage","d":4,"o":[[0,"1 V"],[1,"2 V"],[2,"3 V"],[3,"4 V"],[4,"5 V"],[5,"6 V"],[6,"7 V"],[7,"8 V"],[8,"9 V"],[9,"10 V"]]},{"id":140,"g":"CV/Gate Settings","n":"Voice 3 Pitch Bend range","d":0,"o":[[0,"1 semitone"],[1,"2 semitones"],[2,"3 semitones"],[3,"4 semitones"],[4,"5 semitones"],[5,"6 semitones"],[6,"7 semitones"],[7,"8 semitones"],[8,"9 semitones"],[9,"10 semitones"],[10,"11 semitones"],[11,"12 semitones"],[12,"13 semitones"],[13,"14 semitones"],[14,"15 semitones"],[15,"16 semitones"],[16,"17 semitones"],[17,"18 semitones"],[18,"19 semitones"],[19,"20 semitones"],[20,"21 semitones"],[21,"22 semitones"],[22,"23 semitones"],[23,"24 semitones"]]},{"id":9,"g":"CV/Gate Settings","n":"Voice 4 PITCH CV output","d":0,"o":[[0,"1 V/Oct"],[1,"1,2 V/Oct"],[2,"Hz/Volt"]]},{"id":13,"g":"CV/Gate Settings","n":"Voice 4 base note","d":36,"note":1},{"id":17,"g":"CV/Gate Settings","n":"Voice 4 GATE CV output","d":0,"o":[[0,"V-Trig 5 V"],[1,"V-Trig 12 V"],[2,"S-Trig"]]},{"id":21,"g":"CV/Gate Settings","n":"Voice 4 MOD CV source","d":0,"o":[[0,"Velocity"],[1,"Pressure"],[2,"Mod Wheel"]]},{"id":25,"g":"CV/Gate Settings","n":"Voice 4 MOD CV max voltage","d":4,"o":[[0,"1 V"],[1,"2 V"],[2,"3 V"],[3,"4 V"],[4,"5 V"],[5,"6 V"],[6,"7 V"],[7,"8 V"],[8,"9 V"],[9,"10 V"]]},{"id":141,"g":"CV/Gate Settings","n":"Voice 4 Pitch Bend range","d":0,"o":[[0,"1 semitone"],[1,"2 semitones"],[2,"3 semitones"],[3,"4 semitones"],[4,"5 semitones"],[5,"6 semitones"],[6,"7 semitones"],[7,"8 semitones"],[8,"9 semitones"],[9,"10 semitones"],[10,"11 semitones"],[11,"12 semitones"],[12,"13 semitones"],[13,"14 semitones"],[14,"15 semitones"],[15,"16 semitones"],[16,"17 semitones"],[17,"18 semitones"],[18,"19 semitones"],[19,"20 semitones"],[20,"21 semitones"],[21,"22 semitones"],[22,"23 semitones"],[23,"24 semitones"]]},{"id":128,"g":"CV/Gate Settings","n":"Drum Gate 1","d":0,"o":[[0,"V-Trig 5 V"],[1,"V-Trig 12 V"],[2,"S-Trig"]]},{"id":129,"g":"CV/Gate Settings","n":"Drum Gate 2","d":0,"o":[[0,"V-Trig 5 V"],[1,"V-Trig 12 V"],[2,"S-Trig"]]},{"id":130,"g":"CV/Gate Settings","n":"Drum Gate 3","d":0,"o":[[0,"V-Trig 5 V"],[1,"V-Trig 12 V"],[2,"S-Trig"]]},{"id":131,"g":"CV/Gate Settings","n":"Drum Gate 4","d":0,"o":[[0,"V-Trig 5 V"],[1,"V-Trig 12 V"],[2,"S-Trig"]]},{"id":132,"g":"CV/Gate Settings","n":"Drum Gate 5","d":0,"o":[[0,"V-Trig 5 V"],[1,"V-Trig 12 V"],[2,"S-Trig"]]},{"id":133,"g":"CV/Gate Settings","n":"Drum Gate 6","d":0,"o":[[0,"V-Trig 5 V"],[1,"V-Trig 12 V"],[2,"S-Trig"]]},{"id":134,"g":"CV/Gate Settings","n":"Drum Gate 7","d":0,"o":[[0,"V-Trig 5 V"],[1,"V-Trig 12 V"],[2,"S-Trig"]]},{"id":135,"g":"CV/Gate Settings","n":"Drum Gate 8","d":0,"o":[[0,"V-Trig 5 V"],[1,"V-Trig 12 V"],[2,"S-Trig"]]},{"id":80,"g":"Controller","n":"Global channel","d":0,"ch":[]},{"id":28,"g":"Controller","n":"Knob 1 MIDI CC","d":74,"r":[0,127]},{"id":33,"g":"Controller","n":"Knob 1 port","d":3,"o":[[0,"USB"],[1,"MIDI 1"],[2,"MIDI 2"],[3,"All"]]},{"id":38,"g":"Controller","n":"Knob 1 channel","d":127,"ch":[[127,"Global"]]},{"id":48,"g":"Controller","n":"Knob 1 min range","d":0,"r":[0,127]},{"id":53,"g":"Controller","n":"Knob 1 max range","d":127,"r":[0,127]},{"id":29,"g":"Controller","n":"Knob 2 MIDI CC","d":74,"r":[0,127]},{"id":34,"g":"Controller","n":"Knob 2 port","d":3,"o":[[0,"USB"],[1,"MIDI 1"],[2,"MIDI 2"],[3,"All"]]},{"id":39,"g":"Controller","n":"Knob 2 channel","d":127,"ch":[[127,"Global"]]},{"id":49,"g":"Controller","n":"Knob 2 min range","d":0,"r":[0,127]},{"id":54,"g":"Controller","n":"Knob 2 max range","d":127,"r":[0,127]},{"id":30,"g":"Controller","n":"Knob 3 MIDI CC","d":74,"r":[0,127]},{"id":35,"g":"Controller","n":"Knob 3 port","d":3,"o":[[0,"USB"],[1,"MIDI 1"],[2,"MIDI 2"],[3,"All"]]},{"id":40,"g":"Controller","n":"Knob 3 channel","d":127,"ch":[[127,"Global"]]},{"id":50,"g":"Controller","n":"Knob 3 min range","d":0,"r":[0,127]},{"id":55,"g":"Controller","n":"Knob 3 max range","d":127,"r":[0,127]},{"id":31,"g":"Controller","n":"Knob 4 MIDI CC","d":74,"r":[0,127]},{"id":36,"g":"Controller","n":"Knob 4 port","d":3,"o":[[0,"USB"],[1,"MIDI 1"],[2,"MIDI 2"],[3,"All"]]},{"id":41,"g":"Controller","n":"Knob 4 channel","d":127,"ch":[[127,"Global"]]},{"id":51,"g":"Controller","n":"Knob 4 min range","d":0,"r":[0,127]},{"id":56,"g":"Controller","n":"Knob 4 max range","d":127,"r":[0,127]},{"id":32,"g":"Controller","n":"Knob 5 MIDI CC","d":74,"r":[0,127]},{"id":37,"g":"Controller","n":"Knob 5 port","d":3,"o":[[0,"USB"],[1,"MIDI 1"],[2,"MIDI 2"],[3,"All"]]},{"id":42,"g":"Controller","n":"Knob 5 channel","d":127,"ch":[[127,"Global"]]},{"id":52,"g":"Controller","n":"Knob 5 min range","d":0,"r":[0,127]},{"id":57,"g":"Controller","n":"Knob 5 max range","d":127,"r":[0,127]},{"id":67,"g":"Touch Strip","n":"MIDI send/receive","d":1,"o":[[0,"OFF"],[1,"Send"],[2,"Receive"],[3,"Both"]]},{"id":68,"g":"Touch Strip","n":"MIDI CC","d":9,"r":[0,127]},{"id":107,"g":"Touch Strip","n":"Touch Strip","d":0,"o":[[1,"OFF"],[0,"ON"]]},{"id":81,"g":"Drum Map","n":"Mode","d":0,"o":[[0,"Chromatic"],[1,"Custom"]]},{"id":82,"g":"Drum Map","n":"Low note","d":0,"r":[0,103]},{"id":83,"g":"Drum Map","n":"Note 1","d":36,"r":[0,127]},{"id":84,"g":"Drum Map","n":"Note 2","d":37,"r":[0,127]},{"id":85,"g":"Drum Map","n":"Note 3","d":38,"r":[0,127]},{"id":86,"g":"Drum Map","n":"Note 4","d":39,"r":[0,127]},{"id":87,"g":"Drum Map","n":"Note 5","d":40,"r":[0,127]},{"id":88,"g":"Drum Map","n":"Note 6","d":41,"r":[0,127]},{"id":89,"g":"Drum Map","n":"Note 7","d":42,"r":[0,127]},{"id":90,"g":"Drum Map","n":"Note 8","d":43,"r":[0,127]},{"id":91,"g":"Drum Map","n":"Note 9","d":44,"r":[0,127]},{"id":92,"g":"Drum Map","n":"Note 10","d":45,"r":[0,127]},{"id":93,"g":"Drum Map","n":"Note 11","d":46,"r":[0,127]},{"id":94,"g":"Drum Map","n":"Note 12","d":47,"r":[0,127]},{"id":95,"g":"Drum Map","n":"Note 13","d":48,"r":[0,127]},{"id":96,"g":"Drum Map","n":"Note 14","d":49,"r":[0,127]},{"id":97,"g":"Drum Map","n":"Note 15","d":50,"r":[0,127]},{"id":98,"g":"Drum Map","n":"Note 16","d":51,"r":[0,127]},{"id":99,"g":"Drum Map","n":"Note 17","d":52,"r":[0,127]},{"id":100,"g":"Drum Map","n":"Note 18","d":53,"r":[0,127]},{"id":101,"g":"Drum Map","n":"Note 19","d":54,"r":[0,127]},{"id":102,"g":"Drum Map","n":"Note 20","d":55,"r":[0,127]},{"id":103,"g":"Drum Map","n":"Note 21","d":56,"r":[0,127]},{"id":104,"g":"Drum Map","n":"Note 22","d":57,"r":[0,127]},{"id":105,"g":"Drum Map","n":"Note 23","d":58,"r":[0,127]},{"id":106,"g":"Drum Map","n":"Note 24","d":59,"r":[0,127]},{"id":108,"g":"Misc","n":"Vegas mode","d":0,"o":[[0,"5 min"],[1,"10 min"],[2,"Never"]]},{"id":109,"g":"Misc","n":"Screen saver","d":0,"o":[[0,"2 min"],[1,"10 min"],[2,"30 min"]]},{"id":110,"g":"Misc","n":"Step listen","d":0,"o":[[1,"OFF"],[0,"ON"]]},{"id":143,"g":"Not in MCC (firmware 2.5)","n":"Track 1 PC Send (Seq mode)","d":0,"o":[[0,"OFF"],[1,"ON"]],"hidden":1},{"id":142,"g":"Not in MCC (firmware 2.5)","n":"Track 1 PC Send (Drum mode)","d":0,"o":[[0,"OFF"],[1,"ON"]],"hidden":1},{"id":144,"g":"Not in MCC (firmware 2.5)","n":"Track 2 PC Send","d":0,"o":[[0,"OFF"],[1,"ON"]],"hidden":1},{"id":145,"g":"Not in MCC (firmware 2.5)","n":"Track 3 PC Send","d":0,"o":[[0,"OFF"],[1,"ON"]],"hidden":1},{"id":146,"g":"Not in MCC (firmware 2.5)","n":"Track 4 PC Send","d":0,"o":[[0,"OFF"],[1,"ON"]],"hidden":1},{"id":155,"g":"Not in MCC (firmware 2.5)","n":"Track 1 Fixed Velocity (Seq mode)","d":0,"o":[[0,"OFF"],[1,"ON"]],"hidden":1},{"id":154,"g":"Not in MCC (firmware 2.5)","n":"Track 1 Fixed Velocity (Drum mode)","d":0,"o":[[0,"OFF"],[1,"ON"]],"hidden":1},{"id":156,"g":"Not in MCC (firmware 2.5)","n":"Track 2 Fixed Velocity","d":0,"o":[[0,"OFF"],[1,"ON"]],"hidden":1},{"id":157,"g":"Not in MCC (firmware 2.5)","n":"Track 3 Fixed Velocity","d":0,"o":[[0,"OFF"],[1,"ON"]],"hidden":1},{"id":158,"g":"Not in MCC (firmware 2.5)","n":"Track 4 Fixed Velocity","d":0,"o":[[0,"OFF"],[1,"ON"]],"hidden":1},{"id":152,"g":"Not in MCC (firmware 2.5)","n":"Brightness","d":0,"o":[[0,"Very Low"],[1,"Low"],[2,"High"]],"hidden":1},{"id":153,"g":"Not in MCC (firmware 2.5)","n":"Transpose Latch (raw value; the menu stores it inverted)","d":0,"o":[[0,"0"],[1,"1"]],"hidden":1}];
+/* ================= audio (stand-in instruments) ================= */
+let AC=null,MASTER=null,SOUND=true,acOff=-1e9;
+function ensureAC(){if(AC){if(AC.state==="suspended")AC.resume();return AC}
+ try{AC=new (window.AudioContext||window.webkitAudioContext)();MASTER=AC.createGain();MASTER.gain.value=.5;
+  const comp=AC.createDynamicsCompressor();MASTER.connect(comp);comp.connect(AC.destination)}catch(e){AC=null}return AC}
+/* performance.now() seconds -> AudioContext time; currentTime advances in chunks, so keep the running max offset */
+function toAC(t){if(!AC)return 0;acOff=Math.max(acOff,AC.currentTime-performance.now()/1000);return Math.max(AC.currentTime,t+acOff)}
+const TIMBRE=[{w:"sawtooth",cut:900,q:6,a:.004,r:.08,lvl:.32,oct:0},{w:"sawtooth",cut:1800,q:3,a:.005,r:.12,lvl:.22,det:7},{w:"square",cut:2600,q:1,a:.003,r:.15,lvl:.16},{w:"triangle",cut:3200,q:.7,a:.02,r:.35,lvl:.3,det:5}];
+let BEND=0; // semitones
+const LIVE=new Set();
+function voice(track,midi,vel,t0,t1){if(!SOUND||!ensureAC())return null;const T=TIMBRE[track],a=toAC(t0);
+ const o=AC.createOscillator(),o2=T.det?AC.createOscillator():null,f=AC.createBiquadFilter(),g=AC.createGain();
+ o.type=T.w;o.frequency.value=hz(midi);o.detune.value=BEND*100;if(o2){o2.type=T.w;o2.frequency.value=hz(midi);o2.detune.value=BEND*100+T.det;o2.connect(f)}
+ f.type="lowpass";f.frequency.value=T.cut*(.6+vel/127*.8);f.Q.value=T.q;o.connect(f);f.connect(g);g.connect(MASTER);
+ const lv=T.lvl*(.25+.75*vel/127);g.gain.setValueAtTime(0,a);g.gain.linearRampToValueAtTime(lv,a+T.a);g.gain.setTargetAtTime(lv*.7,a+T.a,.15);
+ const v={o,o2,g,T,stop(t){const e=Math.max(AC.currentTime,t);g.gain.cancelScheduledValues(e);g.gain.setValueAtTime(g.gain.value,e);g.gain.setTargetAtTime(0,e,T.r/3);o.stop(e+T.r*2);o2&&o2.stop(e+T.r*2)}};
+ o.start(a);o2&&o2.start(a);if(t1!=null)v.stop(toAC(t1));return v}
+function liveOn(track,midi,vel){const v=voice(track,midi,vel,performance.now()/1000,null);if(v)LIVE.add(v);return v}
+function liveOff(v){if(v&&AC){v.stop(AC.currentTime);LIVE.delete(v)}}
+function setBend(semi){BEND=semi;for(const v of LIVE){v.o.detune.setTargetAtTime(semi*100,AC.currentTime,.01);v.o2&&v.o2.detune.setTargetAtTime(semi*100+v.T.det,AC.currentTime,.01)}}
+let NOISE=null;function noiseBuf(){if(NOISE)return NOISE;NOISE=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const d=NOISE.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return NOISE}
+/* 24 drum lanes: the lowest octave is a kit, the rest are tuned percussion */
+function drum(lane,vel,t){if(!SOUND||!ensureAC())return;const a=toAC(t),g=AC.createGain(),v=.25+.75*vel/127;g.connect(MASTER);
+ const env=(lv,d)=>{g.gain.setValueAtTime(lv*v,a);g.gain.exponentialRampToValueAtTime(.001,a+d)};
+ const osc=(type,f0,f1,d)=>{const o=AC.createOscillator();o.type=type;o.frequency.setValueAtTime(f0,a);if(f1)o.frequency.exponentialRampToValueAtTime(f1,a+d);o.connect(g);o.start(a);o.stop(a+d+.05)};
+ const nz=(type,f,q,d)=>{const s=AC.createBufferSource();s.buffer=noiseBuf();const fl=AC.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q;s.connect(fl);fl.connect(g);s.start(a);s.stop(a+d+.05)};
+ switch(lane){
+  case 0:env(.9,.35);osc("sine",150,42,.3);break;                 // kick
+  case 1:env(.5,.06);osc("square",800,0,.04);break;              // rim
+  case 2:env(.5,.18);osc("triangle",190,140,.1);nz("highpass",1500,.7,.18);break; // snare
+  case 3:env(.5,.22);nz("bandpass",1200,1.2,.22);break;          // clap
+  case 4:env(.6,.3);osc("sine",120,80,.3);break;                 // low tom
+  case 5:env(.6,.25);osc("sine",170,110,.25);break;              // mid tom
+  case 6:env(.25,.05);nz("highpass",7000,.8,.05);break;          // closed hat
+  case 7:env(.6,.22);osc("sine",230,160,.22);break;              // high tom
+  case 8:env(.22,.3);nz("highpass",6500,.8,.3);break;            // open hat
+  case 9:env(.3,.12);osc("square",540,0,.1);osc("square",800,0,.1);break; // cowbell
+  case 10:env(.2,.9);nz("highpass",5000,.5,.9);break;            // crash
+  case 11:env(.4,.08);nz("bandpass",3000,3,.08);break;           // shaker
+  default:env(.35,.25);osc("sine",hz(48+lane),0,.25)}             // tuned percussion
+}
+function click(accent,t){if(!SOUND||!ensureAC())return;const a=toAC(t),o=AC.createOscillator(),g=AC.createGain();o.frequency.value=accent?1800:1200;o.type="square";
+ g.gain.setValueAtTime(.12,a);g.gain.exponentialRampToValueAtTime(.001,a+.03);o.connect(g);g.connect(MASTER);o.start(a);o.stop(a+.05)}
+/* ================= data model ================= */
+const newStep=()=>({n:[],on:false,skip:[0,0,0,0]});
+const newDStep=()=>({on:false,g:.5,v:100,t:0,r:100,skip:[0,0,0,0]});
+const newPat=()=>({valid:false,len:16,div:2,trip:false,dir:0,poly:true,scale:0,root:0,arp:0,arpOct:0,swOff:0,st:Array.from({length:64},newStep),raw:{}});
+const newDrumPat=()=>({valid:false,len:16,div:2,trip:false,dir:0,poly:false,swOff:0,lanes:Array.from({length:24},()=>({len:16,st:Array.from({length:64},newDStep)})),raw:{}});
+const newCtrlPat=()=>({valid:false,len:16,st:Array.from({length:64},()=>({cc:[null,null,null,null,null]})),raw:{}});
+const newTrack=t=>({mode:"seq",pats:Array.from({length:16},newPat),cur:0,chain:[],chord:{root:null,off:[]},chordOn:false,oct:0,valid:false,raw:{}});
+function newProject(){return {name:null,bpm:120,swing:50,tracks:[0,1,2,3].map(newTrack),drum:{pats:Array.from({length:16},newDrumPat),cur:0,chain:[]},
+ ctrl:{pats:Array.from({length:16},newCtrlPat),cur:0},scenes:Array.from({length:16},()=>null),user:[0xFFF,0xFFF],raw:{}}}
+const GDEF=new Int16Array(160);GLOBALS.forEach(g=>GDEF[g.id]=g.d);GDEF[153]=1;GDEF[152]=1;GDEF[143]=1;GDEF[144]=1;GDEF[145]=1;GDEF[146]=1;GDEF[142]=1;
+[0,1,2,3,4].forEach(i=>GDEF[28+i]=74+i); // the manual's defaults: Pitch 74 … Randomness 78
+GDEF[74]=GDEF[79]=9; // drum channel 10 (0-based 9, as the device reports; the MCC file says 10)
+
+/* track defaults (what the encoders set when no step is held) */
+const newDefaults=()=>({p:60,g:.5,v:100,t:0,r:100});
+const newArpParams=()=>({g:.5,vo:0,t:0,r:0});
+let S,P,HELD,LATCH;
+function baseState(){
+ S={proj:0,ram:Array.from({length:16},newProject),flash:null,globals:Int16Array.from(GDEF),cur:0,
+  playing:false,paused:false,rec:false,quant:true,metro:false,stepEdit:false,overdub:false,sel:null,selNotes:null,
+  hold:[0,0,0,0],arpHeld:[[],[],[],[]],arpLatched:[[],[],[],[]],mute:[0,0,0,0],solo:-1,drumMute:Array(24).fill(0),drumMuteMode:false,
+  trans:[0,1,2,3].map(()=>({semi:0,on:false})),tgroup:new Set(),transMode:false,
+  view:[0,0,0,0,0],follow:true,control:false,ctrlTrack:0,cc:[64,64,64,64,64],mod:[0,0,0,0],
+  defs:[0,1,2,3].map(newDefaults),drumDefs:newDefaults(),arpP:[0,1,2,3].map(newArpParams),
+  menu:null,confirm:null,msg:null,msgT:0,copy:null,undo:null,globalBpm:false,gbpm:120,waitLoad:true,looper:null,looperOn:true,
+  lane:0,chordEntry:null,taps:[],stopTaps:[],cvr:[1,2,4,8],split:null,lastNote:60,rootSel:false,userEdit:null,stepRecPos:0,patMode:null,
+  sceneCur:-1,keysDown:new Map(),recPending:new Map()};
+ S.flash=S.ram.map(deep);
+ P=[0,1,2,3,4].map(()=>({idx:0,cnt:0,next:0,pend:null,chainPos:0,lanes:Array(24).fill(0).map(()=>({idx:0,cnt:0}))}));
+ HELD=new Map();LATCH=new Set();
+}
+const proj=()=>S.ram[S.proj];
+const trk=(t=S.cur)=>proj().tracks[t];
+const isDrum=(t=S.cur)=>t===0&&trk(0).mode==="drum";
+const curPat=(t=S.cur)=>isDrum(t)?proj().drum.pats[proj().drum.cur]:trk(t).pats[trk(t).cur];
+const patIdx=(t=S.cur)=>isDrum(t)?proj().drum.cur:trk(t).cur;
+const bpm=()=>S.globalBpm?S.gbpm:proj().bpm;
+const held=id=>HELD.has(id);
+const fvId=t=>t===0?(isDrum(0)?154:155):155+t;
+const pcId=t=>t===0?(isDrum(0)?142:143):143+t;
+const outCh=t=>{const c=isDrum(t)?S.globals[79]:S.globals[75+t];return c>15?null:c};
+
+/* ---------- scale maps ---------- */
+const mapCache=new Map();
+function scaleMask(t=S.cur){const p=curPat(t);if(isDrum(t))return 0;const s=p.scale;if(s===8)return proj().user[0];if(s===9)return proj().user[1];return SCALES[s]?SCALES[s][1]:0xFFF}
+function noteMap(t=S.cur){if(isDrum(t))return null;const m=scaleMask(t),r=curPat(t).root,k=m+"/"+r;let v=mapCache.get(k);if(!v){v=buildMap(m===0xFFF?0:m,r);mapCache.set(k,v)}return v}
+const q=(t,n)=>{n=clamp(n,0,127);const m=noteMap(t);return m?m[n]:n};
+/* scale-aware step: move a note to the next/previous note of the scale */
+function scaleStep(t,n,d){const mask=scaleMask(t),r=curPat(t).root;if(!mask||mask===0xFFF)return clamp(n+d,0,127);
+ const inS=x=>(mask>>(((x-r)%12+12)%12))&1;let x=n;for(let i=0;i<Math.abs(d);i++){do{x+=Math.sign(d)}while(x>0&&x<127&&!inS(x))}return clamp(x,0,127)}
+
+/* ---------- messages / events ---------- */
+function msg(t,ms=1200){S.msg=t;S.msgT=performance.now()+ms;dirty()}
+const LISTEN=[];function emit(ev){for(const f of LISTEN)f(ev)}
+
+/* ---------- timing ---------- */
+const stepTicks=p=>DIVS[p.div][1]*(p.trip?2/3:1);
+const stepDur=p=>60/bpm()*stepTicks(p)/96;
+function swingDelay(t,p,cnt){const sw=clamp(proj().swing+(p.swOff||0),50,75);return cnt%2?(sw-50)/50*stepDur(p):0}
+let T0=0;const now=()=>performance.now()/1000;
+
+function play(){ensureAC();if(S.playing&&!S.paused){S.paused=true;allOff();emit("pause");dirty();return}
+ if(S.paused){S.paused=false;const t=now()+.03;P.forEach(p=>p.next=t);metroNext=t;emit("play");dirty();return}
+ S.playing=true;S.paused=false;const t=now()+.05;T0=t;P.forEach(p=>{p.idx=0;p.cnt=0;p.next=t;p.chainPos=0;p.lanes.forEach(l=>{l.idx=0;l.cnt=0})});
+ [0,1,2,3].forEach(i=>{const c=i===0&&isDrum(0)?proj().drum.chain:trk(i).chain;if(c.length)setPat(i,c[0],true)});
+ metroNext=t;metroCnt=0;arpStartAll(t);emit("play");dirty()}
+function stop(){const t=performance.now();S.stopTaps=S.stopTaps.filter(x=>t-x<700);S.stopTaps.push(t);if(S.stopTaps.length>=3){allOff(true);msg("All Notes Off");S.stopTaps=[]}
+ S.playing=false;S.paused=false;if(S.rec==="rt")S.rec=false;P.forEach(p=>{p.idx=0;p.cnt=0;p.pend=null});S.looper=null;allOff();emit("stop");dirty()}
+function restart(){if(!S.playing){play();return}const t=now()+.03;P.forEach(p=>{p.idx=0;p.cnt=0;p.next=t;p.lanes.forEach(l=>{l.idx=0;l.cnt=0})});metroNext=t;metroCnt=0;emit("restart")}
+
+/* scheduled notes so stop / pause can cut them */
+const SCHED=[];
+function playNote(t,midi,vel,t0,t1){const v=voice(t,midi,vel,t0,t1);if(v)SCHED.push({v,end:t1});midiNote(t,midi,vel,t0,t1);flash(t,midi,t0,t1)}
+function allOff(midiToo){for(const s of SCHED)s.v.stop(AC?AC.currentTime:0);SCHED.length=0;for(const v of LIVE)liveOff(v);NOTEFLASH.length=0;if(midiToo)midiAllOff()}
+const NOTEFLASH=[];function flash(t,midi,t0,t1){NOTEFLASH.push({t,midi,t0,t1})}
+
+/* ---------- the clock: a Blob worker ticks every 10 ms, rAF also calls advance() ---------- */
+let metroNext=0,metroCnt=0;
+const metroDivs=[[96,1],[64,1],[48,1],[32,1],[24,1],[16,1],[12,1],[8,1]];
+function advance(){const n=now(),la=n+.12;
+ for(let i=SCHED.length-1;i>=0;i--)if(SCHED[i].end<n-1)SCHED.splice(i,1);
+ for(let i=NOTEFLASH.length-1;i>=0;i--)if(NOTEFLASH[i].t1<n)NOTEFLASH.splice(i,1);
+ arpAdvance(la);
+ if(!S.playing||S.paused)return;
+ for(let t=0;t<4;t++){const p=P[t];let guard=0;while(p.next<la&&guard++<64){playTrackStep(t,p.next);p.next+=stepDur(curPat(t))}}
+ {const p=P[4],cp=proj().ctrl.pats[proj().ctrl.cur];let guard=0;while(p.next<la&&guard++<64){playCtrlStep(cp,p);p.next+=60/bpm()/4}}
+ if(S.metro){const md=metroDivs[S.globals[116]]||[24];const d=60/bpm()*md[0]/96;let g=0;while(metroNext<la&&g++<64){const beats=S.globals[115]+1;click(metroCnt%beats===0,metroNext);metroCnt++;metroNext+=d}}
+ else metroNext=Math.max(metroNext,n);
+}
+function nextIdx(p,idx,len){if(p.dir===1)return rnd(len);if(p.dir===2){const r=Math.random();return r<.5?(idx+1)%len:r<.75?idx:(idx-1+len)%len}return (idx+1)%len}
+function patEnd(t){const p=P[t];// end of a pattern pass: chains and wait-to-load
+ const tr=trk(t),chain=t===0&&isDrum(0)?proj().drum.chain:tr.chain;
+ if(p.pend!=null){setPat(t,p.pend,true);p.pend=null;return}
+ if(chain.length>1){p.chainPos=(p.chainPos+1)%chain.length;setPat(t,chain[p.chainPos],true)}}
+function playTrackStep(t,time){const p=P[t],pat=curPat(t);
+ if(S.looper&&S.looper.start[t]!=null){const L=S.looper,len=Math.max(1,Math.round(L.beats*96/stepTicks(pat)));if(p.cnt-L.start[t]>=len){p.idx=L.idx[t];p.cnt=L.start[t]}}
+ const cnt=p.cnt,idx=p.idx,tt=time+swingDelay(t,pat,cnt),dur=stepDur(pat),pageIt=Math.floor(cnt/16)%4;
+ const audible=!(S.solo>=0?S.solo!==t:S.mute[t]);
+ if(isDrum(t))playDrumStep(pat,tt,dur,audible);
+ else if(trk(t).mode==="seq"){const st=pat.st[idx];
+  if(st.on&&st.n.length&&!st.skip[pageIt]&&audible){let notes=st.n;if(!pat.poly)notes=[notes.reduce((a,b)=>b.p<a.p?b:a)];
+   const tr=S.trans[t].on?S.trans[t].semi:0;
+   for(const nt of notes){if(Math.random()*100>=nt.r)continue;const pitch=q(t,nt.p+tr),t0=tt+nt.t/100*dur;playNote(t,pitch,nt.v,t0,t0+Math.max(.03,nt.g*dur*.98))}}
+  if(S.rec==="rt"&&held("tie")){pat.st[idx]=newStep();pat.valid=true}}
+ /* advance */
+ p.idx=nextIdx(pat,idx,pat.len);p.cnt++;if(pat.dir===0?p.idx===0:p.cnt%pat.len===0)patEnd(t);
+ if(t===S.cur&&S.follow&&!isDrum(t))S.view[t]=Math.floor(p.idx/16);if(t===0&&isDrum(0)&&S.follow)S.view[4]=Math.floor(p.idx/16);
+ S.playIdx=S.playIdx||[];S.playIdx[t]={idx,time:tt};
+}
+function playDrumStep(pat,tt,dur,audible){const p=P[0];
+ for(let l=0;l<24;l++){const lane=pat.lanes[l],ls=p.lanes[l],len=pat.poly?lane.len:pat.len,idx=pat.poly?ls.idx%len:p.idx,st=lane.st[idx],pageIt=Math.floor((pat.poly?ls.cnt:p.cnt)/16)%4;
+  if(st.on&&!st.skip[pageIt]&&audible&&!S.drumMute[l]&&Math.random()*100<st.r){const t0=tt+st.t/100*dur;drum(l,st.v,t0);midiDrum(l,st.v,t0,t0+st.g*dur);NOTEFLASH.push({t:0,drum:l,t0,t1:t0+.08})}
+  if(pat.poly){ls.idx=nextIdx(pat,ls.idx,len);ls.cnt++}}
+ if(S.rec==="rt"&&held("tie")){for(const l of pat.lanes)l.st[p.idx]=newDStep()}}
+function playCtrlStep(cp,p){const idx=p.idx,st=cp.st[idx];if(S.playing){st.cc.forEach((v,i)=>{if(v!=null){S.cc[i]=v;midiCC(i,v)}})}p.idx=(p.idx+1)%cp.len;p.cnt++}
+
+/* ---------- arpeggiators (run whenever notes are held, even when stopped) ---------- */
+const ARP=[0,1,2,3].map(()=>({next:0,i:0,seq:[],dirn:1,running:false}));
+function arpNotes(t){return S.hold[t]?S.arpLatched[t]:S.arpHeld[t]}
+function arpSeq(t){const pat=curPat(t),base=arpNotes(t).slice();if(!base.length)return [];
+ const oct=pat.arpOct-1;// -1..+3
+ const sorted=base.slice().sort((a,b)=>a.p-b.p);let list=[];
+ const octs=oct<0?[-1,0]:Array.from({length:oct+1},(_,i)=>i);
+ const mode=ARPS[pat.arp];
+ const src=mode==="Order"?base:sorted;
+ for(const o of octs)for(const n of src)list.push({p:n.p+12*o,v:n.v});
+ if(mode==="Down")list.reverse();
+ if(mode==="Exclu"&&list.length>2)list=list.concat(list.slice(1,-1).reverse());
+ if(mode==="Inclu")list=list.concat(list.slice().reverse());
+ if(mode==="Poly")list=octs.map(o=>({chord:src.map(n=>({p:n.p+12*o,v:n.v}))}));
+ return list}
+function arpStartAll(t0){ARP.forEach((a,t)=>{if(a.running){a.next=t0;a.i=0}})}
+function arpAdvance(la){for(let t=1;t<4;t++){const tr=trk(t);const a=ARP[t];if(tr.mode!=="arp"||!arpNotes(t).length){a.running=false;continue}
+  const pat=curPat(t),dur=stepDur(pat),ap=S.arpP[t];
+  if(!a.running){a.running=true;a.i=0;a.cnt=0;a.next=S.playing&&!S.paused?Math.max(now()+.01,P[t].next):now()+.01}
+  let g=0;while(a.next<la&&g++<32){const list=arpSeq(t);if(!list.length)break;const it=list[a.i%list.length];a.i++;
+   const audible=!(S.solo>=0?S.solo!==t:S.mute[t]),tt=a.next+swingDelay(t,pat,a.cnt||0)+ap.t/100*dur;a.cnt=(a.cnt||0)+1;
+   const tr2=S.trans[t].on?S.trans[t].semi:0,notes=it.chord||[it];
+   for(const n of notes){let pitch=n.p+tr2;if(ap.r>0&&Math.random()*100<ap.r)pitch+=[-12,-7,-5,5,7,12][rnd(6)];
+    const v=clamp(n.v+ap.vo,0,127);if(v<=0)continue;pitch=q(t,pitch);if(audible)playNote(t,pitch,v,tt,tt+Math.max(.03,ap.g*dur));
+    if(S.rec==="rt"&&S.playing&&t===S.cur)recordNote(t,pitch,v,tt,ap.g)}
+   if(S.playing&&S.rec!=="rt"&&!S.paused){}
+   a.next+=dur}}}
+
+/* ---------- patterns, chains ---------- */
+function setPat(t,i,now_){if(isDrum(t)&&t===0)proj().drum.cur=i;else trk(t).cur=i;mapCache.clear&&0;emit(`pattern:${t}:${i}`);dirty();
+ const pc=curPatPC(t);if(pc!=null&&S.globals[pcId(t)])midiPC(t,pc)}
+function curPatPC(t){const p=curPat(t);return p.pc==null?null:p.pc}
+function choosePat(t,i){const tr=trk(t);if(t===0&&isDrum(0))proj().drum.chain=[];else tr.chain=[];
+ if(S.playing&&S.waitLoad)P[t].pend=i;else setPat(t,i,true)}
+
+/* ---------- recording ---------- */
+function curDefaults(t=S.cur){const d=isDrum(t)?S.drumDefs:S.defs[t];return d}
+function noteFromDefaults(t,p,v){const d=curDefaults(t);const vel=S.globals[fvId(t)]?d.v:v;return {p,g:d.g,v:vel,t:d.t,r:d.r}}
+function recordNote(t,pitch,vel,time,gate){const pat=curPat(t),p=P[t],dur=stepDur(pat);
+ // position relative to the step that is playing now
+ const last=S.playIdx&&S.playIdx[t];let idx,ts;if(!last){idx=0;ts=0}else{const rel=(time-last.time)/dur;let k=Math.round(rel);ts=Math.round((rel-k)*100);idx=((last.idx+k)%pat.len+pat.len)%pat.len}
+ if(S.quant)ts=0;ts=clamp(ts,-49,50);
+ const st=pat.st[idx];if(!S.overdub&&!S.recTouched.has(idx)){st.n=[]}S.recTouched.add(idx);
+ if(st.n.length>=16){msg("16 notes limit in\na step reached");return null}
+ const n=noteFromDefaults(t,pitch,vel);n.t=ts;if(gate!=null)n.g=gate;if(!pat.poly)st.n=[];st.n.push(n);st.on=true;pat.valid=true;emit("recnote");dirty();return {n,time,dur}}
+
+/* ---------- step edits & shift functions ---------- */
+function snapshotUndo(){S.undo={t:S.cur,drum:isDrum(),i:patIdx(),pat:deep(curPat())};}
+function doUndo(){if(!S.undo){msg("Nothing to undo");return}const u=S.undo;if(u.drum)proj().drum.pats[u.i]=u.pat;else proj().tracks[u.t].pats[u.i]=u.pat;S.undo=null;msg("Undo");dirty()}
+function shiftStep(i){const pat=curPat(),name=STEPFN[i],t=S.cur,dr=isDrum();
+ const lane=dr?pat.lanes[S.lane]:null,steps=dr?lane.st:pat.st,len=dr&&pat.poly?lane.len:pat.len;
+ const rot=d=>{const a=steps.slice(0,len);const b=d>0?[a[len-1],...a.slice(0,len-1)]:[...a.slice(1),a[0]];b.forEach((s,k)=>steps[k]=s)};
+ const eachNote=f=>{if(!dr)pat.st.slice(0,pat.len).forEach(s=>s.n.forEach(f))};
+ if(S.control&&[2,3,4,10].includes(i)){const cp=proj().ctrl.pats[proj().ctrl.cur],a=cp.st.slice(0,cp.len);let b;
+  if(i===2)b=[...a.slice(1),a[0]];else if(i===3)b=[a[cp.len-1],...a.slice(0,-1)];else if(i===4)b=a.slice().reverse();else b=a.slice().sort(()=>Math.random()-.5);b.forEach((s,k)=>cp.st[k]=s);msg(name);emit("shiftfn:"+name);dirty();return}
+ switch(i){
+  case 0:snapshotUndo();if(dr)proj().drum.pats[proj().drum.cur]=newDrumPat();else trk().pats[trk().cur]=newPat();curPat().valid=true;break;
+  case 1:snapshotUndo();if(dr)lane.st=Array.from({length:64},newDStep);else pat.st=Array.from({length:64},newStep);break;
+  case 2:rot(-1);break;case 3:rot(1);break;
+  case 4:{const a=steps.slice(0,len).reverse();a.forEach((s,k)=>steps[k]=s);break}
+  case 5:eachNote(n=>n.p=scaleStep(t,n.p,1));break;case 6:eachNote(n=>n.p=scaleStep(t,n.p,-1));break;
+  case 7:eachNote(n=>n.p=clamp(n.p+12,0,127));break;case 8:eachNote(n=>n.p=clamp(n.p-12,0,127));break;
+  case 9:case 10:{const f=i===9?.5:0;if(dr)steps.forEach(s=>s.t=Math.round(s.t*f));else eachNote(n=>n.t=Math.round(n.t*f));break}
+  case 11:{const a=steps.slice(0,len).sort(()=>Math.random()-.5);a.forEach((s,k)=>steps[k]=s);break}
+  case 12:eachNote(n=>n.p=q(t,clamp(n.p+rnd(13)-6,0,127)));break;
+  case 13:eachNote(n=>n.p=clamp(n.p+12*(rnd(3)-1),0,127));break;
+  case 14:S.globalBpm=!S.globalBpm;msg(S.globalBpm?`Global BPM\n${S.gbpm.toFixed(2)}`:`Project BPM\n${proj().bpm.toFixed(2)}`);emit("shiftfn:"+name);dirty();return;
+  case 15:S.waitLoad=!S.waitLoad;msg(S.waitLoad?"Wait Load\nON":"Wait Load\nOFF");emit("shiftfn:"+name);dirty();return}
+ pat.valid=true;msg(name);emit("shiftfn:"+name);dirty()}
+
+/* ---------- copy / paste ---------- */
+function copySteps(list){const pat=curPat(),dr=isDrum();const v=S.view[dr?4:S.cur];S.copy={kind:"steps",drum:dr,base:Math.min(...list.map(i=>v*16+i)),items:list.map(i=>v*16+i).map(i=>({off:i,d:deep(dr?pat.lanes[S.lane].st[i]:pat.st[i])}))};S.copy.items.forEach(x=>x.off-=S.copy.base);msg(list.length>1?"Steps\nCopied":"Step\nCopied")}
+function pasteSteps(i){const c=S.copy,dr=isDrum();if(!c||c.kind!=="steps"){msg("Nothing to\npaste");return}if(c.drum!==dr){msg("Can't Paste step\nbetween\nSeq and Drum");return}
+ snapshotUndo();const pat=curPat(),at=S.view[dr?4:S.cur]*16+i;let part=false;
+ c.items.forEach(x=>{const k=at+x.off;if(k>63){part=true;return}if(dr)pat.lanes[S.lane].st[k]=deep(x.d);else pat.st[k]=deep(x.d)});pat.valid=true;msg(part?"Steps partially\nPasted":c.items.length>1?"Steps\nPasted":"Step\nPasted");dirty()}
+
+/* ---------- projects ---------- */
+function loadProject(n){S.proj=n;mapCache.clear();P.forEach(p=>p.pend=null);S.sceneCur=-1;msg("Project\nLoaded");emit("project:"+n);dirty()}
+function saveProject(){const p=S.proj,r=S.ram[p];r.tracks.forEach(t=>t.valid=true);const name=S.flash[p].name;S.flash[p]=deep(r);S.flash[p].name=name;r.name=name;msg("Project\nSaved");emit("save:project");dirty()}
+function eraseProject(){const p=S.proj;S.ram[p]=newProject();S.flash[p]=newProject();msg("Project\nErased");emit("erase:project");dirty()}
+function copyProject(){const src=S.proj,dst=(src+1)%16,name=S.flash[dst].name;S.flash[dst]=deep(S.ram[src]);S.flash[dst].name=name;S.ram[dst]=deep(S.flash[dst]);msg("Project\nCopied");emit("copy:project");dirty()}
+function recallProject(){S.ram[S.proj]=deep(S.flash[S.proj]);mapCache.clear();msg("Load Project\nfrom FLASH");emit("recall");dirty()}
+function savePattern(t,i){const fl=S.flash[S.proj];if(t===0&&isDrum(0)){fl.drum.pats[i]=deep(proj().drum.pats[i]);fl.drum.pats[i].valid=true;proj().drum.pats[i].valid=true}
+ else{fl.tracks[t].pats[i]=deep(trk(t).pats[i]);fl.tracks[t].pats[i].valid=true;trk(t).pats[i].valid=true}}
+function patDirty(t,i){const fl=S.flash[S.proj];const a=t===0&&isDrum(0)?proj().drum.pats[i]:trk(t).pats[i],b=t===0&&isDrum(0)?fl.drum.pats[i]:fl.tracks[t].pats[i];return JSON.stringify(a)!==JSON.stringify(b)}
+function patHasContent(t,i){const a=t===0&&isDrum(0)?proj().drum.pats[i]:trk(t).pats[i];return a.lanes?a.lanes.some(l=>l.st.some(s=>s.on)):a.st.some(s=>s.on&&s.n.length)}
+
+/* ---------- scenes ---------- */
+function saveScene(i){const pr=proj();pr.scenes[i]={pat:[0,1,2,3].map(t=>trk(t).cur),dpat:pr.drum.cur,chain:[0,1,2,3].map(t=>trk(t).chain.slice()),dchain:pr.drum.chain.slice(),mute:S.mute.slice(),solo:S.solo,track:S.cur,valid:true};msg("Scene\nSaved");emit("scene:save:"+i);dirty()}
+function loadScene(i){const sc=proj().scenes[i];if(!sc)return;const pr=proj();[0,1,2,3].forEach(t=>{trk(t).cur=sc.pat[t];trk(t).chain=sc.chain[t].slice()});pr.drum.cur=sc.dpat;pr.drum.chain=sc.dchain.slice();
+ S.mute=sc.mute.slice();S.solo=sc.solo;S.cur=sc.track;S.sceneCur=i;P.forEach(p=>{p.idx=0;p.cnt=0;p.chainPos=0});emit("scene:load:"+i);dirty()}
+
+/* ---------- transpose ---------- */
+function setTranspose(semi){const ts=new Set([S.cur,...S.tgroup]);for(const t of ts){if(isDrum(t)){msg("Drum Track can't\nbe transposed");continue}S.trans[t]={semi,on:semi!==0}}
+ msg(semi?`Transpose\n${semi>0?"+":""}${semi} semi`:"Transpose\nNo Transposition");emit(`trans:${S.cur}:${semi}`);dirty()}
+/* ================= OLED and the Utility menu ================= */
+const GBY=Object.fromEntries(GLOBALS.map(g=>[g.id,g]));
+const L=(n,id,extra={})=>({n,id,...extra});
+const MENU_TS=()=>({n:"Track Settings",c:[L("MIDI Channel IN",()=>isDrum()?74:70+S.cur),L("MIDI Channel OUT",()=>isDrum()?79:75+S.cur),
+ L("PC Send",()=>pcId(S.cur),{o:[[0,"OFF"],[1,"ON"]]}),{n:"PC Assign",pc:1},L("Fixed Velocity",()=>fvId(S.cur),{o:[[0,"OFF"],[1,"ON"]]})]});
+const MENU=()=>({n:"Utility",c:[MENU_TS(),
+ {n:"Sync",c:[L("Source",122),L("Clock rate",123),L("Output",124)]},
+ {n:"Metronome",c:[L("Count In",114),L("Time Div",116),L("Time Sig",115)]},
+ {n:"Launch Quant",c:[L("Wait Load Project",3),L("Wait Load Scene",2),L("Wait Load Pattern",4)]},
+ {n:"CV Settings",c:[...[0,1,2,3].map(v=>({n:"Voice "+(v+1),c:[L("Pitch format",6+v),L("Base note",10+v),L("Gate format",14+v),L("Mod type",18+v),L("Mod max Voltage",22+v),L("Pitch Bend range",138+v)]})),
+  {n:"DrumGates",c:[...Array(8).keys()].map(i=>L(`Gate ${i+1} format`,128+i))}]},
+ {n:"Controller",c:[L("Global MIDI chan",80),...[0,1,2,3,4].map(k=>({n:"Knob "+(k+1),c:[L("MIDI CC",28+k),L("Port",33+k),L("Channel",38+k),L("Min",48+k),L("Max",53+k)]}))]},
+ {n:"MIDI Settings",c:[L("Knob Acceleration",59),L("Aftertouch Curve",60),L("Velocity Curve",61),L("Transport Send",62),L("Transport Receive",63),L("Clock Send",64),L("Clock Receive",65),L("MIDI Out 2",136)]},
+ {n:"Touch Strip",c:[L("MIDI Send/Receive",67),L("MIDI CC",68)]},
+ {n:"MIDI Channels",c:[0,1,2,3].map(t=>L(`Track ${t+1} input`,70+t)).concat([L("Drum input",74)],[0,1,2,3].map(t=>L(`Track ${t+1} output`,75+t)),[L("Drum output",79)])},
+ {n:"Drum Map",c:[L("Mode",81),L("Chromatic Low Note",82),...Array(24).keys()].map((x,i)=>typeof x==="object"?x:L(`Custom Note ${x+1}`,83+x))},
+ {n:"Misc",c:[L("Vegas mode time",108),L("Screen saver time",109),L("Step Listen",110),L("Transpose Latch",153,{o:[[1,"OFF"],[0,"ON"]]}),L("Brightness",152)]},
+ {n:"FW version",info:"Firmware version :\n2.5.20\nbuild 2085"}]});
+const gidOf=it=>typeof it.id==="function"?it.id():it.id;
+function optsOf(it){const id=gidOf(it),g=GBY[id]||{};if(it.o)return it.o;if(g.o)return g.o;
+ if(g.ch)return [...Array(16).keys()].map(i=>[i,String(i+1)]).concat(g.ch);
+ if(g.note)return [...Array(128).keys()].map(i=>[i,nm(i)]);
+ const r=g.r||[0,127];return Array.from({length:r[1]-r[0]+1},(_,i)=>[r[0]+i,String(r[0]+i)])}
+function valStr(it){if(it.pc){const p=curPat();return p.pc==null?"OFF":String(p.pc+1)}const id=gidOf(it),v=S.globals[id],o=optsOf(it).find(x=>x[0]===v);return o?o[1]:String(v)}
+function openMenu(root){S.menu={stack:[root],i:0,edit:false};emit("menu:"+root.n);dirty()}
+function menuNode(){const m=S.menu;return m.stack[m.stack.length-1]}
+function menuTurn(d){const m=S.menu,node=menuNode(),it=node.c[m.i];
+ if(m.edit){if(it.pc){const p=curPat();p.pc=p.pc==null?(d>0?0:null):(p.pc+d<0?null:clamp(p.pc+d,0,127));p.valid=true;if(p.pc!=null)midiPC(S.cur,p.pc);dirty();return}
+  const o=optsOf(it),id=gidOf(it),k=o.findIndex(x=>x[0]===S.globals[id]);const nk=clamp((k<0?0:k)+d,0,o.length-1);S.globals[id]=o[nk][0];emit("global:"+id);dirty();return}
+ m.i=clamp(m.i+d,0,node.c.length-1);dirty()}
+function menuPush(){const m=S.menu,node=menuNode(),it=node.c[m.i];
+ if(it.c){m.stack.push(it);m.i=0;emit("menu:"+it.n)}else if(it.info){msg(it.info,2500)}else{m.edit=!m.edit;if(m.edit)emit("menu:item:"+it.n)}dirty()}
+function menuExit(){const m=S.menu;if(m.edit){m.edit=false}else if(m.stack.length>1){const prev=m.stack.pop();m.i=Math.max(0,menuNode().c.indexOf(prev))}else S.menu=null;dirty()}
+
+/* ---------- OLED rendering (128x32 panel, drawn at 4x) ---------- */
+const OLED=$("#oledBig"),octx=OLED.getContext("2d");
+let oledImg="";
+function oledLines(){
+ if(S.confirm)return {lines:S.confirm.text.split("\n")};
+ if(S.msg&&performance.now()<S.msgT)return {lines:S.msg.split("\n")};
+ if(S.menu){const m=S.menu,node=menuNode(),it=node.c[m.i];const path=m.stack.map(n=>n.n).join("/");
+  if(it.c||it.info)return {lines:[path,"> "+it.n],small:true};
+  return {lines:[path,it.n+" :",(m.edit?"[ ":"")+valStr(it)+(m.edit?" ]":"")],small:true,inv:m.edit?2:-1}}
+ if(S.userEdit!=null)return {lines:[`User ${S.userEdit+1} scale`,"Toggle notes in the","lowest octave"],small:true};
+ if(S.rootSel)return {lines:["Select Root",NN[curPat().root]]};
+ if(held("project")){const p=S.ram[S.proj];return {lines:[p.name||`Project ${S.proj+1}`,"Hold + step: load"],small:true}}
+ if(S.control)return {lines:[`CTRL ${S.ctrlTrack+1}`,`Ptn ${proj().ctrl.cur+1}`],big:true};
+ const t=S.cur,tr=trk(t),mode=isDrum()?"DRUM":tr.mode==="arp"?"ARP "+(t+1):"SEQ "+(t+1);
+ const ch=outCh(t);return {lines:[mode,`PORT: USB`,`CHAN: ${ch==null?"OFF":ch+1}`],home:true}}
+let oledSig="";
+function drawOLED(){const o=oledLines(),W=512,H=128,c=octx;
+ const sig=JSON.stringify(o)+(o.home?[S.trans[S.cur].semi,S.trans[S.cur].on,curPat().scale,curPat().root,trk().chordOn].join():"");if(sig===oledSig)return;oledSig=sig;c.fillStyle="#000";c.fillRect(0,0,W,H);c.fillStyle="#e8f4ff";c.textBaseline="top";
+ if(o.home){c.font="bold 44px ui-monospace,monospace";c.fillText(o.lines[0],18,36);c.font="22px ui-monospace,monospace";c.fillText(o.lines[1],300,28);c.fillText(o.lines[2],300,62);
+  const tr=S.trans[S.cur];if(tr.on){c.font="18px ui-monospace,monospace";c.fillText(`T${tr.semi>0?"+":""}${tr.semi}`,18,92)}
+  const p=curPat();if(!isDrum()&&p.scale){c.font="18px ui-monospace,monospace";c.fillText(`${NN[p.root]} ${SCALES[p.scale][0]}`,90,92)}
+  if(trk().chordOn){c.font="18px ui-monospace,monospace";c.fillText("CHORD",300,96)}}
+ else{const n=o.lines.length,fs=o.small?(n>2?26:30):(n>2?28:36),lh=fs*1.15,y0=(H-lh*n)/2+2;c.font=`${o.big?"bold ":""}${fs}px ui-monospace,monospace`;
+  o.lines.forEach((l,i)=>{const w=c.measureText(l).width,x=o.small?12:Math.max(8,(W-w)/2);if(o.inv===i){c.fillRect(x-6,y0+i*lh-2,w+12,lh);c.fillStyle="#000";c.fillText(l,x,y0+i*lh);c.fillStyle="#e8f4ff"}else c.fillText(l,x,y0+i*lh)})}
+ const url=OLED.toDataURL();if(url!==oledImg){oledImg=url;const im=document.getElementById("oledSvg");if(im)im.setAttribute("href",url)}}
+/* ================= front panel ================= */
+const svg=$("#device"),NS="http://www.w3.org/2000/svg",ctlEls={};
+function el(tag,a,parent){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);(parent||svg).appendChild(e);return e}
+function txt(x,y,s,a={},parent){const e=el("text",{x,y,"font-size":a.fs||7,"text-anchor":a.anchor||"middle",fill:a.fill||"#333","font-family":"system-ui,sans-serif","font-weight":a.fw||400,"pointer-events":"none"},parent);e.textContent=s;return e}
+let dirtyFlag=true;const dirty=()=>{dirtyFlag=true};
+function drawPanel(){svg.innerHTML="";
+ el("rect",{x:30,y:140,width:1250,height:458,rx:14,fill:"#f1f0ec",stroke:"#cfcdc6"});
+ el("path",{d:"M50 172 H665 V256 H50 Z",fill:"#121214"});
+ el("rect",{x:50,y:256,width:198,height:92,fill:"#d8d7d3"});el("rect",{x:255,y:256,width:96,height:92,fill:"#e4e3df"});
+ [357,434,511,588].forEach((x,t)=>{el("rect",{x,y:188,width:76,height:6,fill:TCOL[t]});el("rect",{x,y:256,width:76,height:92,fill:TCOL[t],opacity:.92})});
+ txt(60,190,"KEYSTEP PRO",{fs:13,anchor:"start",fill:"#fff",fw:700});txt(60,200,"Controller & Sequencer",{fs:6,anchor:"start",fill:"#bbb"});
+ txt(1188,197,"ARTURIA",{fs:15,fill:"#222",fw:600});
+ txt(99,250,"Tempo / Fine",{fs:6,fill:"#ccc"});txt(202,250,"Swing / Offset",{fs:6,fill:"#ccc"});
+ txt(1162,237,"Extend",{fs:6,fill:"#2f6fd6"});
+ el("image",{id:"oledSvg",x:258,y:208,width:54,height:30,preserveAspectRatio:"none"});
+ /* 7-seg track displays */
+ [378,455,532,609].forEach((x,t)=>{el("rect",{x,y:212,width:34,height:23,rx:2,fill:"#000"});const e=txt(x+17,231,"1",{fs:17,fill:"#fff",fw:600});e.id="seg"+t;e.setAttribute("font-family","ui-monospace,monospace")});
+ /* key groups and shift labels above the keyboard */
+ KEYGRP.forEach(([a,b,n])=>{const x0=keyX(a)-10,x1=keyX(b)+10;el("line",{x1:x0,x2:x1,y1:351,y2:351,stroke:"#2f6fd6","stroke-width":.6});txt(x0,349,n,{fs:5.5,anchor:"start",fill:"#2f6fd6"})});
+ for(let k=0;k<37;k++){txt(keyX(k),362,KEYFN[k],{fs:5.2,fill:"#2f6fd6"});const d=el("circle",{cx:keyX(k),cy:372,r:2.6,fill:"#ccc"});d.id="kled"+k}
+ /* octave leds */
+ [-2,-1,0,1,2].forEach((o,i)=>{txt(86+i*17,350,o>0?"+"+o:String(o),{fs:5.5});const d=el("circle",{cx:86+i*17,cy:358,r:2.4,fill:"#ccc"});d.id="oled_"+i});
+ txt(119,371,"Octave",{fs:6});txt(119,398,"Reset",{fs:5.5,fill:"#2f6fd6"});
+ for(let r=0;r<4;r++)for(let c=0;c<6;c++)el("circle",{cx:196+c*4,cy:366+r*4,r:1,fill:"#777"});
+ /* strip leds */
+ ["pb","md"].forEach((s,j)=>{for(let i=0;i<9;i++){const d=el("circle",{cx:j?183:55,cy:412+i*14,r:2,fill:"#ccc"});d.id=s+"led"+i}});
+ C.forEach(drawCtl);
+}
+function drawCtl(c){const g=el("g",{class:"ctl","data-id":c.id,tabindex:-1});ctlEls[c.id]=g;
+ if(c.t==="knob"){if(c.ring)for(let i=0;i<15;i++){const a=(-135+i*270/14)*Math.PI/180;el("circle",{cx:c.cx+Math.sin(a)*(c.r+7),cy:c.cy-Math.cos(a)*(c.r+7),r:1.9,fill:"#3a1010",class:"ring"},g)}
+  el("circle",{cx:c.cx,cy:c.cy,r:c.r,fill:"#26272b",stroke:"#555","stroke-width":1.5,class:"face"},g);el("line",{x1:c.cx,y1:c.cy-c.r+3,x2:c.cx,y2:c.cy-c.r+9,stroke:"#ddd","stroke-width":2,class:"ptr"},g);
+  if(c.label&&c.ring)txt(c.cx,c.cy+c.r+19,c.label,{fs:6.2},g)}
+ else if(c.t==="key"){el("rect",{x:c.x+.4,y:c.y,width:c.w-.8,height:c.h,rx:2,fill:c.black?"#1b1b1d":"#fdfdfb",stroke:"#999","stroke-width":.6,class:"face"},g);if(c.black)g.dataset.black=1}
+ else if(c.t==="strip"){el("rect",{x:c.x+4,y:c.y,width:c.w-8,height:c.h,rx:4,fill:"#fafaf8",stroke:"#bbb",class:"face"},g);if(c.id==="pbend")el("line",{x1:c.x+16,x2:c.x+c.w-16,y1:c.y+c.h/2,y2:c.y+c.h/2,stroke:"#333"},g);
+  txt(c.x+c.w/2,c.y+10,"↑",{fs:7},g);txt(c.x+c.w/2,c.y+c.h-4,"↓",{fs:7},g)}
+ else if(c.t==="looper"){el("rect",{x:c.x,y:c.y,width:c.w,height:c.h,rx:4,fill:"#f4f4f2",stroke:"#bbb",class:"face"},g);["1/4","1/8","1/16","1/32"].forEach((l,i)=>txt(c.x+c.w/8*(2*i+1),c.y+16,l,{fs:6,fill:"#999"},g))}
+ else{const dark=["shift"].includes(c.id),big=c.t==="step"||["shift","rec","stop","play","tap"].includes(c.id);
+  el("rect",{x:c.x,y:c.y,width:c.w,height:c.h,rx:big?4:3,fill:dark?"#1e1e22":"#e9e9e6",stroke:"#8d8d8a","stroke-width":1,class:"face"},g);
+  el("rect",{x:c.x+2,y:c.y+2,width:c.w-4,height:c.h-4,rx:2,fill:"transparent",class:"lamp"},g);
+  const lines=String(c.label).split("\n");lines.forEach((l,i)=>txt(c.x+c.w/2,c.y+c.h/2+(i-(lines.length-1)/2)*7.5+2.4,l,{fs:c.t==="step"?8:big?(c.id==="tap"?6.5:8):6,fill:dark?"#5aa0ff":"#222",fw:c.t==="step"?600:400},g).classList.add("lbl"));
+  if(c.sec){txt(c.x+c.w/2,c.y+c.h+(c.t==="step"?9:7),c.sec,{fs:c.t==="step"?5.6:5.6,fill:"#2f6fd6"},g)}
+  if(/^t\dmute$/.test(c.id)){const t=+c.id[1];const n=el("rect",{x:[373,450,527,603][t],y:299,width:12,height:7,rx:1.5,fill:"#555"});n.id="note"+t;txt([379,456,533,609][t],313,"Note",{fs:5.5,fill:"#222"})}}
+}
+
+/* ---------- LEDs ---------- */
+const setA=(e,k,v)=>{if(e&&e.getAttribute(k)!==String(v))e.setAttribute(k,v)};
+const lamp=(id,col)=>{const g=ctlEls[id];if(!g)return;const l=g.querySelector(".lamp");setA(l,"fill",col||"transparent")};
+const blink=(ms=500)=>Math.floor(performance.now()/ms)%2===0;
+const dim=(hex,a=.35)=>hex+Math.round(a*255).toString(16).padStart(2,"0");
+function render(){
+ const n=now(),t=S.cur,col=TCOL[t],pat=curPat(),dr=isDrum(),tr=trk();
+ /* steps */
+ const v=S.view[dr?4:t],play=S.playIdx&&S.playIdx[t];
+ for(let i=0;i<16;i++){const idx=v*16+i;let c=null;
+  if(held("project"))c=i===S.proj?"#ffffff":S.ram[i].tracks.some((x,j)=>x.pats.some(p=>p.valid))||S.flash[i].tracks.some(x=>x.valid)?dim("#3b82f6",.6):null;
+  else if(held("pattern")||S.patMode&&!S.patMode.scene||held("save")&&!held("scene")){const cur=patIdx();c=i===cur?col:patDirty(t,i)?"#ef4444":patHasContent(t,i)?"#3b82f6":null;if(S.patMode&&blink(300)&&c)c=dim(c.slice(0,7),.4)}
+  else if(held("scene")||S.patMode&&S.patMode.scene)c=proj().scenes[i]?(i===S.sceneCur?"#ffffff":"#3b82f6"):null;
+  else if(held("chain")){const ch=dr?proj().drum.chain:tr.chain;c=ch.includes(i)?(blink(250)?col:null):null}
+  else if(S.control){const cp=proj().ctrl.pats[proj().ctrl.cur];c=cp.st[idx].cc.some(x=>x!=null)?col:null;if(idx>=cp.len)c=null;if(S.sel===idx&&blink(250))c="#fff"}
+  else if(dr){const lane=pat.lanes[S.lane],st=lane.st[idx],len=pat.poly?lane.len:pat.len;c=idx<len&&st.on?col:null;if(S.stepEdit&&S.sel===idx&&blink(250))c="#fff"}
+  else{const st=pat.st[idx];c=idx<pat.len?(st.on&&st.n.length?(st.skip.every(x=>x)?dim(col,.3):col):null):null;
+   if(S.stepEdit&&S.sel===idx&&blink(250))c="#fff";if(S.rec==="step"&&S.stepRecPos===idx&&blink(250))c="#fff"}
+  if(S.playing&&!S.paused&&play&&play.idx===idx&&!held("project")&&!held("pattern")&&!held("scene")&&!S.control)c="#ffffff";
+  if(held("shift")&&c&&c.length===7)c=dim(c,.35);
+  if(S.confirm&&S.confirm.kind==="save")c=null;
+  lamp("s"+i,c)}
+ /* key LEDs */
+ const kled=Array(37).fill(null),base=48+12*tr.oct;
+ if(held("shift")){const on=[pat.dir,pat.poly?4:3,5+(pat.arp||0),12+(pat.arpOct||0),17+(pat.div),pat.trip?21:-1];if(!dr){const sk=Object.entries(KEYSCALE).find(([k,s])=>s===pat.scale);if(sk)on.push(+sk[0])}
+  [0,1,2,3].forEach(c=>{if(S.cvr[t]>>c&1)on.push(32+c)});on.forEach(k=>{if(k>=0)kled[k]="#3b82f6"})}
+ else if(S.rootSel){kled[curPat().root]="#3b82f6"}
+ else if(S.userEdit!=null){const m=proj().user[S.userEdit];for(let k=0;k<12;k++)kled[k]=m>>k&1?"#3b82f6":null}
+ else if(held("tap")){kled[17+Math.floor(S.globals[116]/2)]="#3b82f6";if(S.globals[116]%2)kled[21]="#3b82f6"}
+ else if(dr){for(let l=0;l<24;l++){if(pat.lanes[l].st.some(s=>s.on))kled[l]=dim(col,.35);if(S.drumMute[l])kled[l]="#ef4444"}kled[S.lane]=col}
+ else if((S.stepEdit&&S.sel!=null)||heldStep()!=null){const st=pat.st[S.stepEdit&&S.sel!=null?S.sel:v*16+heldStep()];st.n.forEach(nt=>{const k=nt.p-base;if(k>=0&&k<37)kled[k]=col})}
+ for(const f of NOTEFLASH){if(f.t0>n||f.t1<n)continue;if(f.drum!=null){if(dr&&f.drum<37)kled[f.drum]="#ffffff";continue}if(f.t!==t)continue;const k=f.midi-base;if(k>=0&&k<37)kled[k]=TCOL[f.t]}
+ for(const [k] of S.keysDown){if(!kled[k])kled[k]=col}
+ for(let k=0;k<37;k++)setA($("#kled"+k),"fill",kled[k]||"#d6d6d2");
+ /* buttons */
+ lamp("play",S.playing?(S.paused?(blink()?"#22c55e":null):"#22c55e"):null);lamp("rec",S.rec?(S.rec==="step"&&blink()?null:"#ef4444"):null);lamp("stop",null);
+ lamp("shift",held("shift")?"#2f6fd6":null);lamp("stepedit",S.stepEdit?"#ffffff":null);lamp("overdub",S.overdub?"#ef4444":null);
+ lamp("hold",S.hold[t]?col:null);lamp("trans",S.transMode?(blink(300)?"#fff":null):S.trans[t].on?(S.globals[153]===0&&blink()?null:col):null);
+ lamp("tie",tr.chordOn?(blink(1000)?col:null):null);lamp("control",S.control?"#ffffff":null);
+ lamp("pattern",(dr?proj().drum.chain:tr.chain).length>1?null:"#ffffff");lamp("chain",(dr?proj().drum.chain:tr.chain).length>1?"#ffffff":null);lamp("scene",S.sceneCur>=0?dim("#ffffff",.5):null);
+ lamp("exit",S.undo&&blink(700)?"#ffffff":null);lamp("lst",S.follow?dim("#ffffff",.5):null);
+ for(let p=0;p<4;p++){const len=dr&&pat.poly?pat.lanes[S.lane].len:pat.len;let c=p*16<len?dim(col,.4):null;if(S.playing&&play&&Math.floor(play.idx/16)===p)c=col;if(p===v&&!S.follow)c="#ffffff";lamp("pg"+p,c)}
+ for(let i=0;i<4;i++){const ti=trk(i);const ci=TCOL[i];
+  lamp(`t${i}trk`,S.control&&S.ctrlTrack===i?(blink(800)?"#fff":null):i===t?"#ffffff":S.tgroup.has(i)?dim("#ffffff",.6):null);
+  lamp(`t${i}seq`,ti.mode==="seq"?(i===t?"#fff":dim("#ffffff",.45)):null);lamp(`t${i}alt`,ti.mode!=="seq"?(i===t?"#fff":dim("#ffffff",.45)):null);
+  lamp(`t${i}mute`,S.solo===i?"#3b82f6":S.mute[i]?"#ef4444":(i===0&&S.drumMute.some(x=>x)&&blink()?"#ef4444":null));
+  const act=NOTEFLASH.some(f=>(f.t===i||(i===0&&f.drum!=null))&&f.t0<=n&&f.t1>=n)||(i===t&&S.keysDown.size);setA($("#note"+i),"fill",act?"#ff4040":"#5a1a1a");
+  const seg=$("#seg"+i),pi=i===0&&isDrum(0)?proj().drum.cur:ti.cur;seg.textContent=S.control&&S.ctrlTrack===i?"--":String(pi+1);
+  const pend=P[i].pend;if(pend!=null&&blink(250))seg.textContent=String(pend+1)}
+ /* octave leds */
+ for(let i=0;i<5;i++){const o=tr.oct;setA($("#oled_"+i),"fill",(o===i-2||(o===-3&&i===0&&blink()))?"#ef4444":"#d6d6d2")}
+ /* encoder rings */
+ const vals=encFracs();for(let i=0;i<5;i++){const rings=ctlEls["enc"+i].querySelectorAll(".ring"),f=vals[i];rings.forEach((r,k)=>setA(r,"fill",f==null?"#3a1010":(k/14<=f?"#ff3030":"#3a1010")))}
+ /* strips */
+ const pb=Math.round((BEND/2+1)*4),md=Math.round(S.mod[t]/127*8);for(let i=0;i<9;i++){setA($("#pbled"+i),"fill",8-i===pb?"#ef4444":"#d6d6d2");setA($("#mdled"+i),"fill",8-i<=md&&md>0?"#ef4444":"#d6d6d2")}
+ drawOLED();
+ $("#ledInfo").innerHTML=statusLine()}
+function statusLine(){const p=curPat(),pr=proj();return `<b>${pr.name||"Project "+(S.proj+1)}</b> · ${bpm().toFixed(2)} BPM${S.globalBpm?" (global)":""} · swing ${pr.swing}% · ${TNAME[S.cur]} pattern ${patIdx()+1} · ${isDrum()?"drum lane "+(S.lane+1):`${NN[p.root]} ${SCALES[p.scale][0]}`} · ${DIVS[p.div][0]}${p.trip?"T":""} · len ${p.len}${S.waitLoad?" · wait load":""}`}
+const heldStep=()=>{for(const [id] of HELD){const m=id.match(/^s(\d+)$/);if(m)return +m[1]}return null};
+const heldSteps=()=>[...HELD.keys()].filter(id=>/^s\d+$/.test(id)).map(id=>+id.slice(1));
+
+/* ---------- encoder values ---------- */
+const G=raw=>clamp(.0625*Math.pow(2,raw/12.7),.06,64),Graw=g=>Math.round(12.7*Math.log2(g/.0625));
+function encTarget(){// what the five encoders edit right now
+ if(S.control)return {kind:"cc"};const t=S.cur;
+ if(isDrum()){const pat=curPat(),hs=heldStep();const idx=S.stepEdit&&S.sel!=null?S.sel:hs!=null?S.view[4]*16+hs:null;if(idx!=null)return {kind:"dstep",st:pat.lanes[S.lane].st[idx]};return {kind:"def",d:S.drumDefs}}
+ if(trk().mode==="arp")return {kind:"arp",a:S.arpP[t]};
+ const hs=heldStep(),pat=curPat(),idx=S.stepEdit&&S.sel!=null?S.sel:hs!=null?S.view[t]*16+hs:null;
+ if(idx!=null){const st=pat.st[idx];const notes=S.selNotes&&S.selNotes.size?st.n.filter(x=>S.selNotes.has(x.p)):st.n;return {kind:"step",st,notes,idx}}
+ return {kind:"def",d:S.defs[t]}}
+function encFracs(){const e=encTarget();const fr=o=>[o.p!=null?o.p/127:null,Graw(o.g)/127,o.v/127,(o.t+49)/99,o.r/100];
+ if(e.kind==="cc")return S.cc.map(v=>v/127);if(e.kind==="def")return fr(e.d);if(e.kind==="dstep")return [null,...fr(e.st).slice(1)];
+ if(e.kind==="arp")return [null,Graw(e.a.g)/127,(e.a.vo+127)/254,(e.a.t+49)/99,e.a.r/100];
+ if(e.kind==="step"&&e.notes.length)return fr(e.notes[0]);return [null,null,null,null,null]}
+function encShow(i){const e=encTarget(),n=e.kind==="step"&&e.notes.length?e.notes[0]:e.kind==="dstep"?e.st:e.kind==="def"?e.d:null;
+ if(e.kind==="cc"){msg(`Knob ${i+1} CC#${S.globals[28+i]}\n${S.cc[i]}`);return}
+ if(e.kind==="arp"){const a=e.a;msg([null,`Gate Length\n${a.g.toFixed(2)}`,`Velocity\n${a.vo>0?"+":""}${a.vo}`,`Time Shift\n${a.t}%`,`Randomness\n${a.r}%`][i]||"Pitch\n(no effect in Arp)");return}
+ if(!n){msg("Step\nempty");return}
+ msg([`Pitch\n${e.kind==="step"?e.notes.map(x=>nm(x.p)).join(" "):nm(n.p)}`,`Gate Length\n${n.g.toFixed(2)}`,`Velocity\n${n.v}`,`Time Shift\n${n.t>0?"+":""}${n.t}%`,`Randomness\n${n.r}%`][i])}
+function turnEnc(i,d){for(const h of HELD.values())h.used=true;const t=S.cur;
+ if(S.control){S.cc[i]=clamp(S.cc[i]+d,0,127);midiCC(i,S.cc[i]);const cp=proj().ctrl.pats[proj().ctrl.cur];
+  if(held("erase")){if(S.stepEdit&&S.sel!=null)cp.st[S.sel].cc[i]=null;else cp.st.forEach(s=>s.cc[i]=null);msg("Automation\nErased")}
+  else if(S.stepEdit&&S.sel!=null){cp.st[S.sel].cc[i]=S.cc[i];cp.valid=true;emit("cc:step")}
+  else if(S.rec&&S.playing){const k=(P[4].idx-1+cp.len)%cp.len;for(let j=k;j<cp.len;j++)cp.st[j].cc[i]=S.cc[i];cp.valid=true}
+  encShow(i);emit("cc");dirty();return}
+ if(held("shift")){const pat=curPat();snapshotUndo();const name=["Pitch","Gate","Velocity","Time Shift","Randomness"][i];
+  S.offs=S.offs||[0,0,0,0,0];S.offs[i]+=d;
+  if(isDrum()){if(i)pat.lanes.forEach(l=>l.st.forEach(s=>{if(s.on)edit(s,i,d)}))}else pat.st.forEach(s=>s.n.forEach(nt=>edit(nt,i,d,t)));
+  pat.valid=true;msg(`${name} Offset\n${S.offs[i]>0?"+":""}${S.offs[i]}${i===0?" semi":""}`);emit("enc:"+"enc"+i);dirty();return}
+ const e=encTarget();
+ if(e.kind==="arp"){const a=e.a;if(i===1)a.g=G(Graw(a.g)+d);if(i===2)a.vo=clamp(a.vo+d,-127,127);if(i===3)a.t=clamp(a.t+d,-49,50);if(i===4)a.r=clamp(a.r+d,0,100)}
+ else if(e.kind==="step"){e.notes.forEach(nt=>edit(nt,i,d,t));curPat().valid=true}
+ else if(e.kind==="dstep"){if(i)edit(e.st,i,d);curPat().valid=true}
+ else edit(e.d,i,d,t);
+ encShow(i);emit("enc:enc"+i);dirty()}
+function edit(o,i,d,t){if(i===0)o.p=t!=null?scaleStep(t,o.p,d):clamp(o.p+d,0,127);if(i===1)o.g=G(Graw(o.g)+d);if(i===2)o.v=clamp(o.v+d,0,127);if(i===3)o.t=clamp(o.t+d,-49,50);if(i===4)o.r=clamp(o.r+d,0,100)}
+
+/* ---------- keyboard ---------- */
+const keyMidi=k=>48+k+12*trk().oct;
+function keyDown(k,vel=100){for(const h of HELD.values())h.used=true;const t=S.cur,tr=trk();
+ if(held("shift")&&!S.chordEntry){keyShift(k);return}
+ if(held("tap")&&k>=17&&k<=21){const cur=S.globals[116];S.globals[116]=k===21?(cur%2?cur-1:cur+1):(k-17)*2;msg(`Metronome\n${["1/4","1/4 T","1/8","1/8 T","1/16","1/16 T","1/32","1/32 T"][S.globals[116]]}`);dirty();return}
+ if(S.rootSel){if(k<12){curPat().root=k;curPat().valid=true;msg(`Root\n${NN[k]}`);emit("root:"+k);S.rootChosen=true;if(!held("k29"))S.rootSel=false}dirty();return}
+ if(S.userEdit!=null){if(k<12){proj().user[S.userEdit]^=1<<k;if(!proj().user[S.userEdit])proj().user[S.userEdit]=1;mapCache.clear();msg(`User ${S.userEdit+1}\n${maskIv(proj().user[S.userEdit]).map(i=>NN[i]).join(" ")}`)}dirty();return}
+ if(held("trans")||S.transMode){S.transUsed=true;setTranspose(keyMidi(k)-60-12*0);return}
+ const tracksHeld=[...HELD.keys()].filter(id=>/^t\dtrk$/.test(id)).map(id=>+id[1]);
+ if(tracksHeld.length>=2){S.split={up:tracksHeld[0],lo:tracksHeld[1],pt:keyMidi(k)};msg(`Split at ${nm(keyMidi(k))}\nT${tracksHeld[0]+1} up / T${tracksHeld[1]+1} low`);emit("split");dirty();return}
+ if(isDrum()){if(k>=24)return;if(held("t0alt")){S.lane=k;msg(`Drum ${k+1}\nselected`);emit("drum:lane:"+k);dirty();return}
+  if(held("t0mute")||S.drumMuteMode){S.drumMute[k]=S.drumMute[k]?0:1;dirty();return}
+  S.lane=k;drum(k,vel,now());midiDrum(k,vel,now(),now()+.1);S.keysDown.set(k,{});emit("drum:lane:"+k);
+  if(S.rec==="rt"&&S.playing){const pat=curPat(),last=S.playIdx&&S.playIdx[0];if(last){const dur=stepDur(pat),rel=(now()-last.time)/dur,kk=Math.round(rel),idx=((last.idx+kk)%pat.len+pat.len)%pat.len,st=pat.lanes[k].st[idx];
+   Object.assign(st,{on:true,v:S.globals[fvId(0)]?S.drumDefs.v:vel,g:S.drumDefs.g,t:S.quant?0:clamp(Math.round((rel-kk)*100),-49,50),r:S.drumDefs.r});pat.valid=true;emit("recnote")}}
+  dirty();return}
+ let note=keyMidi(k);S.lastNote=note;
+ if(S.split&&(S.split.up===t||S.split.lo===t)){const tt=note>=S.split.pt?S.split.up:S.split.lo;if(tt!==t){const qn=q(tt,note);S.keysDown.set(k,{v:[liveOn(tt,qn,vel)],tt,notes:[qn]});midiOn(tt,qn,vel);dirty();return}}
+ if(S.chordEntry){S.chordEntry.notes.push(note);const v2=liveOn(t,note,vel);S.keysDown.set(k,{v:[v2],notes:[note]});midiOn(t,note,vel);dirty();return}
+ /* filling a step: quick edit (step held), step edit (selected step), step record (cursor) */
+ const hs=heldStep();
+ const target=hs!=null&&!S.control?S.view[t]*16+hs:S.stepEdit&&S.sel!=null&&!S.control?S.sel:S.rec==="step"?S.stepRecPos:null;
+ const outNotes=liveNotes(t,note);
+ if(target!=null&&tr.mode==="seq"){const pat=curPat(),st=pat.st[target];S.fillGesture=S.fillGesture||new Set();
+  if(!S.fillGesture.has(target)){S.fillGesture.add(target);snapshotUndo();if(!S.overdub)st.n=[]}
+  for(const pn of outNotes){if(st.n.length>=16){msg("16 notes limit in\na step reached");break}if(!pat.poly)st.n=[];if(!st.n.some(x=>x.p===pn))st.n.push(noteFromDefaults(t,pn,vel))}
+  if(S.overdub&&!S.stepEdit)S.selNotes=new Set(outNotes);
+  st.on=true;pat.valid=true;emit(S.rec==="step"?"steprec:note":hs!=null?"quick:fill":"stepedit:fill")}
+ if(tr.mode==="arp"){const list=S.hold[t]?S.arpLatched[t]:S.arpHeld[t];
+  if(S.hold[t]&&S.keysDown.size===0&&!S.arpAdding)S.arpLatched[t]=[];S.arpAdding=true;
+  const L2=S.hold[t]?S.arpLatched[t]:S.arpHeld[t];for(const pn of outNotes){if(L2.length>=16){msg("16 notes limit in\nan Arp reached");break}L2.push({p:pn,v:vel})}
+  S.keysDown.set(k,{arp:outNotes});emit("arp:note");emit("arp:note:"+t);if(trk().chordOn)emit("chord:play");dirty();return}
+ const vs=outNotes.map(pn=>liveOn(t,pn,S.globals[fvId(t)]?S.defs[t].v:vel));outNotes.forEach(pn=>midiOn(t,pn,vel));
+ const rec=S.rec==="rt"&&S.playing&&tr.mode==="seq"?outNotes.map(pn=>recordNote(t,pn,vel,now())):null;
+ S.keysDown.set(k,{v:vs,notes:outNotes,rec,t0:now()});if(tr.chordOn)emit("chord:play");dirty()}
+function liveNotes(t,note){const tr=trk(t),base=q(t,note);if(!tr.chordOn||tr.chord.root==null)return [base];
+ return [base,...tr.chord.off.map(o=>q(t,base+o))].filter((x,i,a)=>a.indexOf(x)===i)}
+function keyUp(k){const t=S.cur,kd=S.keysDown.get(k);S.keysDown.delete(k);
+ if(kd){(kd.v||[]).forEach(liveOff);(kd.notes||[]).forEach(pn=>midiOff(kd.tt!=null?kd.tt:t,pn));
+  if(kd.arp&&!S.hold[t]){S.arpHeld[t]=S.arpHeld[t].filter(x=>!kd.arp.includes(x.p))}
+  if(kd.rec){const pat=curPat(),dur=stepDur(pat);kd.rec.forEach(r=>{if(r)r.n.g=clamp((now()-r.time)/dur,.06,64)})}}
+ if(S.keysDown.size===0){S.arpAdding=false;
+  if(S.rec==="step"&&S.fillGesture&&S.fillGesture.size){S.stepRecPos=(S.stepRecPos+1)%curPat().len}
+  S.fillGesture=null;if(S.chordEntry)chordEntryCheck()}
+ dirty()}
+function keyShift(k){const pat=curPat(),t=S.cur,f=KEYFN[k];S.shiftUsed=true;pat.valid=true;
+ if(k<=2){pat.dir=k;msg(`Seq Pattern\n${SEQDIRS[k]}`);emit("seqdir:"+k)}
+ else if(k<=4){pat.poly=k===4;msg(isDrum()?`Drum Mode\n${k===4?"Poly":"Mono"}`:`Seq Mode\n${k===4?"Poly":"Mono"}`);emit("poly:"+pat.poly)}
+ else if(k<=11){if(isDrum())return;pat.arp=k-5;msg(`Arp Pattern\n${ARPS[k-5]}`);emit("arpmode:"+ARPS[k-5])}
+ else if(k<=16){if(isDrum())return;pat.arpOct=k-12;msg(`Arp Octave\n${f}`);emit("arpoct:"+(k-13))}
+ else if(k<=20){pat.div=k-17;msg(`Time Division\n${DIVS[pat.div][0]}${pat.trip?" T":""}`);emit(`div:${t}:${pat.div}`)}
+ else if(k===21){pat.trip=!pat.trip;msg(`Time Division\n${DIVS[pat.div][0]}${pat.trip?" T":""}`);emit("trip")}
+ else if(KEYSCALE[k]!=null){if(isDrum())return;pat.scale=KEYSCALE[k];msg(`Scale\n${SCALES[pat.scale][0]}`);emit("scale:"+pat.scale);
+  if(k===30||k===31){S.userEdit=k-30;msg(`User ${k-29} scale\nedit: lowest octave`,1800)}}
+ else if(k===29){if(isDrum())return;S.rootSel=true;S.rootChosen=false;emit("rootsel")}
+ else if(k>=32&&k<=35){const b=1<<(k-32);S.cvr.forEach((m,i)=>{if(i!==t&&m&b)S.cvr[i]&=~b});S.cvr[t]^=b;msg(`CV Routing\nVoices ${[0,1,2,3].filter(i=>S.cvr[t]>>i&1).map(i=>i+1).join(" ")||"-"}`)}
+ dirty()}
+function chordEntryCheck(){if(!S.chordEntry||held("shift")||held("tie")||S.keysDown.size)return;const n=S.chordEntry.notes,tr=trk();S.chordEntry=null;
+ if(n.length){tr.chord={root:n[0],off:n.slice(1).map(x=>x-n[0])};tr.chordOn=true;tr.valid=true;msg(`Chord\n${n.map(nm).join(" ")}`);emit("chord:stored")}
+ else{tr.chordOn=!tr.chordOn&&tr.chord.root!=null;msg(tr.chordOn?"Chord\nON":"Chord\nOFF");emit(tr.chordOn?"chord:on":"chord:off")}dirty()}
+
+/* ---------- button dispatch ---------- */
+function down(id){const t=S.cur;for(const h of HELD.values())h.used=true;HELD.set(id,{t0:performance.now(),used:false});ensureAC();
+ let m;
+ if((m=id.match(/^k(\d+)$/))){keyDown(+m[1],S.padVel||100);S.padVel=null;return}
+ if((m=id.match(/^s(\d+)$/))){stepDown(+m[1]);return}
+ if((m=id.match(/^pg(\d)$/))){pageDown(+m[1]);return}
+ if((m=id.match(/^t(\d)(dn|up|seq|alt|mute|trk)$/))){trackDown(+m[1],m[2]);return}
+ if(/^enc\d$/.test(id)){encShow(+id[3]);return}
+ switch(id){
+  case "shift":if(held("project")){S.confirm={text:"Load Project\nfrom FLASH",fn:recallProject,kind:"recall"};HELD.get("project").used=true}break;
+  case "play":if(held("shift"))restart();else if(held("rec")){HELD.get("rec").used=true;S.rec="rt";S.recTouched=new Set();if(!S.playing||S.paused)play();emit("rec:rt")}else play();break;
+  case "rec":if(held("shift")){S.quant=!S.quant;msg(S.quant?"Quantize\nON":"Quantize\nOFF");HELD.get("rec").used=true}
+   else if(S.playing&&!S.paused){S.rec=S.rec==="rt"?false:"rt";S.recTouched=new Set();emit(S.rec?"rec:rt":"rec:off");HELD.get("rec").used=true}break;
+  case "stop":if(S.rec==="step")S.rec=false;stop();break;
+  case "tap":if(held("shift")){S.metro=!S.metro;msg(S.metro?"Metronome\nON":"Metronome\nOFF")}else{const tn=performance.now();S.taps=S.taps.filter(x=>tn-x<2000).slice(-7);S.taps.push(tn);
+   if(S.taps.length>=2){const iv=(S.taps[S.taps.length-1]-S.taps[0])/(S.taps.length-1);const b=clamp(60000/iv,30,240);if(S.globalBpm)S.gbpm=b;else proj().bpm=Math.round(b*100)/100;msg(`${bpm().toFixed(2)} BPM`)}}break;
+  case "project":if(held("shift")){openMenu(MENU());emit("utility:open")}
+   else if(held("save")){HELD.get("save").used=true;S.confirm={text:`Save Project ${S.proj+1}\nConfirm ?`,fn:saveProject,kind:"save"};emit("save:project:ask")}
+   else if(held("copy")){HELD.get("copy").used=true;const d=(S.proj+1)%16;S.confirm={text:`Copy Project\nfrom ${S.proj+1} to ${d+1}\nConfirm ?`,fn:copyProject,kind:"copy"}}
+   else if(held("erase")){HELD.get("erase").used=true;S.confirm={text:`Erase Project ${S.proj+1}\nConfirm ?`,fn:eraseProject,kind:"erase"}}break;
+  case "exit":if(held("shift"))doUndo();else if(S.confirm){S.confirm=null;msg("Cancelled",700)}else if(S.menu)menuExit();else{S.userEdit=null;S.rootSel=false;S.patMode=null;S.drumMuteMode=false;S.transMode=false}break;
+  case "save":if(held("shift")){const i=patIdx();const fl=S.flash[S.proj];if(isDrum())proj().drum.pats[i]=deep(fl.drum.pats[i]);else trk().pats[i]=deep(fl.tracks[t].pats[i]);msg("Pattern\nReloaded");HELD.get("shift").used=true}break;
+  case "pattern":case "scene":{const sc=id==="scene";if(held("copy"))S.patMode={op:"copy",scene:sc};else if(held("paste"))S.patMode={op:"paste",scene:sc};else if(held("erase"))S.patMode={op:"erase",scene:sc};else if(held("save"))S.patMode={op:"save",scene:sc};
+   if(S.patMode)msg(`Select ${sc?"Scene":"Pattern"}\nto ${S.patMode.op[0].toUpperCase()+S.patMode.op.slice(1)}\nPress Exit to Cancel`,2500);break}
+  case "chain":S.chainBuild={t,list:[]};break;
+  case "control":S.control=!S.control;S.ctrlTrack=t;S.sel=null;emit(S.control?"control:on":"control:off");msg(S.control?"Control\nmode":"Control\nOFF");break;
+  case "stepedit":S.stepEdit=!S.stepEdit;S.sel=null;S.selNotes=null;emit(S.stepEdit?"stepedit:on":"stepedit:off");break;
+  case "overdub":S.overdub=!S.overdub;S.selNotes=null;break;
+  case "lst":if(held("shift")){S.follow=!S.follow;msg(S.follow?"Follow\nON":"Follow\nOFF")}break;
+  case "octdn":case "octup":{const tr=trk();if(held(id==="octdn"?"octup":"octdn")){tr.oct=0;msg("Octave\n0")}else{tr.oct=clamp(tr.oct+(id==="octup"?1:-1),-3,2);msg(`Octave\n${tr.oct>0?"+":""}${tr.oct}`)}emit("oct");break}
+  case "hold":if(held("shift")){S.hold=[0,0,0,0];S.arpLatched=[[],[],[],[]];msg("Arps\nCleared")}else{S.hold[t]=S.hold[t]?0:1;if(S.hold[t])S.arpLatched[t]=S.arpHeld[t].slice();else S.arpLatched[t]=[];emit(S.hold[t]?"hold:on":"hold:off")}break;
+  case "trans":S.transUsed=false;if(held("shift")){S.trans.forEach(x=>{x.on=false;x.semi=0});S.tgroup.clear();S.transMode=false;msg("Transpose\nCleared");emit("trans:clear");S.transUsed=true}
+   else if(held("erase")){S.tgroup.clear();msg("Transpose group\ndeleted");S.transUsed=true}
+   else if(S.globals[153]===0){S.transMode=!S.transMode;S.transUsed=true;msg(S.transMode?"Transpose\nlatched":"Transpose\nmode off")}
+   else{const tr=S.trans[t];msg(`Track ${t+1}\n${tr.semi?(tr.semi>0?"+":"")+tr.semi+" semi":"No Transposition"}`)}break;
+  case "tie":if(held("shift")){S.chordEntry={notes:[]};HELD.get("shift").used=true;msg("Chord\nPlay notes");emit("chord:entry")}else tieDown();break;
+  case "pbend":case "modw":case "looper":break;
+ }
+ dirty()}
+function up(id){const h=HELD.get(id);HELD.delete(id);if(!h)return;let m;
+ if((m=id.match(/^k(\d+)$/))){keyUp(+m[1]);if(+m[1]===29&&S.rootSel&&S.rootChosen)S.rootSel=false;dirty();return}
+ if((m=id.match(/^s(\d+)$/))){stepUp(+m[1],h);return}
+ if((m=id.match(/^t(\d)(mute|trk)$/))){if(m[2]==="mute"&&!h.used&&!h.sh){const t=+m[1];S.mute[t]=S.mute[t]?0:1;if(S.solo===t){S.solo=-1}emit("mute:"+t)}dirty();return}
+ switch(id){
+  case "rec":if(!h.used&&!S.playing){S.rec=S.rec==="step"?false:"step";S.stepRecPos=0;emit(S.rec?"rec:step":"rec:off")}break;
+  case "trans":if(!S.transUsed&&S.globals[153]!==0){const ts=new Set([S.cur,...S.tgroup]);let any=false;for(const t of ts){if(S.trans[t].semi){S.trans[t].on=!S.trans[t].on;any=true}}if(any)emit("transtoggle")}break;
+  case "copy":if(S.copySel&&S.copySel.length){copySteps(S.copySel)}S.copySel=null;break;
+  case "shift":case "tie":chordEntryCheck();break;
+  case "chain":if(S.chainBuild&&S.chainBuild.list.length)emit("chain:set");S.chainBuild=null;break;
+  case "pbend":setBend(0);midiBend(0);break;
+  case "looper":S.looper=null;break;
+ }
+ dirty()}
+function tieDown(){const pat=curPat(),t=S.cur;
+ if(S.rec==="step"){if(S.keysDown.size){const prev=(S.stepRecPos-1+pat.len)%pat.len;pat.st[prev].n.forEach(n=>n.g=Math.min(64,Math.floor(n.g)+1))}else{if(!S.overdub)pat.st[S.stepRecPos]=newStep();S.stepRecPos=(S.stepRecPos+1)%pat.len}pat.valid=true;emit("steprec:rest");return}
+ if(S.stepEdit&&S.sel!=null){if(S.keysDown.size||S.overdub){pat.st[S.sel].n.forEach(n=>{if(!S.selNotes||S.selNotes.has(n.p))n.g=Math.min(64,Math.floor(n.g)+1)})}else{snapshotUndo();pat.st[S.sel]=newStep();S.sel=(S.sel+1)%pat.len}pat.valid=true;return}
+ if(heldStep()!=null){const st=pat.st[S.view[t]*16+heldStep()];st.n.forEach(n=>n.g=Math.min(64,Math.floor(n.g)+1));return}}
+function trackDown(t,k){const tr=trk(t);
+ if(k==="dn"||k==="up"){const pi=t===0&&isDrum(0)?proj().drum.cur:tr.cur;choosePat(t,(pi+(k==="up"?1:15))%16);emit(`pattern:${t}:${(pi+(k==="up"?1:15))%16}`);return}
+ if(k==="seq"){tr.mode="seq";S.cur=t;emit(`mode:${t}:seq`);emit("track:"+t);return}
+ if(k==="alt"){if(t===0){if(held("shift")){S.drumMute.fill(0);msg("Drums\nunmuted");return}if(held("t0mute")){S.drumMuteMode=!S.drumMuteMode;HELD.get("t0mute").used=true;return}tr.mode="drum"}else tr.mode="arp";
+  S.cur=t;emit(`mode:${t}:${tr.mode}`);emit("track:"+t);return}
+ if(k==="mute"){if(held("shift")){S.solo=S.solo===t?-1:t;HELD.get("t"+t+"mute").sh=true;emit("solo:"+t)}return}
+ if(k==="trk"){if(held("shift")){S.cur=t;openMenu(MENU_TS());return}
+  if(held("save")){HELD.get("save").used=true;for(let i=0;i<16;i++)savePattern(t,i);msg("Patterns\nSaved");emit("save:track");return}
+  if(held("trans")||S.transMode){S.transUsed=true;if(t!==S.cur){S.tgroup.has(t)?S.tgroup.delete(t):S.tgroup.add(t);emit("transgroup")}return}
+  if(S.control){S.control=false;emit("control:off");if(t===S.ctrlTrack)return}
+  if(S.split&&[...HELD.keys()].filter(id=>/^t\dtrk$/.test(id)).length>=2){const a=[...HELD.keys()].filter(id=>/^t\dtrk$/.test(id)).map(x=>+x[1]);if(a.includes(S.split.up)&&a.includes(S.split.lo)){S.split=null;msg("Split\nOFF")}}
+  if(S.chainBuild)S.chainBuild={t,list:[]};
+  S.cur=t;S.sel=null;emit("track:"+t)}}
+function stepDown(i){const t=S.cur,dr=isDrum(),v=S.view[dr?4:t],idx=v*16+i,pat=curPat();
+ if(S.confirm){if(S.confirm.kind==="save"){S.confirm=null;loadProject(i);msg("Project\nLoaded\n(not saved!)",1800)}return}
+ if(held("shift")){HELD.get("shift").used=true;shiftStep(i);return}
+ if(held("project")){HELD.get("project").used=true;loadProject(i);return}
+ if(S.patMode){const pm=S.patMode;if(pm.scene){if(pm.op==="save")saveScene(i);else if(pm.op==="copy"){S.copy={kind:"scene",d:deep(proj().scenes[i])};msg("Scene\nCopied")}else if(pm.op==="paste"&&S.copy&&S.copy.kind==="scene"){proj().scenes[i]=deep(S.copy.d);msg("Scene\nPasted")}else if(pm.op==="erase"){proj().scenes[i]=null;msg("Scene\nErased")}}
+  else{const pats=dr?proj().drum.pats:trk().pats;if(pm.op==="copy"){S.copy={kind:"pat",drum:dr,d:deep(pats[i])};msg("Pattern\nCopied")}else if(pm.op==="paste"){if(!S.copy||S.copy.kind!=="pat"||S.copy.drum!==dr){msg("Nothing to\npaste")}else{S.undo={t,drum:dr,i,pat:deep(pats[i])};pats[i]=deep(S.copy.d);pats[i].valid=true;msg("Pattern Pasted\nUndo possible")}}
+   else if(pm.op==="erase"){S.undo={t,drum:dr,i,pat:deep(pats[i])};pats[i]=dr?newDrumPat():newPat();pats[i].valid=true;msg("Pattern\nErased")}else if(pm.op==="save"){savePattern(t,i);msg("Pattern\nSaved")}}
+  if(!held("copy")&&!held("paste")&&!held("erase")&&!held("save"))S.patMode=pm.op==="copy"||pm.op==="paste"?S.patMode:null;dirty();return}
+ if(held("pattern")){HELD.get("pattern").used=true;choosePat(t,i);return}
+ if(held("scene")){if(held("save"))saveScene(i);else loadScene(i);return}
+ if(held("chain")&&S.chainBuild){const cb=S.chainBuild;cb.list.push(i);if(cb.list.length>16)cb.list.shift();if(dr)proj().drum.chain=cb.list.slice();else trk(cb.t).chain=cb.list.slice();P[cb.t].chainPos=0;msg(`Chain\n${cb.list.length} pattern${cb.list.length>1?"s":""}\nin the chain`);if(cb.list.length===1)setPat(cb.t,i,true);dirty();return}
+ if(held("save")){HELD.get("save").used=true;savePattern(t,patIdx());savePattern(t,i);msg("Pattern\nSaved");return}
+ if(held("lst")){HELD.get("lst").used=true;if(dr&&pat.poly)pat.lanes[S.lane].len=idx+1;else pat.len=idx+1;pat.valid=true;msg(`Last Step\n${idx+1}`);return}
+ if(held("copy")){S.copySel=S.copySel||[];S.copySel.push(i);return}
+ if(held("paste")){pasteSteps(i);return}
+ if(held("erase")){snapshotUndo();if(dr)pat.lanes[S.lane].st[idx]=newDStep();else pat.st[idx]=newStep();pat.valid=true;msg("Step\nErased");return}
+ if(S.control){S.sel=S.sel===idx?null:idx;return}
+ if(dr){if(S.stepEdit){S.sel=idx;return}const st=pat.lanes[S.lane].st[idx];if(st.on)st.on=false;else Object.assign(st,{on:true,g:S.drumDefs.g,v:S.drumDefs.v,t:S.drumDefs.t,r:S.drumDefs.r});pat.valid=true;emit("drum:step:"+i);return}
+ if(S.stepEdit){S.sel=idx;S.selNotes=null;emit("stepedit:sel");if(!S.playing&&S.globals[110]===0){const st=pat.st[idx];const t0=now()+.01,dur=stepDur(pat);st.n.forEach(n=>playNote(t,q(t,n.p),n.v,t0+Math.max(0,n.t)/100*dur,t0+n.g*dur))}return}
+ if(S.rec==="step"){S.stepRecPos=idx;return}}
+function stepUp(i,h){const t=S.cur,dr=isDrum();if(dr||S.stepEdit||S.control||S.rec==="step"||h.used)return dirty();
+ const pat=curPat(),idx=S.view[t]*16+i,st=pat.st[idx];
+ if(st.n.length){st.on=!st.on}else{st.n=[noteFromDefaults(t,S.lastNote,S.defs[t].v)];st.on=true}pat.valid=true;emit(st.on?"step:on:"+i:"step:off:"+i);dirty()}
+function pageDown(n){const t=S.cur,dr=isDrum(),pat=curPat(),hs=heldSteps();
+ if(held("lst")){HELD.get("lst").used=true;if(dr&&pat.poly)pat.lanes[S.lane].len=(n+1)*16;else pat.len=(n+1)*16;S.view[dr?4:t]=n;pat.valid=true;msg(`Last Step\n${(n+1)*16}`);return}
+ if(held("shift")){HELD.get("shift").used=true;const steps=dr?pat.lanes[S.lane].st:pat.st;for(let i=0;i<16;i++)steps[n*16+i]=deep(steps[i]);if(dr&&pat.poly)pat.lanes[S.lane].len=Math.max(pat.lanes[S.lane].len,(n+1)*16);else pat.len=Math.max(pat.len,(n+1)*16);pat.valid=true;msg("Page\nPasted");return}
+ if(held("copy")){S.copySel=null;S.copy={kind:"page",drum:dr,d:deep((dr?pat.lanes[S.lane].st:pat.st).slice(n*16,n*16+16))};msg("Page\nCopied");return}
+ if(held("paste")){if(!S.copy||S.copy.kind!=="page"){msg("Nothing to\npaste");return}snapshotUndo();const steps=dr?pat.lanes[S.lane].st:pat.st;S.copy.d.forEach((s,i)=>steps[n*16+i]=deep(s));pat.valid=true;msg("Page\nPasted");return}
+ if(held("erase")){snapshotUndo();const steps=dr?pat.lanes[S.lane].st:pat.st;for(let i=0;i<16;i++)steps[n*16+i]=dr?newDStep():newStep();pat.valid=true;msg("Page\nErased");return}
+ if(hs.length){hs.forEach(i=>{HELD.get("s"+i).used=true;const st=dr?pat.lanes[S.lane].st[S.view[4]*16+i]:pat.st[S.view[t]*16+i];st.skip[n]=st.skip[n]?0:1});pat.valid=true;msg(`Step Skip\npage ${n+1}`);emit("skip");return}
+ S.view[dr?4:t]=n;S.follow=false;dirty()}
+function turnKnob(id,d){for(const h of HELD.values())h.used=true;
+ if(id==="tempo"){const f=held("shift")?.01:1;if(S.globalBpm)S.gbpm=clamp(Math.round((S.gbpm+d*f)*100)/100,30,240);else proj().bpm=clamp(Math.round(((held("shift")?proj().bpm:Math.round(proj().bpm))+d*f)*100)/100,30,240);msg(held("shift")?`${bpm().toFixed(2)} BPM`:`${Math.round(bpm())} BPM`);emit("tempo")}
+ else if(id==="swing"){if(held("shift")){const p=curPat();p.swOff=clamp((p.swOff||0)+d,-25,25);p.valid=true}else proj().swing=clamp(proj().swing+d,50,75);msg(`Swing\nGlobal : ${proj().swing}%\nTrack ${S.cur+1} : ${curPat().swOff>0?"+":""}${curPat().swOff||0}%`);emit("swing")}
+ else if(id==="sel"){if(S.menu)menuTurn(d);else if(held("project")){HELD.get("project").used=true;S.projPick=clamp((S.projPick==null?S.proj:S.projPick)+d,0,15);msg(`Load Project\n${S.ram[S.projPick].name||"Project "+(S.projPick+1)}`)}}
+ else if(/^enc\d$/.test(id))turnEnc(+id[3],d);
+ dirty()}
+function clickKnob(id){if(id==="sel"){if(S.confirm){const c=S.confirm;S.confirm=null;c.fn();emit("confirm:"+c.kind)}else if(S.menu)menuPush();else if(S.projPick!=null&&held("project")){loadProject(S.projPick);S.projPick=null}dirty();return}
+ if(id==="swing"){msg(`Swing\nGlobal : ${proj().swing}%\nTrack ${S.cur+1} : ${curPat().swOff||0}%`)}else if(id==="tempo")msg(`${bpm().toFixed(2)} BPM`);else encShow(+id[3]);dirty()}
+
+/* ---------- pointer input ---------- */
+let tipT=0;const tip=$("#tip");
+function showTip(id,e){const inf=infoFor(id);if(!inf){tip.hidden=true;return}tip.innerHTML=`<b>${inf[0]}</b>${inf[1]}${inf[2]?`<div class="s">${inf[2]}</div>`:""}`;tip.hidden=false;
+ const x=Math.min(innerWidth-330,e.clientX+14),y=Math.min(innerHeight-tip.offsetHeight-8,e.clientY+14);tip.style.left=x+"px";tip.style.top=y+"px"}
+function showInfo(id){const inf=infoFor(id);if(!inf)return;$("#info").innerHTML=`<div class="crumb">Manual <b>${inf[3]}</b></div><h2>${inf[0]}</h2><p>${inf[1]}</p>${inf[2]?`<p><b>Shift:</b> ${inf[2]}</p>`:""}${inf[4]?`<div class="fw"><b>Firmware:</b> ${inf[4]}</div>`:""}`}
+function toggleLatch(id){if(LATCH.has(id)){LATCH.delete(id);ctlEls[id].classList.remove("latched");up(id)}else{LATCH.add(id);ctlEls[id].classList.add("latched");down(id)}}
+const stripVal=(c,e)=>{const r=svg.getScreenCTM().inverse(),p=new DOMPoint(e.clientX,e.clientY).matrixTransform(r);return c.t==="looper"?clamp((p.x-c.x)/c.w,0,.999):clamp(1-(p.y-c.y)/c.h,0,1)};
+function stripInput(c,e){const v=stripVal(c,e);if(c.id==="pbend"){const b=(v-.5)*2;const bb=Math.abs(b)<.08?0:b;setBend(bb*2);midiBend(bb)}else if(c.id==="modw"){S.mod[S.cur]=Math.round(v*127);midiCC(-1,S.mod[S.cur])}
+ else if(c.id==="looper"){if(held("shift")){S.looperOn=!S.looperOn;msg(S.looperOn?"Touch Strip\nON":"Touch Strip\nOFF");HELD.get("shift").used=true;return}if(!S.looperOn||!S.playing)return;const z=Math.floor(v*4),beats=[1,.5,.25,.125][z];
+  if(!S.looper||S.looper.beats!==beats){S.looper={beats,start:P.map(p=>p.cnt),idx:P.map(p=>p.idx)};emit("looper")}}dirty()}
+function bindInput(){
+ let drag=null,lp=null;
+ svg.addEventListener("contextmenu",e=>e.preventDefault());
+ svg.addEventListener("pointerdown",e=>{const g=e.target.closest(".ctl");if(!g)return;const id=g.dataset.id,c=CI[id];e.preventDefault();tip.hidden=true;showInfo(id);
+  if(e.button===2){toggleLatch(id);return}
+  if(c.t==="knob"){drag={id,y:e.clientY,moved:false,acc:0};svg.setPointerCapture(e.pointerId);return}
+  if(c.t==="strip"||c.t==="looper"){down(id);drag={id,strip:c};stripInput(c,e);svg.setPointerCapture(e.pointerId);return}
+  if(LATCH.has(id)){toggleLatch(id);return}
+  if(e.pointerType==="touch"){lp=setTimeout(()=>{lp=null;if(HELD.has(id)){LATCH.add(id);ctlEls[id].classList.add("latched")}},HOLDMS)}
+  if(c.t==="key"){const pt=new DOMPoint(e.clientX,e.clientY).matrixTransform(svg.getScreenCTM().inverse());S.padVel=clamp(Math.round(45+82*(pt.y-c.y)/c.h),1,127)}
+  down(id);drag={id,btn:true};svg.setPointerCapture(e.pointerId)});
+ svg.addEventListener("pointermove",e=>{if(drag&&drag.strip){stripInput(drag.strip,e);return}
+  if(drag&&!drag.btn){const dy=drag.y-e.clientY;drag.acc+=dy;drag.y=e.clientY;const step=held("shift")||e.shiftKey?6:4;while(Math.abs(drag.acc)>=step){const d=Math.sign(drag.acc);drag.acc-=d*step;drag.moved=true;turnKnob(drag.id,d)}return}
+  if(!drag){const g=e.target.closest(".ctl");if(g){const id=g.dataset.id;g.classList.add("hl");if(svg._hl&&svg._hl!==g)svg._hl.classList.remove("hl");svg._hl=g;showTip(id,e)}else{tip.hidden=true;if(svg._hl){svg._hl.classList.remove("hl");svg._hl=null}}}});
+ const end=e=>{if(lp){clearTimeout(lp);lp=null}if(!drag)return;const d=drag;drag=null;
+  if(d.strip){up(d.id);return}if(!d.btn){if(!d.moved)clickKnob(d.id);return}if(!LATCH.has(d.id))up(d.id)};
+ svg.addEventListener("pointerup",end);svg.addEventListener("pointercancel",end);
+ svg.addEventListener("pointerleave",()=>{tip.hidden=true});
+ svg.addEventListener("wheel",e=>{const g=e.target.closest(".ctl");if(!g)return;const c=CI[g.dataset.id];if(c.t!=="knob")return;e.preventDefault();turnKnob(c.id,e.deltaY<0?1:-1)},{passive:false});
+ /* computer keyboard */
+ const KMAP="awsedftgyhujk";
+ const kmDown=new Set();
+ addEventListener("keydown",e=>{if(e.target.closest("input,select,textarea"))return;const k=e.key.toLowerCase();
+  if(e.key==="Shift"){if(!held("shift"))down("shift");return}
+  if(e.repeat)return;
+  if(k===" "){e.preventDefault();down("play");up("play");return}if(k==="."){down("stop");up("stop");return}if(k==="r"){down("rec");up("rec");return}
+  if(k==="z"){down("octdn");up("octdn");return}if(k==="x"){down("octup");up("octup");return}
+  const i=KMAP.indexOf(k);if(i>=0){const key="k"+(12+i);kmDown.add(key);down(key)}});
+ addEventListener("keyup",e=>{const k=e.key.toLowerCase();if(e.key==="Shift"){if(!LATCH.has("shift"))up("shift");return}const i=KMAP.indexOf(k);if(i>=0){const key="k"+(12+i);if(kmDown.delete(key))up(key)}});
+ addEventListener("blur",()=>{for(const id of [...HELD.keys()])if(!LATCH.has(id))up(id)});
+}
+
+/* ---------- Web MIDI mirror (notes out, keyboard in) ---------- */
+let MOUT=null,MIN=null;
+async function toggleMidi(){const b=$("#midiBtn");if(MOUT||MIN){MOUT=null;if(MIN)MIN.onmidimessage=null;MIN=null;b.setAttribute("aria-pressed","false");b.textContent="MIDI";return}
+ if(!navigator.requestMIDIAccess){alert("This browser has no Web MIDI.");return}
+ try{const acc=await navigator.requestMIDIAccess();const outs=[...acc.outputs.values()],ins=[...acc.inputs.values()];
+  MOUT=outs.find(o=>!/keystep/i.test(o.name))||outs[0]||null;MIN=ins.find(i=>!/keystep/i.test(i.name))||ins[0]||null;
+  if(MIN)MIN.onmidimessage=ev=>{const [s,d1,d2]=ev.data;const ty=s&0xF0;const k=d1-48-12*trk().oct;if(k<0||k>36)return;if(ty===0x90&&d2>0){keyDown(k,d2)}else if(ty===0x80||ty===0x90){keyUp(k)}};
+  b.setAttribute("aria-pressed","true");b.textContent=`MIDI: ${MOUT?MOUT.name:"no out"}`}catch(e){alert("MIDI access was refused.")}}
+const tms=t=>t==null?undefined:Math.max(performance.now(),t*1000);
+function midiNote(t,midi,vel,t0,t1){if(!MOUT)return;const ch=outCh(t);if(ch==null)return;MOUT.send([0x90|ch,midi,vel],tms(t0));MOUT.send([0x80|ch,midi,0],tms(t1))}
+function midiDrum(l,vel,t0,t1){if(!MOUT)return;const ch=S.globals[79];if(ch>15)return;const n=S.globals[81]?S.globals[83+l]:S.globals[82]+36+l;MOUT.send([0x90|ch,n&127,vel],tms(t0));MOUT.send([0x80|ch,n&127,0],tms(t1))}
+function midiOn(t,midi,vel){if(!MOUT)return;const ch=outCh(t);if(ch!=null)MOUT.send([0x90|ch,midi,vel])}
+function midiOff(t,midi){if(!MOUT)return;const ch=outCh(t);if(ch!=null)MOUT.send([0x80|ch,midi,0])}
+function midiCC(i,v){if(!MOUT)return;if(i<0){const ch=outCh(S.cur);if(ch!=null)MOUT.send([0xB0|ch,1,v]);return}const c=S.globals[38+i],ch=c>15?S.globals[80]:c;MOUT.send([0xB0|(ch&15),S.globals[28+i]&127,v])}
+function midiPC(t,pc){if(!MOUT)return;const ch=outCh(t);if(ch!=null)MOUT.send([0xC0|ch,pc&127])}
+function midiBend(b){if(!MOUT)return;const ch=outCh(S.cur);if(ch==null)return;const v=clamp(Math.round(8192+b*8191),0,16383);MOUT.send([0xE0|ch,v&127,v>>7])}
+function midiAllOff(){if(!MOUT)return;for(let c=0;c<16;c++)MOUT.send([0xB0|c,123,0])}
+
+/* ---------- tours ---------- */
+let tour=null;
+function startTour(i){tour={i,k:0};renderTour()}
+function renderTour(){const box=$("#tourBox");document.querySelectorAll(".tourTarget").forEach(e=>e.classList.remove("tourTarget"));
+ if(!tour){box.hidden=true;return}const T=TOURS[tour.i];box.hidden=false;
+ if(tour.k>=T.steps.length){box.innerHTML=`<h2>${T.n}</h2><p class="done">Done. Pick another tour or keep playing.</p><div class="nav"><button id="tourClose">Close</button></div>`;$("#tourClose").onclick=()=>{tour=null;renderTour()};return}
+ const st=T.steps[tour.k];box.innerHTML=`<div class="crumb">Tour · step ${tour.k+1} of ${T.steps.length}</div><h2>${T.n}</h2><p class="step">${st.s}</p><div class="nav"><button id="tourSkip">Skip step</button><button id="tourClose">End tour</button></div>`;
+ if(st.t&&ctlEls[st.t])ctlEls[st.t].classList.add("tourTarget");$("#tourSkip").onclick=()=>{tour.k++;renderTour()};$("#tourClose").onclick=()=>{tour=null;renderTour()}}
+LISTEN.push(ev=>{if(!tour)return;const st=TOURS[tour.i].steps[tour.k];if(!st)return;if(st.ev instanceof RegExp?st.ev.test(ev):st.ev===ev){tour.k++;renderTour()}});
+
+/* ---------- chapters ---------- */
+const SHOW={
+ trackSettings(){S.cur=1;openMenu(MENU_TS());return "<p>Firmware 2.5 added a per-track settings page: <b>Shift + Track button</b>. It holds MIDI Channel IN/OUT, Program Change Send and Assign, and Fixed Velocity. Transpose Latch lives in <b>Utility &gt; Misc</b>.</p><div class='fw'><b>Firmware:</b> PC Send and Fixed Velocity are global settings 142–146 and 154–158 (track 1 has separate Seq and Drum entries). MCC does not list them; the Device tools tab can read and set them.</div>"},
+ recordBasics(){S.cur=1;trk(1).mode="seq";return "<p>Three ways to fill a pattern: <b>Quick Record</b> (hold a step and play keys, Record and Step Edit off), <b>Step Record</b> (press Record while stopped; each key press fills a step and advances; Tie/Rest = rest) and <b>Real-time Record</b> (hold Record, press Play). Overdub decides whether notes add to or replace a step. Shift + Record toggles quantized recording.</p>"},
+ arpBasics(){S.cur=2;trk(2).mode="arp";return "<p>Tracks 2–4 have arpeggiators. Press <b>Arp</b>, hold a chord, and it plays even when the sequencer is stopped. <b>Hold</b> latches it; while one key is held you can add notes (up to 16). Shift + the Arp Pattern keys pick Up, Down, Exclu, Inclu, Rand, Order or Poly; Shift + Arp Octave −1…+3 sets the range. Gate, Velocity (bipolar), Time Shift and Randomness act on the whole arpeggio.</p>"},
+ scaleBasics(){S.cur=1;return "<p>Shift + a Scale key (Chrom, Major, Minor, Dorian, Mixo, H.Min, Blues, User 1, User 2) sets the scale of the current pattern. The keyboard, the sequence and the arpeggio of that track all play in the scale. Shift + Root, then a key in the lowest octave, sets the root. Shift + User 1/2 lets you toggle notes in the lowest octave to build your own scale.</p><div class='fw'><b>Firmware:</b> the scale is a 12-bit mask; out-of-scale notes snap to the nearest scale note and ties snap <b>down</b> (in C major C# plays C, F# plays F). The masks are Major 0xAB5, Minor 0x5AD (natural minor), Dorian 0x6AD, Mixolydian 0x6B5, Harmonic minor 0x9AD (C D Eb F G Ab B), Blues 0x4E9. Quantizing happens at play time, so recorded steps keep their raw pitch.</div>"},
+ tempo(){return "<p>Tempo 30–240 BPM (Shift = fine, 0.01 BPM). Tap Tempo: tap at least twice. Swing 50–75% for all tracks; Shift + Swing sets an offset for the selected track. Shift + step 15 switches between the project tempo and a global tempo.</p>"},
+ encoders(){S.cur=1;return "<p>The five encoders edit Pitch, Gate, Velocity, Time Shift and Randomness. With no step held they set the <b>track defaults</b> used for new notes. Hold a step (or select it in Step Edit) to edit that step. Shift + turn offsets every step of the pattern.</p>"},
+ looper(){return "<p>Touch the looper strip while playing to loop all tracks from that moment: 1/4 at the left is the longest loop, 1/32 at the right the shortest. Shift + touch disables or enables the strip.</p>"},
+ shiftFns(){return "<p>Hold <b>Shift</b>: the LEDs above the keys show what is active (sequence direction, mono/poly, arp pattern and octave, time division, scale, CV routing). Shift + a step runs the blue step functions: Clr Ptn, Clr Steps, Nudge, Invert, Semi Up/Down (scale-aware), Oct Up/Down, Qnt 50%/100%, Rand Order/Notes/Oct, Global BPM, Wait Load.</p>"},
+ seqLength(){return "<p>Lst Step + a step sets the length within the viewed page; Lst Step + 16/32/48/64 sets it in pages. Shift + a page button extends the pattern by copying page 1 there. Shift + Lst Step toggles Follow. Shift + Mono/Poly keys set whether a step plays all its notes or only the lowest; Shift + Fwd/Rand/Walk sets the direction.</p>"},
+ stepEdit(){S.cur=1;S.stepEdit=true;return "<p><b>Step Edit</b> on: press a step to select it (it blinks). Play keys to replace its notes, or with Overdub on to add notes. Encoders edit the step; Tie/Rest clears it. When the sequencer is stopped, pressing a step plays it (step listen). <b>Quick Edit</b> (Step Edit off): press steps to toggle them, or hold one and play keys / turn encoders.</p>"},
+ copyPaste(){return "<p>Copy + steps, then Paste + a step. Copy + a page button, then Paste + another page. Erase + steps or a page. Copy/Paste/Erase + Pattern opens pattern mode: press steps to pick patterns. Shift + Exit undoes the last paste or erase.</p>"},
+ saving(){return "<p>Edits live in working memory. Hold <b>Save</b>: unsaved patterns of the track show red, saved ones blue. Save + step saves that pattern; Save + Track button saves the whole track; Save + Project saves everything (confirm with the encoder). Shift + Save reloads the current pattern.</p>"},
+ drum(){trk(0).mode="drum";S.cur=0;return "<p>Track 1 → Drum: 24 lanes on the lowest 24 keys. Press a key to select (and hear) a lane, then press steps to toggle hits. Hold the Drum button and press a key to select a lane silently. Hold Mute + a key to mute lanes; Shift + Drum unmutes all. Shift + Poly lets each lane have its own length (Lst Step + step while a lane is selected).</p>"},
+ chordMode(){S.cur=2;return "<p>Hold <b>Shift + Tie/Rest</b> and play a chord (or play it legato): its intervals from the first note are stored. Then any key plays that chord. Shift + Tie/Rest turns chord mode off and on again; the shape stays stored. One chord per track.</p><div class='fw'><b>Firmware:</b> each chord note is snapped through the scale map individually, so a shape becomes diatonic in a scale. The shape and chord-mode flag are part of the track data that Save Project writes, so a saved chord survives a power cycle even though the manual says it doesn't.</div>"},
+ projects(){return "<p>16 projects. Hold Project + a step to load one (or hold Project and turn the encoder). Save + Project, Copy + Project (to the next slot) and Erase + Project all ask for confirmation: push the selection encoder. Hold Project and press Shift to recall the saved version from flash.</p><div class='fw'><b>Firmware:</b> all 16 projects are loaded into RAM at boot and edits stay in RAM until saved. At “Save Project / Confirm ?”, a step pad does <b>not</b> confirm: it loads that project and discards the edits. The simulation reproduces this.</div>"},
+ tracks(){return "<p>Mute a track with its Mute button; Shift + Mute solos it (exclusive). Hold two track buttons and press a key to split the keyboard (first button = upper part). Press the two track buttons again to remove the split.</p>"},
+ patterns(){return "<p>16 patterns per track. Use the track arrows, or hold Pattern + a step. With Wait Load on (Shift + step 16) the change happens at the end of the current pattern; the track display blinks the pending number.</p>"},
+ arranging(){return "<p><b>Chain</b>: hold Chain and press steps in order (up to 16). <b>Scene</b>: Save + Scene + step stores the pattern, chain and mute of all tracks; Scene + step loads it. <b>Step skip</b>: hold a step and press page buttons to skip it on those pages/bars.</p>"},
+ controlMode(){S.cur=3;return "<p>Press <b>Control</b>: the selected track becomes the Live Track and its button blinks. The encoders send their CC (Utility &gt; Controller &gt; Knob 1–5). In Step Edit, select a step and turn an encoder to store a value; record while playing to capture moves. Erase + turn clears an encoder's automation.</p>"},
+ utility(){openMenu(MENU());return "<p>Shift + Project opens the Utility menu: turn the selection encoder to move, push to enter or edit, Exit to go back. Settings are global and saved when you leave.</p><div class='fw'><b>Firmware:</b> every Utility setting is one of 158 global IDs, readable and writable over SysEx. Misc also has Brightness (ID 152) and Transpose Latch (ID 153, stored inverted).</div>"},
+ deviceTools(){selectTab("dev");return "<p>The Device tools tab sends SysEx to a real KeyStep Pro through Web MIDI, or to this simulation. It only contains features already tested on hardware.</p>"},
+};
+function renderChapters(){const ul=$("#chapList");ul.innerHTML="";CHAPTERS.forEach(([sec,t,fn])=>{const li=document.createElement("li");li.innerHTML=`<i>${sec}</i><span>${t}</span><button>Show</button>`;
+ li.querySelector("button").onclick=()=>{const html=SHOW[fn]();$("#info").innerHTML=`<div class="crumb">Manual <b>${sec}</b></div><h2>${t}</h2>${html}`;dirty();$("#info").scrollIntoView({block:"nearest"})};ul.appendChild(li)})}
+
+/* ---------- demos ---------- */
+const DEMOS={
+ "Quick tour":()=>{const pr=newProject();pr.bpm=112;pr.name=null;
+  const dp=pr.drum.pats[0];[[0,[0,4,8,12]],[2,[4,12]],[6,[2,6,10,14]],[8,[15]]].forEach(([l,st])=>st.forEach(i=>Object.assign(dp.lanes[l].st[i],{on:true,v:l===6?80:110})));dp.valid=true;pr.tracks[0].mode="drum";
+  const bp=pr.tracks[1].pats[0];bp.scale=2;bp.root=9;[[0,45],[3,45],[6,52],[8,48],[11,50],[14,52]].forEach(([i,p])=>{bp.st[i]={n:[{p,g:.6,v:100,t:0,r:100}],on:true,skip:[0,0,0,0]}});bp.valid=true;
+  const bp2=pr.tracks[1].pats[1];Object.assign(bp2,deep(bp));bp2.st[14]={n:[{p:55,g:1.5,v:110,t:0,r:100}],on:true,skip:[0,0,0,0]};bp2.st[6].n[0].p=57;
+  const ap=pr.tracks[2].pats[0];ap.scale=2;ap.root=9;ap.div=2;ap.arp=3;pr.tracks[2].mode="seq";[[0,[69,72,76]],[4,[67,71,74]],[8,[65,69,72]],[12,[64,67,71]]].forEach(([i,ch])=>{ap.st[i]={n:ch.map(p=>({p,g:3.5,v:80,t:0,r:100})),on:true,skip:[0,0,0,0]}});ap.valid=true;
+  const lp=pr.tracks[3].pats[0];lp.scale=2;lp.root=9;lp.div=1;[[0,81],[2,79],[3,76],[5,72],[6,74]].forEach(([i,p])=>{lp.st[i]={n:[{p,g:.9,v:90,t:i%2?20:0,r:i===6?60:100}],on:true,skip:[0,0,0,0]}});lp.len=8;lp.valid=true;
+  pr.tracks.forEach(t=>t.valid=true);return pr},
+ "Polymeter drums":()=>{const pr=newProject();pr.bpm=120;pr.tracks[0].mode="drum";const dp=pr.drum.pats[0];dp.poly=true;
+  [[0,3,[0]],[6,4,[0,2]],[2,5,[2]],[4,6,[0,3]],[8,16,[4,12]]].forEach(([l,len,st])=>{dp.lanes[l].len=len;st.forEach(i=>Object.assign(dp.lanes[l].st[i],{on:true,v:100}))});dp.valid=true;return pr},
+ "Three arpeggiators":()=>{const pr=newProject();pr.bpm=100;[1,2,3].forEach(t=>{pr.tracks[t].mode="arp";const p=pr.tracks[t].pats[0];p.scale=3;p.root=2;p.div=[2,1,3][t-1];p.arp=[0,3,4][t-1];p.valid=true});return pr},
+};
+function loadDemo(name){const pr=DEMOS[name]();stop();S.ram[S.proj]=pr;S.flash[S.proj]=deep(pr);
+ if(name==="Three arpeggiators"){S.hold=[0,1,1,1];S.arpLatched=[[],[{p:62,v:90},{p:65,v:80},{p:69,v:85}],[{p:50,v:100},{p:57,v:90}],[{p:74,v:70},{p:77,v:70},{p:81,v:70},{p:84,v:70}]]}
+ S.cur=1;msg(name);dirty()}
+
+/* ---------- tabs, buttons, boot ---------- */
+function selectTab(w){$("#tabMan").setAttribute("aria-selected",w==="man");$("#tabDev").setAttribute("aria-selected",w==="dev");$("#paneMan").hidden=w!=="man";$("#paneDev").hidden=w!=="dev";if(w==="dev"){renderDevice();emit("tab:dev")}try{localStorage.setItem("ksp.tab",w)}catch(e){}}
+function boot(){baseState();drawPanel();bindInput();renderChapters();
+ const ex=$("#exSel");Object.keys(DEMOS).forEach(n=>ex.add(new Option(n,n)));ex.onchange=()=>{if(ex.value)loadDemo(ex.value);ex.value=""};
+ const ts=$("#tourSel");TOURS.forEach((t,i)=>ts.add(new Option(t.n,i)));ts.onchange=()=>{if(ts.value!==""){startTour(+ts.value);selectTab("man")}ts.value=""};
+ $("#soundBtn").onclick=e=>{SOUND=!SOUND;e.target.setAttribute("aria-pressed",SOUND);if(!SOUND)allOff()};
+ $("#midiBtn").onclick=toggleMidi;$("#resetBtn").onclick=()=>{stop();const keep=SIMDEV&&SIMDEV.namesFw;baseState();if(SIMDEV)SIMDEV.namesFw=keep;LATCH.forEach(id=>ctlEls[id]&&ctlEls[id].classList.remove("latched"));dirty();msg("Reset")};
+ document.querySelectorAll(".vsw button").forEach(b=>b.onclick=()=>{svg.setAttribute("viewBox",b.dataset.vb);document.querySelectorAll(".vsw button").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+ $("#tabMan").onclick=()=>selectTab("man");$("#tabDev").onclick=()=>selectTab("dev");
+ $("#info").innerHTML=`<h2>Start here</h2><p>Hover any control for a short description; click it for the details on this card. Load the <b>Quick tour</b> demo and press Play (or <kbd>Space</kbd>), or pick a guided tour.</p><p>Right-click (long-press on touch) <b>latches</b> a button as if you were holding it, so two-handed combos like Shift + key or Save + Project work with a mouse.</p>`;
+ loadDemo("Quick tour");
+ try{if(localStorage.getItem("ksp.tab")==="dev")selectTab("dev")}catch(e){}
+ const w=new Worker(URL.createObjectURL(new Blob(["setInterval(()=>postMessage(0),10)"],{type:"text/javascript"})));w.onmessage=advance;
+ const loop=()=>{advance();if(S.msg&&performance.now()>S.msgT){S.msg=null;dirtyFlag=true}if(dirtyFlag||S.playing||NOTEFLASH.length||S.msg||ARP.some(a=>a.running)||S.trans.some(x=>x.on)||trk().chordOn||S.stepEdit||S.rec||S.patMode||S.control||P.some(p=>p.pend!=null)||S.undo||HELD.size){render();dirtyFlag=false}requestAnimationFrame(loop)};requestAnimationFrame(loop);
+}
+/* ================= Device tools: SysEx to a real KeyStep Pro (Web MIDI) or to this simulation =================
+   Protocol notes are from the firmware 2.5.20 study (~/keysteppro/findings.md) and were checked on hardware.
+   Frame: F0 00 20 6B <dev 7F> 42 <cmd> <project 0=current|1..16> <param> ...
+   To add a feature once it is solved: append an entry to FEATURES (title, verified, needs, render). */
+const PREFIX=[0xF0,0x00,0x20,0x6B,0x7F,0x42];
+const frame=(...b)=>[...PREFIX,...b,0xF7];
+const hex=a=>[...a].map(x=>x.toString(16).padStart(2,"0").toUpperCase()).join(" ");
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const TRACK_ITEMS=[0x7B,0x7C,0x7D,0x7E],STATE_ITEMS=[0x7A,...TRACK_ITEMS];
+const P_PATTERN_STATE=0x28,P_MODE=0x56,P_CHORD=0x57,SCENE_ITEM=0x79,P_SCENE_STATE=0x26,CHORD_MODE_BIT=0x10,P_ROOT=0x6B,P_SCALE=0x6C,PROJECT_ITEM=0x78,P_USER1=[0x65,0x66,0x67],P_NAME=0x7C;
+const SCALE_IDS={chromatic:0,major:1,minor:2,dorian:3,mixolydian:4,harmonic:5,blues:6,user1:8,user2:9};
+/* pattern parameters a default pattern needs before it is marked valid (index shapes from 08009102 / 080093e6) */
+const PSINGLE={0x7B:[0x14,0x15,0x16,0x17,0x19,0x1A,0x1B,0x1C,0x61,0x62,0x63,0x64,0x6D,0x6E,0x6F,0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,0x78,0x79],other:[0x14,0x15,0x16,0x17,0x61,0x62,0x63,0x64,0x6D,0x6E,0x6F,0x70,0x71]};
+const PSTEP={0x7B:[0x30,0x31,0x33,0x34,0x35,0x36],other:[0x30,0x31]},PVOICESTEP=[0x32,0x6D,0x6E,0x6F,0x70,0x71];
+
+class Link{
+ async open(p){await this.send(frame(0x05,p))}
+ async commit(p){await this.send(frame(0x06,p),{commit:true})}
+ async set(p,param,item,idx,data){data=[...data];await this.send(frame(0x0C,p,param,1,item,idx,data.length,...data))}
+ async setMany(p,param,item,idxs,data){await this.send(frame(0x0C,p,param,idxs.length,item,...idxs,data.length,...data))}
+ async get(p,param,item,idx){const r=await this.getMany(p,param,item,[idx],1);return r?r[0]:null}
+ async getMany(p,param,item,idxs,n){const k=idxs.length;for(let tr=0;tr<3;tr++){const rs=await this.send(frame(0x0B,p,param,k,item,...idxs,n),{reply:r=>r[6]===0x0C&&r[7]===p&&r[8]===param&&r[9]===k&&r[10]===item});
+   for(const r of rs)if(r[6]===0x0C&&r[7]===p&&r[8]===param&&r[9]===k&&r[10]===item&&idxs.every((x,i)=>r[11+i]===x)&&r[11+k]===n)return [...r.slice(12+k,12+k+n)]}return null}
+ async getGlobal(id){const hi=id>=128,cmd=hi?0x31:0x01,ix=hi?id-128:id;for(let tr=0;tr<3;tr++){const rs=await this.send(frame(cmd,0x00,0x41,ix),{reply:r=>r[6]===cmd+1&&r[8]===0x41&&r[9]===ix});
+   const r=rs.find(r=>r[6]===cmd+1&&r[8]===0x41&&r[9]===ix);if(r)return r[10]}return null}
+ async setGlobal(id,v){const hi=id>=128;await this.send(frame(hi?0x32:0x02,0x00,0x41,hi?id-128:id,v&127))}
+ async setName(p,name){const b=[...name].map(c=>c.charCodeAt(0));while(b.length<16)b.push(0);await this.open(p);await this.send(frame(0x0C,p,P_NAME,0x01,PROJECT_ITEM,0x01,0x10,...b))}
+ async identity(){const rs=await this.send([0xF0,0x7E,0x7F,0x06,0x01,0xF7],{reply:r=>r[1]===0x7E&&r[3]===0x06&&r[4]===0x02});return rs.find(r=>r[1]===0x7E&&r[4]===0x02)||null}
+}
+class WebMidiLink extends Link{
+ constructor(out,inp){super();this.out=out;this.inp=inp;this.inbox=[];this.part=[];this.sim=false;
+  inp.onmidimessage=e=>{const d=e.data;for(const b of d){if(b===0xF0)this.part=[b];else if(this.part.length){this.part.push(b);if(b===0xF7){this.inbox.push(this.part);this.part=[]}}}}}
+ async send(bytes,o={}){this.inbox=[];devLog("→ "+hex(bytes),"tx");this.out.send(bytes);
+  if(o.commit){await sleep(3000);return this.inbox}
+  if(o.reply){const t0=performance.now();while(performance.now()-t0<500){if(this.inbox.some(o.reply))break;await sleep(5)}this.inbox.forEach(r=>devLog("← "+hex(r),"tx"));return this.inbox}
+  await sleep(12);return this.inbox}
+ close(){this.inp.onmidimessage=null}
+}
+class SimLink extends Link{constructor(){super();this.sim=true}
+ async send(bytes,o={}){devLog("→ "+hex(bytes),"tx");const out=SIMDEV.handle(bytes);out.forEach(r=>devLog("← "+hex(r),"tx"));if(o.commit)await sleep(150);dirty();return out}}
+const chordRaw=tr=>{const c=tr.chord;return c.root==null?Array(16).fill(0x7F):[c.root,...c.off.map(o=>o&127),...Array(15-c.off.length).fill(0x7F)]};
+
+/* ---------- the simulated device: answers the same frames from the panel's state ---------- */
+const SIMDEV={namesFw:true,sess:null,
+ handle(b){const out=[];
+  if(b[1]===0x7E&&b[3]===0x06&&b[4]===0x01)return [[0xF0,0x7E,0x7F,0x06,0x02,0x00,0x20,0x6B,0x02,0x00,0x09,0x00,0x25,0x14,0x05,0x02,0xF7]];
+  if(b.slice(0,6).some((x,i)=>i!==4&&x!==PREFIX[i]))return out;
+  const cmd=b[6],p=b[7];
+  if((cmd===0x01||cmd===0x31)&&b[8]===0x41){const id=b[9]+(cmd===0x31?128:0);out.push([...PREFIX,cmd+1,0x00,0x41,b[9],S.globals[id]&127,0xF7],[...PREFIX,0x1C,0x00,0xF7]);return out}
+  if((cmd===0x02||cmd===0x32)&&b[8]===0x41){const id=b[9]+(cmd===0x32?128:0);if(id>=1&&id<=158){S.globals[id]=b[10];emit("global:"+id)}return out}
+  const pn=p===0?S.proj:p-1;
+  if(cmd===0x05){this.sess={p:pn,buf:deep(S.flash[pn]),touched:new Set()};return out}
+  if(cmd===0x06){this.commit(pn);return out}
+  if(cmd===0x0B||cmd===0x0C){const param=b[8],k=b[9],item=b[10],idxs=[...b.slice(11,11+k)],n=b[11+k];
+   if(item===PROJECT_ITEM&&param===P_NAME&&cmd===0x0C){if(this.namesFw){const s=String.fromCharCode(...b.slice(12+k,12+k+16)).replace(/\0+$/,"");S.flash[pn].name=s||null;S.ram[pn].name=s||null;emit("dev:name");dirty()}return out}
+   if(!this.sess||this.sess.p!==pn)this.sess={p:pn,buf:deep(S.flash[pn]),touched:new Set()};
+   const buf=this.sess.buf;
+   if(cmd===0x0B){const vals=[];for(let j=0;j<n;j++){const ix=idxs.slice();ix[k-1]+=j;vals.push(this.getv(buf,item,param,ix)&127)}out.push([...PREFIX,0x0C,p,param,k,item,...idxs,n,...vals,0xF7],[...PREFIX,0x1C,0x00,0xF7]);return out}
+   const data=[...b.slice(12+k,12+k+n)];data.forEach((v,j)=>{const ix=idxs.slice();ix[k-1]+=j;this.setv(buf,item,param,ix,v);this.sess.touched.add(`${item}/${param}/${ix.join(",")}`)});return out}
+  return out},
+ track(buf,item){return buf.tracks[TRACK_ITEMS.indexOf(item)]},
+ /* p0x57: root, then semitone offsets from the root, 0x7F padding (16 bytes) */
+ getv(buf,item,param,ix){const [i0]=ix;
+  if(item===PROJECT_ITEM){if(P_USER1.includes(param)){const m=buf.user[0],j=P_USER1.indexOf(param);return [m&127,m>>7,0][j]}if([0x68,0x69,0x6A].includes(param)){const m=buf.user[1],j=param-0x68;return [m&127,m>>7,0][j]}return buf.raw[param]||0}
+  if(item===SCENE_ITEM&&param===P_SCENE_STATE)return buf.scenes[i0-1]?3:2;
+  if(item===0x7A&&param===P_PATTERN_STATE)return buf.ctrl.pats[i0-1].valid?3:2;
+  const tr=this.track(buf,item);if(!tr)return 0;
+  if(param===0x27)return tr.valid?3:2;
+  if(param===P_MODE)return (clamp(tr.oct+3,0,7))|(tr.chordOn?CHORD_MODE_BIT:0);
+  if(param===P_CHORD)return chordRaw(tr)[i0-1];
+  const pat=tr.pats[i0-1];if(!pat)return 0;
+  if(param===P_PATTERN_STATE)return pat.valid?3:2;if(param===P_ROOT)return pat.root;if(param===P_SCALE)return pat.scale;
+  const key=param+"/"+ix.join(",");return pat.raw[key]!=null?pat.raw[key]:0},
+ setv(buf,item,param,ix,v){const [i0]=ix;
+  if(item===PROJECT_ITEM){if(P_USER1.includes(param)){const j=P_USER1.indexOf(param),m=buf.user[0];buf.user[0]=j===0?(m&~127)|v:j===1?(m&127)|((v&31)<<7):m}else if([0x68,0x69,0x6A].includes(param)){const j=param-0x68,m=buf.user[1];buf.user[1]=j===0?(m&~127)|v:j===1?(m&127)|((v&31)<<7):m}else buf.raw[param]=v;return}
+  if(item===SCENE_ITEM&&param===P_SCENE_STATE){if(v===3&&!buf.scenes[i0-1])buf.scenes[i0-1]={pat:[0,0,0,0],dpat:0,chain:[[],[],[],[]],dchain:[],mute:[0,0,0,0],solo:-1,track:0};if(v===2)buf.scenes[i0-1]=null;return}
+  if(item===0x7A&&param===P_PATTERN_STATE){buf.ctrl.pats[i0-1].valid=v===3;return}
+  const tr=this.track(buf,item);if(!tr)return;
+  if(param===0x27){tr.valid=v===3;return}
+  if(param===P_MODE){tr.oct=clamp((v&7)-3,-3,2);tr.chordOn=!!(v&CHORD_MODE_BIT);tr.valid=true;return}
+  if(param===P_CHORD){const raw=chordRaw(tr);raw[i0-1]=v;const end=raw.indexOf(0x7F,1);tr.chord=raw[0]===0x7F?{root:null,off:[]}:{root:raw[0],off:raw.slice(1,end<0?16:end).map(o=>o>63?o-128:o)};tr.valid=true;return}
+  const pat=tr.pats[i0-1];if(!pat)return;
+  if(param===P_PATTERN_STATE){pat.valid=v===3;return}if(param===P_ROOT){pat.root=v%12;return}if(param===P_SCALE){pat.scale=v;return}
+  pat.raw[param+"/"+ix.join(",")]=v},
+ /* cmd 06: stock firmware decides every scene/pattern marker from the session header bits, so each marker
+    the session did not set flips (valid <-> default). Then the project is reloaded from flash. */
+ commit(pn){const s=this.sess&&this.sess.p===pn?this.sess:{p:pn,buf:deep(S.flash[pn]),touched:new Set()},buf=s.buf,T=s.touched;
+  for(let i=1;i<=16;i++){const k=`${SCENE_ITEM}/${P_SCENE_STATE}/${i}`;if(!T.has(k))this.setv(buf,SCENE_ITEM,P_SCENE_STATE,[i],buf.scenes[i-1]?2:3)}
+  for(const item of STATE_ITEMS)for(let i=1;i<=16;i++){const k=`${item}/${P_PATTERN_STATE}/${i}`;if(T.has(k))continue;
+   if(item===0x7A)buf.ctrl.pats[i-1].valid=!buf.ctrl.pats[i-1].valid;else{const pat=this.track(buf,item).pats[i-1];pat.valid=!pat.valid}}
+  for(const tr of buf.tracks)tr.pats.forEach((pt,i)=>{if(!pt.valid){const d=newPat();d.raw=pt.raw;tr.pats[i]=d}});
+  buf.name=S.flash[pn].name;S.flash[pn]=buf;S.ram[pn]=deep(buf);this.sess=null;mapCache.clear();emit("dev:commit");dirty()}};
+
+/* ---------- write one project: name, chord shape + chord mode, root/scale on all patterns (port of ksp_setlist.py) ---------- */
+function chordBytes(shape){const root=shape[0],offs=shape.slice(1).map(n=>n-root);if(root<0||root>127||offs.some(o=>!(o>0&&o<0x7F))||shape.length>16)throw new Error("bad chord shape "+shape.join(" "));return [root,...offs,...Array(16-shape.length).fill(0x7F)]}
+function userMaskParts(iv){const mask=[...new Set(iv)].reduce((m,i)=>m|1<<i,0);if(!(mask>0&&mask<0x1000&&mask&1))throw new Error("bad user scale");return [mask&0x7F,mask>>7,0]}
+async function readStates(link,p){const keys=[];for(let i=1;i<=16;i++)keys.push([SCENE_ITEM,P_SCENE_STATE,i]);for(const it of STATE_ITEMS)for(let i=1;i<=16;i++)keys.push([it,P_PATTERN_STATE,i]);
+ const m=new Map();for(const k of keys)m.set(k.join("/"),await link.get(p,k[1],k[0],k[2]));return m}
+async function readPatternDefaults(link,p,item,pat){const key=item===0x7B?0x7B:"other",out=[];
+ for(const pr of PSINGLE[key])out.push([pr,[pat],await link.getMany(p,pr,item,[pat],1)]);
+ for(const pr of PSTEP[key])out.push([pr,[pat,1],await link.getMany(p,pr,item,[pat,1],64)]);
+ for(const pr of PVOICESTEP)for(let v=1;v<=3;v++)out.push([pr,[pat,v,1],await link.getMany(p,pr,item,[pat,v,1],64)]);
+ return out.some(x=>x[2]==null)?null:out}
+async function writeProject(link,song){const p=song.project,problems=[],tracks=song.tracks.map(t=>t.n),chord=song.shape?chordBytes(song.shape):null;
+ await link.open(p);const states=await readStates(link,p);if([...states.values()].includes(null))return ["no reply reading pattern states"];
+ const modes={};for(const t of tracks){modes[t]=await link.get(p,P_MODE,TRACK_ITEMS[t-1],1);if(modes[t]==null)return ["no reply reading track modes"]}
+ const keyed=song.tracks.filter(t=>t.scale&&t.scale!=="chromatic"),defaults={};
+ for(const t of keyed){const item=TRACK_ITEMS[t.n-1];const pat=[...Array(16).keys()].map(i=>i+1).find(i=>states.get(`${item}/${P_PATTERN_STATE}/${i}`)===2);
+  if(pat!=null){defaults[item]=await readPatternDefaults(link,p,item,pat);if(!defaults[item])return [`no reply reading default pattern content (track ${t.n})`]}}
+ if(chord)for(const t of tracks){const item=TRACK_ITEMS[t-1];for(let i=0;i<16;i++)await link.set(p,P_CHORD,item,i+1,[chord[i]]);await link.set(p,P_MODE,item,1,[modes[t]|CHORD_MODE_BIT])}
+ const target=new Map(states);
+ for(const t of keyed){const item=TRACK_ITEMS[t.n-1];for(let pat=1;pat<=16;pat++){if(states.get(`${item}/${P_PATTERN_STATE}/${pat}`)===2&&defaults[item])for(const [pr,path,vals] of defaults[item])await link.setMany(p,pr,item,[pat,...path.slice(1)],vals);
+   await link.set(p,P_ROOT,item,pat,[t.root]);await link.set(p,P_SCALE,item,pat,[SCALE_IDS[t.scale]]);target.set(`${item}/${P_PATTERN_STATE}/${pat}`,3)}
+  if(t.scale==="user1"){const parts=userMaskParts(t.userMask);for(let j=0;j<3;j++)await link.set(p,P_USER1[j],PROJECT_ITEM,1,[parts[j]])}}
+ for(const [k,v] of target){const [item,param,i]=k.split("/").map(Number);await link.set(p,param,item,i,[v])}
+ await link.commit(p);
+ await link.open(p);
+ if(chord)for(const t of tracks){const item=TRACK_ITEMS[t-1];const got=[];for(let i=1;i<=16;i++)got.push(await link.get(p,P_CHORD,item,i));if(got.join()!==chord.join())problems.push(`track ${t} chord reads ${got.join(" ")}`);
+  const md=await link.get(p,P_MODE,item,1);if(md==null||!(md&CHORD_MODE_BIT))problems.push(`track ${t} chord mode reads ${md}`)}
+ for(const t of keyed){const item=TRACK_ITEMS[t.n-1];for(let pat=1;pat<=16;pat++){const r=await link.get(p,P_ROOT,item,pat),s=await link.get(p,P_SCALE,item,pat);if(r!==t.root||s!==SCALE_IDS[t.scale])problems.push(`track ${t.n} pattern ${pat} root/scale reads ${r}/${s}`)}}
+ const after=await readStates(link,p);for(const [k,v] of after)if(v!==target.get(k))problems.push(`state ${k} reads ${v}, expected ${target.get(k)}`);
+ if(song.title)await link.setName(p,displayName(song.title));
+ return problems}
+const NAME_OVERRIDES={"Friday I'm in Love":"Friday In Love","World Loves Violence":"World Loves Viol"};
+function displayName(t){const n=NAME_OVERRIDES[t]||t;if(n.length<1||n.length>16||!/^[\x20-\x7E]+$/.test(n))throw new Error(`name “${n}” must be 1–16 printable ASCII characters`);return n}
+
+/* ---------- feature registry ---------- */
+const FEATURES=[
+ {id:"globals",title:"Global settings (all 158 IDs)",verified:"2026-10-18: full read of all globals on hardware; writes tested with Brightness (152).",needs:null,
+  about:"Every Utility setting, including the ones MCC does not show: Program Change Send and Fixed Velocity per track, Brightness and Transpose Latch. A SET gets no reply, so the tool reads the value back.",
+  render(el){el.innerHTML=`<div class="row"><button class="sm" data-a="readall">Read all</button><label><input type="checkbox" data-a="hid"> only the settings MCC hides</label></div><div class="gtab"><table class="t"><thead><tr><th>ID</th><th>Setting</th><th>Value</th></tr></thead><tbody></tbody></table></div>`;
+   const tb=el.querySelector("tbody"),hidBox=el.querySelector("[data-a=hid]");
+   const draw=()=>{tb.innerHTML="";let grp="";for(const g of GLOBALS){if(hidBox.checked&&!g.hidden)continue;if(g.g!==grp){grp=g.g;tb.insertAdjacentHTML("beforeend",`<tr><th colspan="3">${grp}</th></tr>`)}
+     const tr=document.createElement("tr");const v=DEV.gvals[g.id];const opts=optsOf({id:g.id});
+     tr.innerHTML=`<td>${g.id}</td><td>${g.n}</td><td><select ${v==null?"disabled":""}>${v==null?"<option>–</option>":opts.map(o=>`<option value="${o[0]}" ${o[0]===v?"selected":""}>${o[1]}</option>`).join("")}</select></td>`;
+     tr.querySelector("select").onchange=async e=>{const nv=+e.target.value;await busy(async()=>{await DEV.link.setGlobal(g.id,nv);const rb=await DEV.link.getGlobal(g.id);DEV.gvals[g.id]=rb;devLog(`global ${g.id} ${g.n} = ${rb}${rb===nv?"":" (expected "+nv+")"}`,rb===nv?"ok":"bad")});draw()};tb.appendChild(tr)}};
+   hidBox.onchange=draw;el.querySelector("[data-a=readall]").onclick=()=>busy(async()=>{let n=0;for(const g of GLOBALS){if(hidBox.checked&&!g.hidden)continue;DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}devLog(`read ${n} settings`,"ok");emit("dev:read");draw()});draw()}},
+ {id:"names",title:"Project names",verified:"2026-10-19: the name shows on the device, survives a power cycle and Save Project; Erase Project clears it.",needs:"the project-names firmware (KeyStepPro_2.5.20_project_names.kspf). Stock 2.5.20 ignores this message.",
+  about:"Writes a 1–16 character name for one project slot. The name belongs to the slot: saving another project into it keeps the slot's name.",
+  render(el){el.innerHTML=`<div class="row">Project <select data-a="p">${[...Array(16).keys()].map(i=>`<option value="${i+1}">${i+1}</option>`).join("")}</select><input type="text" data-a="n" maxlength="16" placeholder="Name (16 max)"><button class="sm" data-a="go">Send</button></div>`;
+   el.querySelector("[data-a=go]").onclick=()=>busy(async()=>{const p=+el.querySelector("[data-a=p]").value,n=displayName(el.querySelector("[data-a=n]").value.trim());await DEV.link.setName(p,n);devLog(`project ${p} named “${n}”`,"ok");if(!DEV.link.sim)emit("dev:name")})}},
+ {id:"trackkey",title:"Chord and key per track",verified:"2026-10-19: chords, chord mode and root/scale written and read back on projects 2–15; played by ear on project 15.",needs:null,
+  about:"Writes a track's chord shape and turns chord mode on, and sets root and scale on all 16 of its patterns. It re-sends every pattern's state first, because a stock SysEx commit flips every state it was not given, and fills default patterns with clean default content before marking them valid. Then it reads everything back. The device reloads the project from flash afterwards, so save any panel edits on that project first.",
+  render(el){el.innerHTML=`<div class="row">Project <select data-a="p">${[...Array(16).keys()].map(i=>`<option value="${i+1}">${i+1}</option>`).join("")}</select> Track <select data-a="t"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div>
+   <div class="row">Chord <input type="text" data-a="c" value="E3 G#3 B3" title="Note names, the first is the root; empty = leave the chord alone"> Root <select data-a="r">${NN.map((n,i)=>`<option value="${i}" ${i===4?"selected":""}>${n}</option>`).join("")}</select> Scale <select data-a="s">${["chromatic","major","minor","dorian","mixolydian","harmonic","blues"].map(s=>`<option ${s==="major"?"selected":""}>${s}</option>`).join("")}</select></div>
+   <div class="row"><button class="sm" data-a="go">Write and verify</button><button class="sm" data-a="rd">Read saved chord</button></div>`;
+   const parse=s=>s.trim()?s.trim().split(/[\s,]+/).map(x=>{const m=x.match(/^([A-Ga-g])(#|b)?(-?\d)$/);if(!m)throw new Error("note “"+x+"” (use e.g. E3, G#3)");return 12*(+m[3]+1)+NN.indexOf(m[1].toUpperCase())+(m[2]==="#"?1:m[2]==="b"?-1:0)}):null;
+   el.querySelector("[data-a=go]").onclick=()=>busy(async()=>{const p=+el.querySelector("[data-a=p]").value,t=+el.querySelector("[data-a=t]").value,shape=parse(el.querySelector("[data-a=c]").value),sc=el.querySelector("[data-a=s]").value;
+    const song={project:p,shape,tracks:[{n:t,root:+el.querySelector("[data-a=r]").value,scale:sc}]};const pr=await writeProject(DEV.link,song);
+    devLog(pr.length?"PROBLEM: "+pr.join("; "):`project ${p} track ${t}: written and verified`,pr.length?"bad":"ok");if(!pr.length)emit("dev:trackkey")});
+   el.querySelector("[data-a=rd]").onclick=()=>busy(async()=>{const p=+el.querySelector("[data-a=p]").value,t=+el.querySelector("[data-a=t]").value,item=TRACK_ITEMS[t-1];await DEV.link.open(p);
+    const c=[];for(let i=1;i<=16;i++)c.push(await DEV.link.get(p,P_CHORD,item,i));const md=await DEV.link.get(p,P_MODE,item,1);
+    const notes=c[0]===0x7F||c[0]==null?"none":[c[0],...c.slice(1).filter(x=>x!==0x7F).map(o=>c[0]+(o>63?o-128:o))].map(nm).join(" ");devLog(`saved chord P${p} T${t}: ${notes}; chord mode ${md!=null&&md&CHORD_MODE_BIT?"ON":"OFF"} (bytes ${c.map(x=>x==null?"--":x.toString(16)).join(" ")})`,"ok")})}},
+ {id:"setlist",title:"Set list writer",verified:"2026-10-19: 14 Band Keys songs written to projects 1–14 (names, chords, keys) and verified by readback.",needs:"names need the project-names firmware; chords and keys work on stock 2.5.20.",
+  about:"Paste or load a plan exported by tools/bandkeys_plans.js (a list of {project, title, shape, tracks:[{n, root, scale}]}) and write every project in it.",
+  render(el){el.innerHTML=`<div class="row"><input type="file" accept=".json,application/json" data-a="f"><button class="sm" data-a="go">Write all</button></div><textarea data-a="j" placeholder='[{"project":15,"title":"Test","shape":[64,68,71],"tracks":[{"n":1,"root":4,"scale":"major"}]}]'></textarea>`;
+   el.querySelector("[data-a=f]").onchange=async e=>{const f=e.target.files[0];if(f)el.querySelector("[data-a=j]").value=await f.text()};
+   el.querySelector("[data-a=go]").onclick=()=>busy(async()=>{const songs=JSON.parse(el.querySelector("[data-a=j]").value||"[]");let bad=0;
+    for(const s of songs){if(!(s.project>=1&&s.project<=16))throw new Error(`${s.title}: project ${s.project} out of range`);const pr=await writeProject(DEV.link,s);bad+=!!pr.length;devLog(`P${s.project} ${s.title?displayName(s.title):""}: ${pr.length?"PROBLEM: "+pr.join("; "):"OK"}`,pr.length?"bad":"ok")}
+    devLog(bad?`${bad} project(s) had problems`:`${songs.length} project(s) written and verified`,bad?"bad":"ok")})}},
+];
+
+/* ---------- the tab ---------- */
+const DEV={link:null,gvals:{},busy:false,ports:null};
+function devLog(s,cls=""){const box=$("#devLog");if(!box)return;const d=document.createElement("div");d.className=cls;d.textContent=s;box.appendChild(d);while(box.childNodes.length>400)box.firstChild.remove();box.scrollTop=box.scrollHeight}
+async function busy(fn){if(!DEV.link){devLog("Connect first.","bad");return}if(DEV.busy)return;DEV.busy=true;document.querySelectorAll("#paneDev button.sm").forEach(b=>b.disabled=true);
+ try{await fn()}catch(e){devLog("Error: "+e.message,"bad")}finally{DEV.busy=false;document.querySelectorAll("#paneDev button.sm").forEach(b=>b.disabled=false)}}
+async function devConnect(){const sel=$("#devPort").value;if(DEV.link&&DEV.link.close)DEV.link.close();DEV.link=null;DEV.gvals={};
+ if(sel==="sim"){DEV.link=new SimLink();SIMDEV.namesFw=$("#simNames").checked}
+ else{const [oi,ii]=sel.split("|");const out=[...DEV.ports.outputs.values()].find(o=>o.id===oi),inp=[...DEV.ports.inputs.values()].find(i=>i.id===ii);if(!out||!inp){devLog("Port not found.","bad");return}DEV.link=new WebMidiLink(out,inp)}
+ const id=await DEV.link.identity();if(id){const v=id.slice(12,16);devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");$("#devState").innerHTML=DEV.link.sim?'<span class="pill sim">simulation</span>':'<span class="pill real">KeyStep Pro</span>';emit("dev:connect")}
+ else{devLog("No identity reply. Check the ports and that SysEx permission was granted.","bad");DEV.link=null}}
+async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">Simulated KeyStep Pro (this page)</option>';
+ if(!navigator.requestMIDIAccess){devLog("This browser has no Web MIDI (use Chrome or Edge; Firefox needs the site permission add-on).","bad");return}
+ try{DEV.ports=await navigator.requestMIDIAccess({sysex:true})}catch(e){devLog("SysEx access was refused: "+e.message,"bad");return}
+ const outs=[...DEV.ports.outputs.values()],ins=[...DEV.ports.inputs.values()];
+ for(const o of outs){const i=ins.find(x=>x.name===o.name)||ins.find(x=>/keystep/i.test(x.name))||ins[0];if(!i)continue;const opt=new Option(`${o.name} (out) ⇄ ${i.name} (in)`,o.id+"|"+i.id);s.add(opt);if(/keystep/i.test(o.name))s.value=opt.value}
+ devLog(`${outs.length} MIDI output(s) found`)}
+function renderDevice(){const pane=$("#paneDev");if(pane.dataset.built)return;pane.dataset.built=1;
+ pane.innerHTML=`<div class="card"><h2>Device tools <span id="devState"></span></h2>
+  <p class="pg">Talks SysEx to a KeyStep Pro on USB (Chrome/Edge, Web MIDI with SysEx permission) or to the simulated one in this page. Everything here was worked out from firmware 2.5.20 and tested on hardware; new tools are added as they are solved. Unofficial: back up your projects with MIDI Control Center before writing.</p>
+  <div class="feat"><div class="row"><select id="devPort"><option value="sim">Simulated KeyStep Pro (this page)</option></select><button class="sm" id="devScanBtn">Find MIDI ports</button><button class="sm" id="devConnBtn">Connect</button></div>
+  <div class="row"><label><input type="checkbox" id="simNames" checked> simulation runs the project-names firmware</label></div></div>
+  <div id="featList"></div><h3>Log</h3><div id="devLog"></div></div>`;
+ $("#devScanBtn").onclick=devScan;$("#devConnBtn").onclick=()=>devConnect().catch(e=>devLog("Error: "+e.message,"bad"));$("#simNames").onchange=e=>{SIMDEV.namesFw=e.target.checked};
+ const list=$("#featList");for(const f of FEATURES){const box=document.createElement("div");box.className="feat";box.innerHTML=`<h3>${f.title}</h3><div class="meta"><b>Verified</b> ${f.verified}${f.needs?` <span class="need">Needs ${f.needs}</span>`:""}</div><p class="pg">${f.about}</p><div class="body"></div>`;list.appendChild(box);f.render(box.querySelector(".body"))}}
+boot();
+</script>
+</body>
+</html>

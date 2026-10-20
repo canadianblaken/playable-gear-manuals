@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeyStep Pro Interactive Manual</title>
+<style>
+:root{
+  --bg:#f4f3ef; --fg:#1d1d1f; --muted:#5b5b60; --card:#ffffff; --line:#d9d7d0; --accent:#2f6fd6; --accent-fg:#fff;
+  --ok:#15803d; --warn:#b45309; --bad:#b91c1c; --blue:#2563eb;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141416; --fg:#ececef; --muted:#a1a1aa; --card:#1e1e22; --line:#33333a; --accent:#6fa8ff; --accent-fg:#111;
+    --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; --blue:#6fa8ff;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141416; --fg:#ececef; --muted:#a1a1aa; --card:#1e1e22; --line:#33333a; --accent:#6fa8ff; --accent-fg:#111;
+  --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; --blue:#6fa8ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:14px 16px 8px;max-width:1700px;margin:0 auto}
+h1{font-size:20px;margin:0}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:1700px;margin:0 auto;padding:6px 16px}
+.bar button,.bar select{font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+.bar button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.bar .hint{color:var(--muted);font-size:12px;margin-left:auto}
+.vsw{display:none;gap:4px}
+@media (max-width:700px){.vsw{display:inline-flex}}
+.hint .touch{display:none}
+@media (pointer:coarse){.hint .desk{display:none}.hint .touch{display:inline}}
+main{max-width:1700px;margin:0 auto;padding:4px 16px 40px;display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){main{grid-template-columns:minmax(0,1fr)}.bar .hint{margin-left:0}
+  #tourBox:not([hidden]){position:fixed;left:8px;right:8px;bottom:8px;z-index:15;max-height:38vh;overflow:auto;box-shadow:0 6px 24px rgba(0,0,0,.3)}
+  main{padding-bottom:40vh}}
+/* wide screens: the device stays put, only the right column scrolls */
+@media (min-width:901px){html,body{height:100%;overflow:hidden}body{display:flex;flex-direction:column}
+  main{flex:1;min-height:0;width:100%;grid-template-rows:100%;padding-bottom:12px}
+  #devCol{overflow:auto;height:100%}#sideCol{overflow-y:auto;height:100%;padding-right:4px}}
+#device{width:100%;height:auto;display:block;touch-action:pan-y pinch-zoom;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.screenRow{display:flex;gap:12px;align-items:center;margin-top:8px;flex-wrap:wrap}
+#oledBig{width:384px;max-width:100%;height:auto;aspect-ratio:4/1;background:#000;border-radius:8px;border:6px solid #111;display:block}
+.screenRow .ledinfo{font-size:12px;color:var(--muted);flex:1;min-width:200px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.card h2{font-size:16px;margin:0 0 6px}
+.card h3{font-size:14px;margin:10px 0 4px}
+.card p{margin:6px 0}
+.card a{color:var(--blue)}
+.pg{font-size:12px;color:var(--muted)}
+.crumb{font-size:12px;color:var(--muted);margin-bottom:4px}
+.crumb b{color:var(--accent)}
+kbd{font:12px ui-monospace,monospace;border:1px solid var(--line);border-radius:4px;padding:0 4px}
+code{font:12px ui-monospace,monospace}
+ul.tight{margin:4px 0;padding-left:18px}
+ul.tight li{margin:3px 0}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+.fw{border-left:3px solid var(--accent);padding:4px 8px;margin:8px 0;font-size:13px;background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:0 6px 6px 0}
+.fw b{color:var(--accent)}
+#tourBox .step{font-size:14px}
+#tourBox .nav{display:flex;gap:8px;margin-top:8px}
+#tourBox button,.chap button,.card button.sm{font:inherit;font-size:12px;padding:3px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.card button.sm:disabled{opacity:.5;cursor:default}
+#tourBox .done{color:var(--ok)}
+.chap{list-style:none;margin:0;padding:0;max-height:420px;overflow:auto}
+.chap li{display:flex;gap:8px;align-items:baseline;padding:4px 6px;border-radius:6px;font-size:13px}
+.chap li:hover{background:var(--bg)}
+.chap li span{flex:1}
+.chap li i{font-size:11px;color:var(--muted);white-space:nowrap;font-style:normal}
+table.t{border-collapse:collapse;font-size:12.5px;width:100%;margin:6px 0}
+table.t td,table.t th{border-bottom:1px solid var(--line);padding:3px 6px;text-align:left;vertical-align:top}
+table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
+.tabs{display:flex;gap:4px;margin-bottom:10px}
+.tabs button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+/* device tools */
+.feat{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}
+.feat h3{margin:0 0 2px;font-size:14px}
+.feat .meta{font-size:11.5px;color:var(--muted)}
+.feat .meta b{color:var(--ok);font-weight:600}
+.feat .need{color:var(--warn)}
+.feat .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0}
+.feat select,.feat input{font:inherit;font-size:12.5px;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.feat input[type=text]{width:12em}
+.feat textarea{width:100%;font:12px ui-monospace,monospace;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);min-height:4em}
+#devLog{font:11.5px/1.45 ui-monospace,monospace;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;max-height:180px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+#devLog .tx{color:var(--muted)}#devLog .ok{color:var(--ok)}#devLog .bad{color:var(--bad)}
+.gtab{max-height:340px;overflow:auto}
+.gtab td:last-child{white-space:nowrap}
+.pill{display:inline-block;font-size:11px;border-radius:999px;padding:0 7px;border:1px solid var(--line);color:var(--muted)}
+.pill.sim{border-color:var(--accent);color:var(--accent)}
+.pill.real{border-color:var(--ok);color:var(--ok)}
+/* device */
+.ctl{cursor:pointer}
+.ctl:focus{outline:none}
+.ctl .face{transition:stroke .1s}
+.hl .face{stroke:#2f6fd6!important;stroke-width:2.5!important}
+.latched .face{stroke:#facc15!important;stroke-width:3!important;stroke-dasharray:5 3}
+.tourTarget .face{stroke:#06b6d4!important;stroke-width:3!important;animation:pulse 1s infinite}
+@keyframes pulse{50%{stroke-opacity:.25}}
+@media (prefers-reduced-motion:reduce){.tourTarget .face{animation:none}}
+#tip{position:fixed;z-index:20;max-width:320px;padding:8px 10px;border-radius:8px;background:var(--card);color:var(--fg);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.18);font-size:12.5px;line-height:1.4;pointer-events:none}
+#tip b{display:block;font-size:13px;margin-bottom:2px}
+#tip .s{color:var(--muted);margin-top:4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>KeyStep Pro interactive manual</h1>
+  <p class="sub">Unofficial, playable recreation of the Arturia KeyStep Pro (firmware 2.5), built from the 2.5.1 user manual, the MIDI Control Center device definition and a reverse-engineering study of firmware 2.5.20. All sounds are synthesized stand-ins. The Device tools tab talks to a real KeyStep Pro over Web MIDI, or to this simulation. Not affiliated with Arturia.</p>
+</header>
+<div class="bar">
+  <select id="exSel" aria-label="Load a demo project"><option value="">Load demo…</option></select>
+  <select id="tourSel" aria-label="Guided tours"><option value="">Guided tours…</option></select>
+  <button id="soundBtn" aria-pressed="true">Sound</button>
+  <button id="midiBtn" aria-pressed="false" title="Mirror notes to MIDI gear and accept a MIDI keyboard (Web MIDI)">MIDI</button>
+  <button id="resetBtn">Reset</button>
+  <span class="vsw" role="group" aria-label="Zoom the panel"><button data-vb="30 140 1250 460" aria-pressed="true">Whole</button><button data-vb="30 160 650 220" aria-pressed="false">Left</button><button data-vb="650 160 630 220" aria-pressed="false">Steps</button><button data-vb="230 340 1050 260" aria-pressed="false">Keys</button></span>
+  <span class="hint"><span class="touch">Tap = press · long-press = hold (latches) · drag an encoder up/down = turn · tap anything for help</span><span class="desk">Hover for help · right-click = hold a button (latch) · drag/wheel an encoder, click = touch · <kbd>Shift</kbd> = Shift · <kbd>Space</kbd> play · <kbd>.</kbd> stop · <kbd>R</kbd> rec · <kbd>A W S E D F T G Y H U J K</kbd> keys · <kbd>Z</kbd>/<kbd>X</kbd> octave</span></span>
+</div>
+<main>
+  <div id="devCol">
+    <svg id="device" viewBox="30 140 1250 460" role="application" aria-label="KeyStep Pro front panel"></svg>
+    <div class="screenRow"><canvas id="oledBig" width="512" height="128" aria-label="OLED display, enlarged"></canvas><div class="ledinfo" id="ledInfo"></div></div>
+  </div>
+  <div id="sideCol">
+    <div class="tabs" role="tablist"><button role="tab" id="tabMan" aria-selected="true">Manual</button><button role="tab" id="tabDev" aria-selected="false">Device tools</button></div>
+    <div id="paneMan">
+      <div class="card" id="tourBox" hidden></div>
+      <section class="card" id="info" aria-live="polite"></section>
+      <div class="card">
+        <h2>The manual, chapter by chapter</h2>
+        <p class="pg">Show jumps the simulation to that part of the KeyStep Pro and explains it here.</p>
+        <ul class="chap" id="chapList"></ul>
+      </div>
+      <div class="card">
+        <h2>About this simulation</h2>
+        <p>Four tracks with 16 patterns of up to 64 steps (up to 16 notes per step), the drum sequencer with 24 lanes, three arpeggiators, scales and user scales, chord mode, transpose (with groups and latch), quick edit, step edit, step and real-time recording, overdub, the Shift step functions, step skip, pages, chains, scenes, projects with save/copy/erase/recall, the looper strip, control mode, the Utility menu, tempo, swing, metronome and Web MIDI in/out all work.</p>
+        <details><summary>Firmware notes</summary>
+          <p class="pg">Some behaviour here follows the decoded 2.5.20 firmware rather than the manual. Those places are marked with a blue “Firmware” note in the help text.</p>
+        </details>
+        <details><summary>Simplified or not simulated</summary>
+          <ul class="tight">
+            <li>Sounds are stand-ins; CV/Gate outputs, clock in/out, sync and pedal are settings only.</li>
+            <li>Arpeggiator randomness, keyboard splits and the Program Change assign page are simplified.</li>
+            <li>Copy/paste of individual notes inside a step and the Chroma colour sets are not simulated.</li>
+            <li>Multi-touch is replaced by holding with right-click (or long-press on touch) and then pressing other controls.</li>
+          </ul>
+        </details>
+        <p class="pg">Sources: KeyStep Pro user manual 2.5.1 (14 March 2024), MIDI Control Center device file, firmware 2.5.20 reverse-engineering notes. Section numbers refer to the manual.</p>
+      </div>
+    </div>
+    <div id="paneDev" hidden></div>
+  </div>
+</main>
+<div id="tip" hidden></div>
+<script>
+"use strict";

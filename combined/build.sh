@@ -4,9 +4,11 @@ set -e
 cd "$(dirname "$0")"
 ../hapax/build.sh
 ../blackbox/build.sh
+../keystep/build.sh
 TABS=(  "squid|Toraiz SQUID|../squid/squid-interactive-manual.html"
         "blackbox|1010music Blackbox|../blackbox/blackbox-interactive-manual.html"
-        "hapax|Squarp Hapax|../hapax/hapax-interactive-manual.html" )
+        "hapax|Squarp Hapax|../hapax/hapax-interactive-manual.html"
+        "keystep|Arturia KeyStep Pro|../keystep/keystep-interactive-manual.html" )
 OUT=playable-gear-manuals.html
 {
   cat head.html
@@ -16,14 +18,14 @@ OUT=playable-gear-manuals.html
   echo "</nav>"
   for t in "${TABS[@]}"; do IFS='|' read -r id name f <<<"$t"
     # ponytail: whole page escaped into a data attribute, loaded on first open (keeps the 3 apps from booting at once)
-    printf '<iframe id="f-%s" role="tabpanel" title="%s" hidden data-doc="' "$id" "$name"
+    printf '<iframe id="f-%s" role="tabpanel" title="%s" allow="midi" hidden data-doc="' "$id" "$name"
     sed -e 's/&/\&amp;/g' -e 's/"/\&quot;/g' "$f"
     echo '"></iframe>'; done
   cat <<'JS'
 <script>
 "use strict";
 // how each manual stops its own transport when its tab is hidden
-const STOP={squid:w=>{w.press("stop");w.release("stop")},blackbox:w=>w.transportStop(),hapax:w=>w.stop()};
+const STOP={squid:w=>{w.press("stop");w.release("stop")},blackbox:w=>w.transportStop(),hapax:w=>w.stop(),keystep:w=>w.stop()};
 const tabs=[...document.querySelectorAll('[role=tab]')];
 function show(id){
   if(!document.getElementById("f-"+id))id=tabs[0].id.slice(2);
