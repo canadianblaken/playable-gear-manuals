@@ -77,6 +77,12 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
 @media (max-width:560px){.ccmKnob{grid-template-columns:auto minmax(0,1fr)}.ccmKnob .pg{grid-column:1/-1}}
 .filebtn{display:inline-block}
 .feat .row.small{font-size:12.5px}
+.edGrid{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:6px 0}
+@media (max-width:700px){.edGrid{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.edCell{font:inherit;font-size:10px;line-height:1.2;padding:2px 3px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--fg);min-height:32px;display:flex;flex-direction:column;align-items:flex-start;overflow:hidden;cursor:pointer;text-align:left}
+.edCell.on{background:color-mix(in srgb,var(--accent) 22%,var(--bg))}.edCell.sel{outline:2px solid var(--accent);outline-offset:-1px}.edCell.out{opacity:.4}.edCell.skip .v{text-decoration:line-through}
+.edCell .n{color:var(--muted)}.edCell .v{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.edStep .t input{font:inherit;font-size:12px}
 .card button.sm[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 #tourBox .done{color:var(--ok)}
 .chap{list-style:none;margin:0;padding:0;max-height:420px;overflow:auto}

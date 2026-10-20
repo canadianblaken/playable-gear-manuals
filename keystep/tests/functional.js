@@ -49,7 +49,7 @@ const f1=await readProject(L,1);ok("recall reads project 1",f1.data.length===895
 f1.name="Copy Test";const pr3=await storeProject(L,9,f1);
 ok("store to project 9 verifies",pr3.length===0,pr3.slice(0,3));
 const nz=r=>Object.keys(r).sort().filter(k=>r[k]).map(k=>k+"="+r[k]);
-const sysexView=pj=>JSON.stringify(pj.tracks.map(t=>[t.valid,t.chord,t.chordOn,t.oct,t.pats.map(p=>[p.valid,p.root,p.scale,nz(p.raw)])]));
+const sysexView=pj=>JSON.stringify(pj.tracks.map(t=>[t.valid,t.chord,t.chordOn,t.oct,t.pats.map(p=>[p.valid,p.root,p.scale])]));
 ok("project 9 equals project 1 after store (SysEx-visible state)",sysexView(S.flash[8])===sysexView(S.flash[0])&&S.flash[8].raw["121/76/3"]===5&&S.flash[8].raw["122/95/2,17"]===1&&S.flash[8].name==="Copy Test");
 const f9=await readProject(L,9);ok("recall of the copy is identical",JSON.stringify(f9.data)===JSON.stringify(f1.data));
 /* chords entered with a note below the root: 0xF7 cuts the reply, 0xF8-0xFF vanish; neither can be written back */
@@ -78,5 +78,24 @@ await DEV.libDraw();const row=[...document.querySelectorAll("#featList table.t t
 ok("library Load puts the project into the Projects tool",DEV.project&&DEV.project.data.length===8951&&/Library “Renamed”/.test(document.querySelector("#featList").textContent));
 ok("library refuses a damaged project",await libAdd({format:"x"},"bad","").then(()=>false,()=>true));
 for(const it of await libList())await libDelete(it.id);ok("library delete",(await libList()).length===0);
+/* project editor: notes into slots, scenes, limits, send and read back */
+reset();saveProject();const fe=await readProject(L,1);DEV.showProject(fe,"test");
+const pe=edReadPattern(fe,0x7C,3);pe.steps[0].notes=[60,64,67].map(p=>({pitch:p,gate:7,vel:100,shift:49,rand:100}));pe.steps[0].on=true;
+pe.steps[4].notes=[{pitch:69,gate:20,vel:90,shift:60,rand:80}];pe.steps[4].on=true;pe.len=8;pe.root=4;pe.scale=1;edWritePattern(fe,0x7C,3,pe);
+const pe2=edReadPattern(fe,0x7C,3);
+ok("editor: notes, length, root/scale read back",pe2.valid&&pe2.len===8&&pe2.root===4&&pe2.scale===1&&pe2.steps[0].notes.map(n=>n.pitch).join()==="60,64,67"&&pe2.steps[4].notes[0].shift===60&&pe2.steps[4].notes[0].gate===20&&pe2.steps.filter(s=>s.notes.length).length===2,pe2.steps.slice(0,5).map(s=>s.notes));
+ok("editor: notes fill slots in step order, the rest are 0x7F",edGet(fe,0x7C,0x32,[3,1,1])===0&&edGet(fe,0x7C,0x32,[3,1,4])===4&&edGet(fe,0x7C,0x32,[3,1,5])===0x7F&&edGet(fe,0x7C,0x6D,[3,3,64])===0x7F);
+ok("editor: 17 notes on a step refused",(()=>{const x=edReadPattern(fe,0x7C,3);x.steps[2].notes=Array.from({length:17},(_,i)=>({pitch:40+i,gate:7,vel:100,shift:49,rand:100}));try{edWritePattern(fe,0x7C,3,x);return false}catch(e){return /limit is 16/.test(e.message)}})());
+ok("editor: 193 notes in a pattern refused",(()=>{const x=edReadPattern(fe,0x7C,3);x.steps.forEach((s,i)=>s.notes=Array.from({length:i<1?4:3},(_,j)=>({pitch:40+j,gate:7,vel:100,shift:49,rand:100})));try{edWritePattern(fe,0x7C,3,x);return false}catch(e){return /holds 192/.test(e.message)}})());
+const sc=edReadScene(fe,2);Object.assign(sc,{valid:true,pats:[1,2,0,0,0],mute:5,chains:[[0,1,2],[],[],[],[]],chainOn:true,track:1});edWriteScene(fe,2,sc);const sc2=edReadScene(fe,2);
+ok("editor: scene patterns, mutes, chain read back",sc2.valid&&sc2.pats.join()==="1,2,0,0,0"&&sc2.mute===5&&sc2.chains[0].join()==="0,1,2"&&sc2.chainOn&&sc2.track===1,sc2);
+const pr5=await storeProject(L,11,fe);const f11=await readProject(L,11);const pe3=edReadPattern(f11,0x7C,3);
+ok("editor: edited project sent and read back",pr5.length===0&&pe3.steps[0].notes.map(n=>n.pitch).join()==="60,64,67"&&pe3.len===8&&edReadScene(f11,2).chains[0].join()==="0,1,2",pr5.slice(0,3));
+/* the editor UI: pick a step, add a note, keep */
+const edBox=[...document.querySelectorAll("#featList .feat")].find(b=>/Project editor/.test(b.textContent));const eq=a=>edBox.querySelector(`[data-a=${a}]`);
+eq("t").value="3";eq("t").onchange();eq("grid").children[2].click();const addIn=eq("step").querySelector("input[type=text]");addIn.value="D4 F#4";[...eq("step").querySelectorAll("button")].find(b=>b.textContent==="Add").click();
+ok("editor UI: added notes show on the step",/D4 F#4/.test(eq("grid").children[2].textContent),eq("grid").children[2].textContent);
+eq("apply").click();const kept=edReadPattern(DEV.project,0x7D,1);
+ok("editor UI: Keep puts the edit into the Projects tool",kept.steps[2].notes.map(n=>noteName(n.pitch)).join(" ")==="D4 F#4"&&/Edited in the editor/.test(document.querySelector("#featList").textContent));
 ok("file check rejects a damaged file",(()=>{const b=deep(f1);b.data[5][3]=[200];try{checkProjectFile(b);return false}catch(e){return true}})());
 selectTab("man");return R;

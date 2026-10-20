@@ -44,6 +44,9 @@ class SimLink extends Link{constructor(){super();this.sim=true}
 const chordRaw=tr=>{const c=tr.chord;return c.root==null?Array(16).fill(0x7F):[c.root,...c.off.map(o=>o&255),...Array(15-c.off.length).fill(0x7F)]};
 
 /* ---------- the simulated device: answers the same frames from the panel's state ---------- */
+/* what a fresh pattern reads on the hardware (backup of 2026-10-20): empty note slots are 0x7F in all six fields;
+   pattern defaults: swing 25 (= 0), step count 15 (= 16 steps), bits 20, mode 26, pitch 60, gate 7, velocity 100, time shift 49 (= 0), randomness 100 */
+const SIM_SLOT_PARAMS=[0x32,0x6D,0x6E,0x6F,0x70,0x71],SIM_PAT_DEFAULTS={0x61:25,0x62:15,0x63:20,0x64:26,0x6D:60,0x6E:7,0x6F:100,0x70:49,0x71:100};
 const SIMDEV={namesFw:true,sess:null,
  handle(b){const out=[];
   if(b[1]===0x7E&&b[3]===0x06&&b[4]===0x01)return [[0xF0,0x7E,0x7F,0x06,0x02,0x00,0x20,0x6B,0x02,0x00,0x09,0x00,0x25,0x14,0x05,0x02,0xF7]];
@@ -76,7 +79,8 @@ const SIMDEV={namesFw:true,sess:null,
   if(param===P_CHORD)return chordRaw(tr)[i0-1];
   const pat=tr.pats[i0-1];if(!pat)return 0;
   if(param===P_PATTERN_STATE)return pat.valid?3:2;if(param===P_ROOT)return pat.root;if(param===P_SCALE)return pat.scale;
-  const key=param+"/"+ix.join(",");return pat.raw[key]!=null?pat.raw[key]:0},
+  const key=param+"/"+ix.join(",");if(pat.raw[key]!=null)return pat.raw[key];
+  return ix.length===3&&SIM_SLOT_PARAMS.includes(param)?0x7F:ix.length===1&&SIM_PAT_DEFAULTS[param]!=null?SIM_PAT_DEFAULTS[param]:0},
  setv(buf,item,param,ix,v){const [i0]=ix;
   if(item===PROJECT_ITEM){if(P_USER1.includes(param)){const j=P_USER1.indexOf(param),m=buf.user[0];buf.user[0]=j===0?(m&~127)|v:j===1?(m&127)|((v&31)<<7):m}else if([0x68,0x69,0x6A].includes(param)){const j=param-0x68,m=buf.user[1];buf.user[1]=j===0?(m&~127)|v:j===1?(m&127)|((v&31)<<7):m}else buf.raw[param]=v;return}
   if(item===SCENE_ITEM&&param===P_SCENE_STATE){if(v===3&&!buf.scenes[i0-1])buf.scenes[i0-1]={pat:[0,0,0,0],dpat:0,chain:[[],[],[],[]],dchain:[],mute:[0,0,0,0],solo:-1,track:0};if(v===2)buf.scenes[i0-1]=null;return}
@@ -266,7 +270,7 @@ const FEATURES=[
    <div class="row">Send to project <select data-a="to">${opts}</select><label><input type="checkbox" data-a="vf" checked> read back to verify</label><button class="sm" data-a="go">Send to device</button></div>`;
    const q=a=>el.querySelector(`[data-a=${a}]`),go=q("go");let cur=null,armT=0;
    const prog=x=>{q("pg").value=x;q("st").textContent=` ${Math.round(x*100)}%`};
-   const show=(f,src)=>{cur=DEV.project=f;q("nm").value=f.name||"";q("to").value=f.project;q("sum").textContent=`${src}: ${projectSummary(f)}`};
+   const show=(f,src)=>{cur=DEV.project=f;q("nm").value=f.name||"";q("to").value=f.project;q("sum").textContent=`${src}: ${projectSummary(f)}`;if(DEV.editorLoad)DEV.editorLoad()};
    DEV.showProject=show; /* the library loads into this tool */
    q("rc").onclick=()=>busy(async()=>{const p=+q("p").value,t0=performance.now();prog(0);const f=await readProject(DEV.link,p,prog);
     show(f,`Project ${p}, recalled`);devLog(`project ${p} recalled: ${f.data.length} blocks in ${((performance.now()-t0)/1000).toFixed(1)} s`,"ok");emit("dev:recall")});
