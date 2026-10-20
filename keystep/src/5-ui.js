@@ -448,7 +448,7 @@ function initPanelZoom(){
  $("#panelZoomFit").onclick=()=>{zoom=100;apply();$("#panelViewport").scrollLeft=0};
  apply();
 }
-function boot(){baseState();drawPanel();bindInput();renderChapters();initPanelZoom();
+function boot(){baseState();drawPanel();bindInput();renderChapters();initPanelZoom();devBindBar();
  const ex=$("#exSel");Object.keys(DEMOS).forEach(n=>ex.add(new Option(n,n)));ex.onchange=()=>{if(ex.value)loadDemo(ex.value);ex.value=""};
  const ts=$("#tourSel");TOURS.forEach((t,i)=>ts.add(new Option(t.n,i)));ts.onchange=()=>{if(ts.value!==""){startTour(+ts.value);selectTab("man")}ts.value=""};
  $("#soundBtn").onclick=e=>{SOUND=!SOUND;e.target.setAttribute("aria-pressed",SOUND);if(!SOUND)allOff()};

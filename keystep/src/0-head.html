@@ -28,6 +28,8 @@ h1{font-size:20px;margin:0}
 .bar button,.bar select{font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
 .bar button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .bar .hint{color:var(--muted);font-size:12px;margin-left:auto}
+.bar .ksp{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;padding-left:10px;border-left:1px solid var(--line)}
+.bar .ksp .lbl{font-size:12px;color:var(--muted)}.bar #devPort{max-width:15em}
 .vsw{display:none;gap:4px}
 @media (max-width:700px){.vsw{display:inline-flex}}
 .hint .touch{display:none}
@@ -119,6 +121,7 @@ table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
 .pill{display:inline-block;font-size:11px;border-radius:999px;padding:0 7px;border:1px solid var(--line);color:var(--muted)}
 .pill.sim{border-color:var(--accent);color:var(--accent)}
 .pill.real{border-color:var(--ok);color:var(--ok)}
+.pill.bad{border-color:var(--bad);color:var(--bad)}
 /* device */
 .ctl{cursor:pointer}
 .ctl:focus{outline:none}
@@ -144,6 +147,7 @@ table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
   <button id="soundBtn" aria-pressed="true">Sound</button>
   <button id="midiBtn" aria-pressed="false" title="Mirror notes to MIDI gear and accept a MIDI keyboard (Web MIDI)">MIDI</button>
   <button id="resetBtn">Reset</button>
+  <span class="ksp" role="group" aria-label="KeyStep Pro connection"><span class="lbl">KeyStep</span><select id="devPort" aria-label="KeyStep Pro MIDI port"><option value="sim">Simulated KeyStep Pro</option></select><button id="devScanBtn" title="Ask the browser for MIDI ports (Chrome/Edge, with SysEx permission)">Find MIDI ports</button><button id="devConnBtn">Connect</button><button id="devStopBtn" title="Stop the transfer that is running">Stop</button><span id="devState" aria-live="polite"></span></span>
   <span class="vsw" role="group" aria-label="Zoom the panel"><button data-vb="30 140 1250 460" aria-pressed="true">Whole</button><button data-vb="30 160 650 220" aria-pressed="false">Left</button><button data-vb="650 160 630 220" aria-pressed="false">Steps</button><button data-vb="230 340 1050 260" aria-pressed="false">Keys</button></span>
   <span class="hint"><span class="touch">Tap = press · long-press = hold (latches) · drag an encoder up/down = turn · tap anything for help</span><span class="desk">Hover for help · right-click = hold a button (latch) · drag/wheel an encoder, click = touch · <kbd>Shift</kbd> = Shift · <kbd>Space</kbd> play · <kbd>.</kbd> stop · <kbd>R</kbd> rec · <kbd>A W S E D F T G Y H U J K</kbd> keys · <kbd>Z</kbd>/<kbd>X</kbd> octave</span></span>
 </div>

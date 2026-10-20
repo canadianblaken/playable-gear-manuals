@@ -337,18 +337,22 @@ const DEV={link:null,gvals:{},busy:false,stop:false,ports:null};
 function devLog(s,cls=""){const box=$("#devLog");if(!box)return;const d=document.createElement("div");d.className=cls;d.textContent=s;box.appendChild(d);while(box.childNodes.length>400)box.firstChild.remove();box.scrollTop=box.scrollHeight}
 async function busy(fn){if(!DEV.link){devLog("Connect first.","bad");return}if(DEV.busy)return;DEV.busy=true;DEV.stop=false;document.querySelectorAll("#paneDev button.sm").forEach(b=>b.disabled=true);
  try{await fn()}catch(e){devLog("Error: "+e.message,"bad")}finally{DEV.busy=false;document.querySelectorAll("#paneDev button.sm").forEach(b=>b.disabled=false)}}
+/* the connection controls live in the top bar, so they work before Device tools is opened */
+function devBindBar(){$("#devScanBtn").onclick=devScan;$("#devStopBtn").onclick=()=>{if(DEV.busy){DEV.stop=true;devLog("Stopping…")}};
+ $("#devConnBtn").onclick=()=>devConnect().catch(e=>{devLog("Error: "+e.message,"bad");devStatus("Error: "+e.message,"bad")})}
+function devStatus(text,cls){const st=$("#devState");st.innerHTML="";const p=document.createElement("span");p.className="pill "+cls;p.textContent=text;st.appendChild(p)}
 async function devConnect(){const sel=$("#devPort").value;if(DEV.link&&DEV.link.close)DEV.link.close();DEV.link=null;DEV.gvals={};
- if(sel==="sim"){DEV.link=new SimLink();SIMDEV.namesFw=$("#simNames").checked}
+ if(sel==="sim"){DEV.link=new SimLink();if($("#simNames"))SIMDEV.namesFw=$("#simNames").checked}
  else{const [oi,ii]=sel.split("|");const out=[...DEV.ports.outputs.values()].find(o=>o.id===oi),inp=[...DEV.ports.inputs.values()].find(i=>i.id===ii);if(!out||!inp){devLog("Port not found.","bad");return}DEV.link=new WebMidiLink(out,inp)}
- const id=await DEV.link.identity();if(id){const v=id.slice(12,16);devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");$("#devState").innerHTML=DEV.link.sim?'<span class="pill sim">simulation</span>':'<span class="pill real">KeyStep Pro</span>';
+ const id=await DEV.link.identity();if(id){const v=id.slice(12,16);devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");devStatus(DEV.link.sim?"simulation":`KeyStep Pro ${v[3]}.${v[2]}.${v[1]}`,DEV.link.sim?"sim":"real");
   await busy(async()=>{devLog("Reading the global settings…");let n=0;await quietly(DEV.link,async()=>{for(const g of GLOBALS){DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}});devLog(`read ${n} global settings`,"ok")});
   if(DEV.globalsDraw)DEV.globalsDraw();emit("dev:connect")}
- else{devLog("No identity reply. Check the ports and that SysEx permission was granted.","bad");DEV.link=null}}
-async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">Simulated KeyStep Pro (this page)</option>';
+ else{devLog("No identity reply. Check the ports and that SysEx permission was granted.","bad");devStatus("no reply","bad");DEV.link=null}}
+async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">Simulated KeyStep Pro</option>';
  if(!navigator.requestMIDIAccess){devLog("This browser has no Web MIDI (use Chrome or Edge; Firefox needs the site permission add-on).","bad");return}
  try{DEV.ports=await navigator.requestMIDIAccess({sysex:true})}catch(e){devLog("SysEx access was refused: "+e.message,"bad");return}
  const outs=[...DEV.ports.outputs.values()],ins=[...DEV.ports.inputs.values()];
- for(const o of outs){const i=ins.find(x=>x.name===o.name)||ins.find(x=>/keystep/i.test(x.name))||ins[0];if(!i)continue;const opt=new Option(`${o.name} (out) ⇄ ${i.name} (in)`,o.id+"|"+i.id);s.add(opt);if(/keystep/i.test(o.name))s.value=opt.value}
+ for(const o of outs){const i=ins.find(x=>x.name===o.name)||ins.find(x=>/keystep/i.test(x.name))||ins[0];if(!i)continue;const opt=new Option(o.name===i.name?o.name:`${o.name} ⇄ ${i.name}`,o.id+"|"+i.id);s.add(opt);if(/keystep/i.test(o.name))s.value=opt.value}
  devLog(`${outs.length} MIDI output(s) found`)}
 /* Device tools open under the keyboard (#devWide, the wide left column); the right column keeps a jump list */
 /* tools shown in the right-column box with the instructions instead of under the keyboard */
@@ -360,13 +364,13 @@ function featNav(){const nav=document.createElement("div");nav.className="featNa
  for(const f of FEATURES){const b=document.createElement("button");b.type="button";b.textContent=FEATURE_SHORT[f.id]||f.title.split(":")[0];if(FEATURE_KEY.has(f.id))b.className="hi";b.onclick=()=>featJump(f.id);nav.appendChild(b)}return nav}
 function renderDevice(){const pane=$("#paneDev");if(pane.dataset.built)return;pane.dataset.built=1;
  FEATURES.sort((a,b)=>FEATURE_ORDER.indexOf(a.id)-FEATURE_ORDER.indexOf(b.id));$("#devWide").appendChild(pane);
- pane.innerHTML=`<div class="card"><h2>Device tools <span id="devState"></span></h2>
+ pane.innerHTML=`<div class="card"><h2>Device tools</h2>
   <p class="pg">Talks SysEx to a KeyStep Pro on USB (Chrome/Edge, Web MIDI with SysEx permission) or to the simulated one in this page. Everything here was worked out from firmware 2.5.20 and tested on hardware; new tools are added as they are solved. Unofficial: back up your projects with MIDI Control Center before writing.</p>
-  <div class="feat"><div class="row"><select id="devPort"><option value="sim">Simulated KeyStep Pro (this page)</option></select><button class="sm" id="devScanBtn">Find MIDI ports</button><button class="sm" id="devConnBtn">Connect</button><button class="sm2" id="devStopBtn" title="Stop the transfer that is running">Stop</button></div>
-  <div class="row"><label><input type="checkbox" id="simNames" checked> simulation runs the project-names firmware</label></div></div>
+  <div class="feat"><div class="row small">Connect with the KeyStep controls in the top bar (pick a port, then Connect).</div>
+  <div class="row small"><label><input type="checkbox" id="simNames" checked> simulation runs the project-names firmware</label></div></div>
   <div data-a="nav"></div><div id="featList"></div><h3>Log</h3><div id="devLog"></div></div>`;
  pane.querySelector("[data-a=nav]").appendChild(featNav());
  const note=$("#paneDevNote");note.innerHTML=`<h2>Device tools</h2><p class="pg">MIDI file import and export are right here. The other tools are open under the keyboard, where there is room to edit.</p>`;
- $("#devScanBtn").onclick=devScan;$("#devStopBtn").onclick=()=>{if(DEV.busy){DEV.stop=true;devLog("Stopping…")}};$("#devConnBtn").onclick=()=>devConnect().catch(e=>devLog("Error: "+e.message,"bad"));$("#simNames").onchange=e=>{SIMDEV.namesFw=e.target.checked};
+ $("#simNames").onchange=e=>{SIMDEV.namesFw=e.target.checked};
  const list=$("#featList");for(const f of FEATURES){const box=document.createElement("div");box.className="feat"+(FEATURE_KEY.has(f.id)?" key":"");box.id="feat-"+f.id;box.innerHTML=`<h3>${f.title}</h3><div class="meta"><b>Verified</b> ${f.verified}${f.needs?` <span class="need">Needs ${f.needs}</span>`:""}</div><p class="pg">${f.about}</p><div class="body"></div>`;(FEATURE_SIDE.has(f.id)?note:list).appendChild(box);f.render(box.querySelector(".body"))}
  const jp=document.createElement("p");jp.className="pg";jp.textContent="Jump to a tool under the keyboard:";note.append(jp,featNav())}

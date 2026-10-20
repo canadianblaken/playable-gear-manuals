@@ -220,7 +220,7 @@ const TOURS=[
   {s:"Open the Device tools tab: this setting is global ID 156, which MCC does not show. Read it from the simulated device.",t:null,ev:"dev:read"}]},
  {n:"Device tools: write a song setup to the simulated KeyStep",steps:[
   {s:"Open the Device tools tab (top of the right column). The tools open under the keyboard.",t:null,ev:"tab:dev"},
-  {s:"Choose “Simulated KeyStep Pro” as the device and connect.",t:null,ev:"dev:connect"},
+  {s:"In the top bar, choose “Simulated KeyStep Pro” next to KeyStep and press Connect.",t:null,ev:"dev:connect"},
   {s:"In “Project names”, name project 2 and send it (the simulation runs the project-names firmware).",t:null,ev:"dev:name"},
   {s:"In “Chord and key per track”, write a chord and scale to project 2, track 2.",t:null,ev:"dev:trackkey"},
   {s:"Load project 2 on the panel (hold Project, press step 2) and play a key on Track 2.",t:"project",ev:"project:1"}]},
