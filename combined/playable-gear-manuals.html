@@ -4135,6 +4135,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
 @media (max-width:560px){.ccmKnob{grid-template-columns:auto minmax(0,1fr)}.ccmKnob .pg{grid-column:1/-1}}
 .filebtn{display:inline-block}
 .feat .row.small{font-size:12.5px}
+.card button.sm[aria-pressed=&quot;true&quot;]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 #tourBox .done{color:var(--ok)}
 .chap{list-style:none;margin:0;padding:0;max-height:420px;overflow:auto}
 .chap li{display:flex;gap:8px;align-items:baseline;padding:4px 6px;border-radius:6px;font-size:13px}
@@ -5604,12 +5605,16 @@ async function loadCatalog(){if(MG)return MG;
  if(typeof DecompressionStream!==&quot;function&quot;)throw new Error(&quot;this browser cannot unpack the catalog (it needs DecompressionStream: Chrome 80, Safari 16.4, Firefox 113 or later)&quot;);
  const bin=Uint8Array.from(atob(MIDIGUIDE_GZ),c=>c.charCodeAt(0));
  const cat=JSON.parse(await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream(&quot;gzip&quot;))).text());
- cat.devices.forEach(d=>{d.id=d.m+&quot;/&quot;+d.d;d.params=d.p.map(a=>mgParam(d,a));d.cc=d.params.filter(p=>p.kind===&quot;cc&quot;);d.unsupported=d.params.filter(p=>p.kind!==&quot;cc&quot;)});
+ cat.devices.forEach(d=>{d.id=d.m+&quot;/&quot;+d.d;d.params=d.p.map(a=>mgParam(d,a));d.cc=d.params.filter(p=>p.kind===&quot;cc&quot;);d.pairs=d.params.filter(isPair);d.unsupported=d.params.filter(p=>p.kind!==&quot;cc&quot;)});
  cat.byId=new Map(cat.devices.map(d=>[d.id,d]));return MG=cat}
 /* one catalog row; the importer drops trailing empty fields */
 function mgParam(d,a){const g=i=>a[i]===undefined?null:a[i],s=i=>a[i]||&quot;&quot;;
  return {section:d.s[a[0]]||&quot;&quot;,name:s(1),desc:s(2),kind:a[3],cc:g(4),lsb:g(5),nrpnMsb:g(6),nrpnLsb:g(7),min:g(8),max:g(9),def:g(10),
   nrpnMin:g(11),nrpnMax:g(12),nrpnDef:g(13),centered:!!a[14],notes:s(15),usage:s(16),rawCC:s(17)}}
+/* 14-bit pairs (MSB + LSB) are offered only with the &quot;14-bit synths&quot; button, as their coarse half: the MSB alone */
+const isPair=p=>p.kind===&quot;cc14&quot;&amp;&amp;p.cc<=119;
+const offered=d=>d.params.filter(p=>p.kind===&quot;cc&quot;||CCM.coarse&amp;&amp;isPair(p));
+const coarseNote=k=>`Coarse only: sends CC ${k.cc} without its LSB${k.lsb!=null?&quot; (CC &quot;+k.lsb+&quot;)&quot;:&quot;&quot;}, so 128 steps instead of 16,384. Check in the synth's manual that it responds to CC ${k.cc} alone.`;
 /* a knob is a good fit for a range of values; switches (a usage list without &quot;~&quot;, or a short range) still work but are not suggested */
 const continuous=p=>/~/.test(p.usage)||!p.usage&amp;&amp;((p.max??127)-(p.min??0))>=16;
 function unsupportedText(p){const where=p.kind===&quot;cc14&quot;?`CC ${p.cc} + LSB ${p.lsb}`:p.kind===&quot;mode&quot;?`CC ${p.cc}`:p.kind===&quot;nrpn&quot;?`NRPN ${p.nrpnMsb??&quot;?&quot;}:${p.nrpnLsb??&quot;?&quot;}`:p.rawCC?`CC field “${p.rawCC}”`:&quot;no CC or NRPN&quot;;
@@ -5622,9 +5627,9 @@ const SUGGEST=[
  {slot:&quot;Filter envelope amount&quot;,re:[/\b(filter|vcf)\b.*\b(env|eg|envelope)\b.*\b(amount|amt|depth|int|intensity)\b/i,/\b(env|eg|envelope)\b.*\b(amount|amt|depth|intensity)\b/i,/contour/i]},
  {slot:&quot;Envelope release or decay&quot;,re:[/\b(amp|vca)\b.*\brelease\b/i,/\b(amp|vca)\b.*\bdecay\b/i,/\brelease\b/i,/\bdecay\b/i]},
  {slot:&quot;LFO rate&quot;,re:[/\blfo\b.*\b(rate|speed|freq|frequency)\b/i,/\b(rate|speed)\b/i]}];
-function suggestKnobs(d){const used=new Set(),cands=d.cc.filter(continuous);
+function suggestKnobs(d){const used=new Set(),cands=[...d.cc,...(CCM.coarse?d.pairs:[])].filter(continuous);
  return SUGGEST.map(s=>{for(const re of s.re){const p=cands.find(p=>!used.has(p)&amp;&amp;re.test(`${p.section} ${p.name}`));if(p){used.add(p);return knobFrom(p,true)}}return null})}
-const knobFrom=(p,suggested=false)=>({cc:p.cc,min:p.min??0,max:p.max??127,label:p.name,section:p.section,suggested});
+const knobFrom=(p,suggested=false)=>({cc:p.cc,min:p.min??0,max:p.max??127,label:p.name,section:p.section,suggested,...(isPair(p)?{coarse:true,lsb:p.lsb}:{})});
 
 /* ---------- the mapping model ---------- */
 const int=(v,lo,hi)=>Number.isInteger(v)&amp;&amp;v>=lo&amp;&amp;v<=hi;
@@ -5637,8 +5642,8 @@ function checkMapping(m){if(!m||typeof m!==&quot;object&quot;)throw new Error(&q
  if(!int(m.port,0,3))throw new Error(`“${m.name}”: bad output port`);
  if(!Array.isArray(m.knobs)||m.knobs.length!==5)throw new Error(`“${m.name}”: needs five knobs`);
  const knobs=m.knobs.map((k,i)=>{if(k===null)return null;
-  if(!k||!int(k.cc,0,119)||!int(k.min,0,127)||!int(k.max,0,127)||!text(k.label,80)||!(k.section===undefined||text(k.section,80)))throw new Error(`“${m.name}”: knob ${i+1} is not a single CC 0–119 with min/max 0–127`);
-  return {cc:k.cc,min:k.min,max:k.max,label:k.label,section:k.section||&quot;&quot;}});
+  if(!k||!int(k.cc,0,119)||!int(k.min,0,127)||!int(k.max,0,127)||!text(k.label,80)||!(k.section===undefined||text(k.section,80))||!(k.coarse===undefined||typeof k.coarse===&quot;boolean&quot;)||!(k.lsb===undefined||k.lsb===null||int(k.lsb,0,127)))throw new Error(`“${m.name}”: knob ${i+1} is not a single CC 0–119 with min/max 0–127`);
+  return {cc:k.cc,min:k.min,max:k.max,label:k.label,section:k.section||&quot;&quot;,...(k.coarse?{coarse:true,lsb:k.lsb??null}:{})}});
  return {name:m.name.trim(),device:m.device,channel:m.channel,port:m.port,knobs}}
 /* the global settings a mapping sets: IDs 28-32 CC, 33-37 port, 38-42 channel (0-15, 127 = Global), 48-52 min, 53-57 max */
 function mappingGlobals(m){const g={};m.knobs.forEach((k,i)=>{if(!k)return;
@@ -5657,20 +5662,20 @@ function exportMaps(maps){return {format:CCMAP_FORMAT,version:1,saved:new Date()
 function importMaps(obj){if(!obj||obj.format!==CCMAP_FORMAT||obj.version!==1||!Array.isArray(obj.maps))throw new Error(&quot;not a KeyStep Pro CC mapping file from this page&quot;);
  if(obj.maps.length>500)throw new Error(&quot;too many mappings in the file&quot;);return obj.maps.map(checkMapping)}
 /* match a saved knob against the catalog as it is now */
-function resolveKnob(d,k){if(!k)return {state:&quot;none&quot;};if(!d)return {state:&quot;nodevice&quot;};
- const same=d.cc.find(p=>p.cc===k.cc&amp;&amp;p.name===k.label);if(same)return {state:&quot;ok&quot;,p:same};
- const byCC=d.cc.find(p=>p.cc===k.cc);return byCC?{state:&quot;renamed&quot;,p:byCC}:{state:&quot;missing&quot;}}
+function resolveKnob(d,k){if(!k)return {state:&quot;none&quot;};if(!d)return {state:&quot;nodevice&quot;};const list=k.coarse?d.pairs:d.cc;
+ const same=list.find(p=>p.cc===k.cc&amp;&amp;p.name===k.label);if(same)return {state:&quot;ok&quot;,p:same};
+ const byCC=list.find(p=>p.cc===k.cc);return byCC?{state:&quot;renamed&quot;,p:byCC}:{state:&quot;missing&quot;}}
 
 /* ---------- the tab ---------- */
-const CCM={dev:null,knobs:[null,null,null,null,null],channel:0,port:3,saved:[]};
+const CCM={dev:null,knobs:[null,null,null,null,null],channel:0,port:3,saved:[],coarse:false},CCMAP_COARSE=&quot;ksp.ccmap.coarse&quot;;
 function ccmStatus(s,cls=&quot;&quot;){const e=$(&quot;#ccmStatus&quot;);if(e){e.textContent=s;e.className=&quot;pg &quot;+cls}}
-function ccmDraft(){return {name:&quot;draft&quot;,device:CCM.dev?CCM.dev.id:null,channel:CCM.channel,port:CCM.port,knobs:CCM.knobs.map(k=>k&amp;&amp;{cc:k.cc,min:k.min,max:k.max,label:k.label,section:k.section})}}
+function ccmDraft(){return {name:&quot;draft&quot;,device:CCM.dev?CCM.dev.id:null,channel:CCM.channel,port:CCM.port,knobs:CCM.knobs.map(k=>k&amp;&amp;{cc:k.cc,min:k.min,max:k.max,label:k.label,section:k.section,...(k.coarse?{coarse:true,lsb:k.lsb??null}:{})})}}
 function ccmSaveDraft(){try{localStorage.setItem(CCMAP_DRAFT,JSON.stringify(ccmDraft()))}catch(e){}}
 function ccEl(tag,props={},kids=[]){const e=document.createElement(tag);Object.assign(e,props);for(const k of kids)e.append(k);return e}
 async function renderCCMap(){const pane=$(&quot;#paneCC&quot;);if(pane.dataset.built)return;pane.dataset.built=1;
  pane.innerHTML=`<div class=&quot;card&quot;><h2>Synth CC mapper</h2>
   <p class=&quot;pg&quot;>Pick a synth and give the KeyStep Pro's five Control-mode knobs some of its parameters. These are the five <b>global</b> knob assignments (Utility › Controller › Knob 1–5): every track's Control mode uses the same five, there are no separate banks per track. Applying changes the simulated KeyStep Pro only.</p>
-  <div class=&quot;feat&quot;><div class=&quot;row&quot;><input type=&quot;search&quot; id=&quot;ccmSearch&quot; placeholder=&quot;Search manufacturer or model&quot; aria-label=&quot;Search synths&quot; autocomplete=&quot;off&quot;><span class=&quot;pg&quot; id=&quot;ccmCount&quot;></span></div>
+  <div class=&quot;feat&quot;><div class=&quot;row&quot;><input type=&quot;search&quot; id=&quot;ccmSearch&quot; placeholder=&quot;Search manufacturer or model&quot; aria-label=&quot;Search synths&quot; autocomplete=&quot;off&quot;><button class=&quot;sm&quot; id=&quot;ccmCoarse&quot; aria-pressed=&quot;false&quot; title=&quot;Show only synths with 14-bit CC pairs, and offer those pairs as coarse CCs (MSB only)&quot;>14-bit synths (coarse CC)</button><span class=&quot;pg&quot; id=&quot;ccmCount&quot;></span></div>
    <select id=&quot;ccmList&quot; size=&quot;8&quot; aria-label=&quot;Synths&quot; class=&quot;ccmList&quot;></select></div>
   <div id=&quot;ccmDevice&quot; class=&quot;feat&quot; hidden></div>
   <div class=&quot;feat&quot;><h3>Knobs</h3><div class=&quot;row small&quot;>MIDI channel <select id=&quot;ccmCh&quot; aria-label=&quot;MIDI channel&quot;></select> Output <select id=&quot;ccmPort&quot; aria-label=&quot;Output port&quot;></select></div>
@@ -5682,6 +5687,7 @@ async function renderCCMap(){const pane=$(&quot;#paneCC&quot;);if(pane.dataset.b
   <details><summary>How the simulation uses these settings</summary><ul class=&quot;tight pg&quot;>
    <li>Min and Max scale the knob: the simulation keeps the knob position (0–127, also what Control-track automation records) and sends Min + (Max − Min) × position / 127, so live moves and recorded automation use the same range. A Min above Max reverses the knob. This scaling follows Arturia's description of the settings and is not yet traced in the firmware.</li>
    <li>Only single 7-bit CCs are offered, because that is what a knob sends. NRPN, 14-bit CC pairs (MSB + LSB), channel mode messages (CC 120–127) and SysEx are listed separately and never turned into plain CCs.</li>
+   <li>The <b>14-bit synths</b> button lists only synths with 14-bit CC pairs and offers each pair's coarse half: the knob sends the MSB (for example CC 19) without the LSB (CC 51). Most such synths follow the MSB alone in 128 steps, but some wait for the LSB or keep an old one; the catalog cannot tell which, so check the synth's manual. Coarse knobs are marked in the menus, in saved mappings and in exported files.</li>
    <li>Output port is stored as on the device. This page's MIDI button (top bar) stands in for the USB port: it sends a knob only when its port is USB or All. MIDI 1/MIDI 2 routing and writing a mapping to a real KeyStep Pro are not done yet.</li>
    <li>Suggestions are picked from the synth's own documented parameters by name, never assumed from another synth.</li></ul></details>
   <p class=&quot;pg&quot; id=&quot;ccmCredit&quot;></p></div>`;
@@ -5709,8 +5715,13 @@ async function renderCCMap(){const pane=$(&quot;#paneCC&quot;);if(pane.dataset.b
  try{await loadCatalog()}catch(e){ccmStatus(&quot;The synth catalog could not be loaded: &quot;+e.message,&quot;bad&quot;);return}
  const search=$(&quot;#ccmSearch&quot;),list=$(&quot;#ccmList&quot;);
  const drawList=()=>{const words=search.value.toLowerCase().split(/\s+/).filter(Boolean),keep=list.value;list.innerHTML=&quot;&quot;;let n=0;
-  for(const d of MG.devices){const hay=(d.m+&quot; &quot;+d.d).toLowerCase();if(!words.every(w=>hay.includes(w)))continue;n++;list.add(new Option(`${d.m} — ${d.d} (${d.cc.length} CC)`,d.id))}
-  list.value=keep;$(&quot;#ccmCount&quot;).textContent=`${n} of ${MG.devices.length} synths`};
+  for(const d of MG.devices){const hay=(d.m+&quot; &quot;+d.d).toLowerCase();if(CCM.coarse&amp;&amp;!d.pairs.length||!words.every(w=>hay.includes(w)))continue;n++;
+   list.add(new Option(`${d.m} — ${d.d} (${d.cc.length} CC${CCM.coarse?`, ${d.pairs.length} 14-bit pair${d.pairs.length===1?&quot;&quot;:&quot;s&quot;}`:&quot;&quot;})`,d.id))}
+  list.value=keep;$(&quot;#ccmCount&quot;).textContent=CCM.coarse?`${n} of ${MG.devices.filter(d=>d.pairs.length).length} synths with 14-bit pairs`:`${n} of ${MG.devices.length} synths`};
+ const coarseBtn=$(&quot;#ccmCoarse&quot;),setCoarse=on=>{CCM.coarse=on;coarseBtn.setAttribute(&quot;aria-pressed&quot;,on);try{localStorage.setItem(CCMAP_COARSE,on?&quot;1&quot;:&quot;0&quot;)}catch(e){}};
+ coarseBtn.onclick=()=>{setCoarse(!CCM.coarse);drawList();if(CCM.dev)selectDevice(CCM.dev,false);
+  ccmStatus(CCM.coarse?&quot;Showing synths with 14-bit CC pairs; their coarse halves (MSB only) are now in the knob menus, marked “coarse”.&quot;:&quot;Showing all synths; only single CCs are offered.&quot;)};
+ try{setCoarse(localStorage.getItem(CCMAP_COARSE)===&quot;1&quot;)}catch(e){}
  search.oninput=drawList;list.onchange=()=>{selectDevice(MG.byId.get(list.value),true)};drawList();
  let draft=null;try{draft=JSON.parse(localStorage.getItem(CCMAP_DRAFT)||&quot;null&quot;)}catch(e){}
  if(draft){try{loadMapping(checkMapping(draft),true)}catch(e){drawKnobs()}}else drawKnobs();
@@ -5718,11 +5729,13 @@ async function renderCCMap(){const pane=$(&quot;#paneCC&quot;);if(pane.dataset.b
  emit(&quot;ccmap:ready&quot;)}
 function selectDevice(d,suggest){CCM.dev=d||null;const box=$(&quot;#ccmDevice&quot;);box.innerHTML=&quot;&quot;;box.hidden=!d;
  if(d){$(&quot;#ccmList&quot;).value=d.id;const by=k=>d.unsupported.filter(p=>p.kind===k).length;
-  box.append(ccEl(&quot;h3&quot;,{textContent:`${d.m} ${d.d}`}),ccEl(&quot;div&quot;,{className:&quot;pg&quot;,textContent:`${d.cc.length} parameter${d.cc.length===1?&quot;&quot;:&quot;s&quot;} a knob can send (single CC). Not offered: ${by(&quot;nrpn&quot;)} NRPN, ${by(&quot;cc14&quot;)} 14-bit CC pair, ${by(&quot;mode&quot;)} channel mode, ${by(&quot;other&quot;)} other.`}));
-  if(!d.cc.length)box.append(ccEl(&quot;p&quot;,{className:&quot;need&quot;,textContent:&quot;None of this synth's documented parameters can go on a KeyStep Pro knob: a knob sends one 7-bit CC, and this synth uses NRPN, 14-bit CC pairs or other messages for them (listed below). Use the synth's own controls, or software that sends NRPN.&quot;}));
-  if(d.unsupported.length){const det=ccEl(&quot;details&quot;,{},[ccEl(&quot;summary&quot;,{textContent:`Parameters not offered (${d.unsupported.length})`})]),ul=ccEl(&quot;ul&quot;,{className:&quot;tight pg&quot;});
-   d.unsupported.forEach(p=>ul.append(ccEl(&quot;li&quot;,{textContent:unsupportedText(p)})));det.append(ul);box.append(det)}
-  if(suggest){CCM.knobs=suggestKnobs(d);const n=CCM.knobs.filter(Boolean).length;ccmStatus(d.cc.length?(n?`Suggested ${n} knob${n===1?&quot;&quot;:&quot;s&quot;} from this synth's parameters; change any of them.`:&quot;No parameter names matched the suggestion slots; pick the knobs yourself.&quot;):&quot;&quot;)}}
+  const off=offered(d),pairs=CCM.coarse?d.pairs.length:0,not=d.unsupported.filter(p=>!(CCM.coarse&amp;&amp;isPair(p)));
+  box.append(ccEl(&quot;h3&quot;,{textContent:`${d.m} ${d.d}`}),ccEl(&quot;div&quot;,{className:&quot;pg&quot;,textContent:`${d.cc.length} parameter${d.cc.length===1?&quot;&quot;:&quot;s&quot;} a knob can send (single CC)${pairs?`, plus ${pairs} 14-bit pair${pairs===1?&quot;&quot;:&quot;s&quot;} offered as coarse CC`:&quot;&quot;}. Not offered: ${by(&quot;nrpn&quot;)} NRPN, ${CCM.coarse?by(&quot;cc14&quot;)-pairs:by(&quot;cc14&quot;)} 14-bit CC pair, ${by(&quot;mode&quot;)} channel mode, ${by(&quot;other&quot;)} other.`}));
+  if(!off.length)box.append(ccEl(&quot;p&quot;,{className:&quot;need&quot;,textContent:&quot;None of this synth's documented parameters can go on a KeyStep Pro knob: a knob sends one 7-bit CC, and this synth uses NRPN, 14-bit CC pairs or other messages for them (listed below). Use the synth's own controls, or software that sends NRPN.&quot;}));
+  if(!off.length&amp;&amp;!CCM.coarse&amp;&amp;d.pairs.length)box.append(ccEl(&quot;p&quot;,{className:&quot;pg&quot;,textContent:`It has ${d.pairs.length} 14-bit CC pair${d.pairs.length===1?&quot;&quot;:&quot;s&quot;}: the “14-bit synths” button offers their coarse halves.`}));
+  if(not.length){const det=ccEl(&quot;details&quot;,{},[ccEl(&quot;summary&quot;,{textContent:`Parameters not offered (${not.length})`})]),ul=ccEl(&quot;ul&quot;,{className:&quot;tight pg&quot;});
+   not.forEach(p=>ul.append(ccEl(&quot;li&quot;,{textContent:unsupportedText(p)})));det.append(ul);box.append(det)}
+  if(suggest){CCM.knobs=suggestKnobs(d);const n=CCM.knobs.filter(Boolean).length;ccmStatus(off.length?(n?`Suggested ${n} knob${n===1?&quot;&quot;:&quot;s&quot;} from this synth's parameters; change any of them.`:&quot;No parameter names matched the suggestion slots; pick the knobs yourself.&quot;):&quot;&quot;)}}
  drawKnobs();ccmSaveDraft()}
 function loadMapping(m,quiet){const d=m.device&amp;&amp;MG?MG.byId.get(m.device):null;CCM.channel=m.channel;CCM.port=m.port;$(&quot;#ccmCh&quot;).value=m.channel;$(&quot;#ccmPort&quot;).value=m.port;
  if(m.name!==&quot;draft&quot;)$(&quot;#ccmName&quot;).value=m.name;CCM.knobs=m.knobs.map(k=>k&amp;&amp;{...k,suggested:false});selectDevice(d,false);
@@ -5732,13 +5745,14 @@ function loadMapping(m,quiet){const d=m.device&amp;&amp;MG?MG.byId.get(m.device)
 function drawKnobs(){const box=$(&quot;#ccmKnobs&quot;);if(!box)return;box.innerHTML=&quot;&quot;;const d=CCM.dev;
  for(let i=0;i<5;i++){const k=CCM.knobs[i],row=ccEl(&quot;div&quot;,{className:&quot;ccmKnob&quot;}),sel=ccEl(&quot;select&quot;,{ariaLabel:`Knob ${i+1} parameter`});
   sel.add(new Option(&quot;— not assigned (keeps its current setting) —&quot;,&quot;&quot;));
-  const r=resolveKnob(d,k);if(k&amp;&amp;r.state!==&quot;ok&quot;){sel.add(new Option(`CC ${k.cc} · ${k.label} (saved; not in the catalog for this synth)`,&quot;saved&quot;))}
-  if(d){let og=null,sec=null;d.cc.forEach((p,j)=>{if(p.section!==sec){sec=p.section;og=ccEl(&quot;optgroup&quot;,{label:sec||&quot;(no section)&quot;});sel.append(og)}og.append(new Option(`CC ${p.cc} · ${p.name}`,j))})}
-  sel.value=!k?&quot;&quot;:r.state===&quot;ok&quot;?String(d.cc.indexOf(r.p)):&quot;saved&quot;;
+  const r=resolveKnob(d,k),off=d?offered(d):[];if(k&amp;&amp;r.state===&quot;ok&quot;&amp;&amp;!off.includes(r.p))off.push(r.p); /* a saved coarse knob stays selectable with the button off */
+  if(k&amp;&amp;r.state!==&quot;ok&quot;){sel.add(new Option(`CC ${k.cc} · ${k.label}${k.coarse?&quot; (coarse)&quot;:&quot;&quot;} (saved; not in the catalog for this synth)`,&quot;saved&quot;))}
+  if(d){let og=null,sec=null;off.forEach((p,j)=>{if(p.section!==sec||!og){sec=p.section;og=ccEl(&quot;optgroup&quot;,{label:sec||&quot;(no section)&quot;});sel.append(og)}og.append(new Option(`CC ${p.cc} · ${p.name}${isPair(p)?` (coarse, LSB ${p.lsb})`:&quot;&quot;}`,j))})}
+  sel.value=!k?&quot;&quot;:r.state===&quot;ok&quot;?String(off.indexOf(r.p)):&quot;saved&quot;;
   const mn=ccEl(&quot;input&quot;,{type:&quot;number&quot;,min:0,max:127,value:k?k.min:0,ariaLabel:`Knob ${i+1} minimum`,disabled:!k}),mx=ccEl(&quot;input&quot;,{type:&quot;number&quot;,min:0,max:127,value:k?k.max:127,ariaLabel:`Knob ${i+1} maximum`,disabled:!k});
   const info=ccEl(&quot;div&quot;,{className:&quot;pg&quot;});if(k){const p=r.state===&quot;ok&quot;?r.p:null;
-   info.textContent=[k.suggested?`Suggested (${SUGGEST[i].slot})`:&quot;&quot;,p&amp;&amp;p.section,p&amp;&amp;p.desc,p&amp;&amp;p.usage&amp;&amp;`Values: ${p.usage}`,p&amp;&amp;p.notes&amp;&amp;`Note: ${p.notes}`,p&amp;&amp;p.centered?&quot;Centered (bipolar)&quot;:&quot;&quot;].filter(Boolean).join(&quot; · &quot;)}
-  sel.onchange=()=>{const v=sel.value;CCM.knobs[i]=v===&quot;&quot;?null:v===&quot;saved&quot;?k:knobFrom(d.cc[+v]);drawKnobs();ccmSaveDraft()};
+   info.textContent=[k.suggested?`Suggested (${SUGGEST[i].slot})`:&quot;&quot;,k.coarse?coarseNote(k):&quot;&quot;,p&amp;&amp;p.section,p&amp;&amp;p.desc,p&amp;&amp;p.usage&amp;&amp;`Values: ${p.usage}`,p&amp;&amp;p.notes&amp;&amp;`Note: ${p.notes}`,p&amp;&amp;p.centered?&quot;Centered (bipolar)&quot;:&quot;&quot;].filter(Boolean).join(&quot; · &quot;)}
+  sel.onchange=()=>{const v=sel.value;CCM.knobs[i]=v===&quot;&quot;?null:v===&quot;saved&quot;?k:knobFrom(off[+v]);drawKnobs();ccmSaveDraft()};
   const num=(inp,f)=>{inp.onchange=()=>{const v=Math.round(+inp.value);if(!int(v,0,127)){inp.value=CCM.knobs[i][f];return ccmStatus(&quot;Min and Max are 0–127.&quot;,&quot;bad&quot;)}CCM.knobs[i][f]=v;ccmSaveDraft()}};num(mn,&quot;min&quot;);num(mx,&quot;max&quot;);
   row.append(ccEl(&quot;b&quot;,{textContent:`Knob ${i+1}`}),sel,&quot;Min&quot;,mn,&quot;Max&quot;,mx,info);box.append(row)}}
 function drawSaved(pick){const s=$(&quot;#ccmSaved&quot;);if(!s)return;s.innerHTML=&quot;&quot;;if(!CCM.saved.length)s.add(new Option(&quot;(none saved)&quot;,&quot;&quot;));

@@ -4,7 +4,7 @@
 
 - **Manual**: hover/click help for every control, chapters keyed to the 2.5.1 user manual, demos and 14 guided tours.
 - **Device tools**: SysEx tools that talk to a real KeyStep Pro over Web MIDI (Chrome/Edge, SysEx permission), or to the simulated one in the page. Includes whole-project recall/send, backups of all 16 projects, and a project library kept in the browser (IndexedDB).
-- **Synth CC**: pick a synth from the MIDI Guide catalog (447 devices) and assign its parameters to the five Control-mode knobs of the simulation (global settings 28–57). Only single 7-bit CCs are offered; NRPN, 14-bit pairs, channel mode CCs and other messages are listed separately. Mappings are saved in the browser and export/import as JSON. Nothing is sent to a device yet.
+- **Synth CC**: pick a synth from the MIDI Guide catalog (447 devices) and assign its parameters to the five Control-mode knobs of the simulation (global settings 28–57). Only single 7-bit CCs are offered; NRPN, 14-bit pairs, channel mode CCs and other messages are listed separately. The “14-bit synths” button narrows the list to the 46 synths with 14-bit pairs and offers each pair's coarse half (MSB only), marked as such. Mappings are saved in the browser and export/import as JSON. Nothing is sent to a device yet.
 
 Places where the simulation follows the decoded 2.5.20 firmware instead of the manual carry a blue **Firmware** note in the help text (scale quantizer ties, chord-mode snapping, chord persistence, the Save confirm trap, hidden settings).
 

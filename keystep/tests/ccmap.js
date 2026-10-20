@@ -56,6 +56,20 @@ $("#ccmApply").onclick();ok("Apply to simulation from the tab",S.globals[28]===2
 loadMapping(checkMapping({...map,device:"Nobody/Ghost synth"}));ok("missing catalog entry: loads with a note, keeps the CCs",/not in this catalog/.test($("#ccmStatus").textContent)&&CCM.knobs[0].cc===23,$("#ccmStatus").textContent);
 loadMapping(checkMapping({...map,knobs:[{cc:23,min:0,max:127,label:"Old name"},null,null,null,null]}));ok("renamed parameter is flagged",/now called “Cutoff”/.test($("#ccmStatus").textContent),$("#ccmStatus").textContent);
 $("#ccmSearch").value="";$("#ccmSearch").oninput();$("#ccmList").value="Moog/One";$("#ccmList").onchange();ok("no-compatible-parameter explanation",/None of this synth's documented parameters/.test($("#ccmDevice").textContent));
+/* the 14-bit button: list only synths with pairs, offer the pairs' coarse halves, keep them marked */
+const withPairs=C.devices.filter(d=>d.pairs.length).length;
+$("#ccmSearch").value="";$("#ccmCoarse").click();
+ok("14-bit button lists only synths with pairs",$("#ccmCoarse").getAttribute("aria-pressed")==="true"&&$("#ccmList").options.length===withPairs&&[...$("#ccmList").options].some(o=>o.value==="Moog/Subsequent 37")&&![...$("#ccmList").options].some(o=>o.value==="Arturia/MicroFreak"),{n:$("#ccmList").options.length,withPairs});
+$("#ccmList").value="Moog/Subsequent 37";$("#ccmList").onchange();
+ok("Sub 37 suggestion: coarse CC 19 for Filter cutoff, LSB recorded",CCM.knobs[0]&&CCM.knobs[0].cc===19&&CCM.knobs[0].coarse===true&&CCM.knobs[0].lsb===51&&CCM.knobs[0].label==="Filter cutoff",CCM.knobs[0]);
+ok("coarse knob is marked in the menu and explained",/\(coarse, LSB 51\)/.test($("#ccmKnobs").textContent)&&/Coarse only: sends CC 19 without its LSB \(CC 51\)/.test($("#ccmKnobs").textContent));
+ok("device box counts the pairs as offered",/14-bit pairs? offered as coarse CC/.test($("#ccmDevice").textContent),$("#ccmDevice").textContent);
+$("#ccmApply").onclick();ok("coarse knob applies as a plain CC 19 setting",S.globals[28]===19);
+const cm=checkMapping({...ccmDraft(),name:"Sub"});ok("coarse flag survives export/import",importMaps(JSON.parse(JSON.stringify(exportMaps([cm]))))[0].knobs[0].coarse===true);
+ok("bad coarse flag rejected",(()=>{try{checkMapping({...cm,knobs:[{...cm.knobs[0],coarse:"yes"},null,null,null,null]});return false}catch(e){return true}})());
+ok("button state is remembered",localStorage.getItem(CCMAP_COARSE)==="1");
+$("#ccmCoarse").click();
+ok("button off: all synths again, saved coarse knob stays selected, other pairs not offered",$("#ccmList").options.length===C.devices.length&&$("#ccmKnobs select").value!==""&&[...$("#ccmKnobs select").options].filter(o=>/\(coarse, LSB/.test(o.text)).length===1,{n:$("#ccmList").options.length});
 ok("mapper never touched DEV.link or MIDI access",touched.length===0,touched);
 Object.defineProperty(DEV,"link",realLink);navigator.requestMIDIAccess=realRMA;
 try{localStorage.removeItem(CCMAP_KEY);localStorage.removeItem(CCMAP_DRAFT)}catch(e){}
