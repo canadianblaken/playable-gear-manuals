@@ -426,7 +426,16 @@ function loadDemo(name){const pr=DEMOS[name]();stop();S.ram[S.proj]=pr;S.flash[S
 
 /* ---------- tabs, buttons, boot ---------- */
 function selectTab(w){$("#tabMan").setAttribute("aria-selected",w==="man");$("#tabDev").setAttribute("aria-selected",w==="dev");$("#paneMan").hidden=w!=="man";$("#paneDev").hidden=w!=="dev";if(w==="dev"){renderDevice();emit("tab:dev")}try{localStorage.setItem("ksp.tab",w)}catch(e){}}
-function boot(){baseState();drawPanel();bindInput();renderChapters();
+function initPanelZoom(){
+ let zoom=100;
+ try{const saved=Number(localStorage.getItem("ksp.panelZoom"));if(Number.isFinite(saved)&&saved>=50&&saved<=250)zoom=saved}catch(e){}
+ const apply=()=>{svg.style.width=zoom+"%";svg.style.maxWidth="none";$("#panelZoomValue").textContent=zoom+"%";$("#panelZoomOut").disabled=zoom<=50;$("#panelZoomIn").disabled=zoom>=250;try{localStorage.setItem("ksp.panelZoom",String(zoom))}catch(e){}};
+ $("#panelZoomOut").onclick=()=>{zoom=Math.max(50,zoom-25);apply()};
+ $("#panelZoomIn").onclick=()=>{zoom=Math.min(250,zoom+25);apply()};
+ $("#panelZoomFit").onclick=()=>{zoom=100;apply();$("#panelViewport").scrollLeft=0};
+ apply();
+}
+function boot(){baseState();drawPanel();bindInput();renderChapters();initPanelZoom();
  const ex=$("#exSel");Object.keys(DEMOS).forEach(n=>ex.add(new Option(n,n)));ex.onchange=()=>{if(ex.value)loadDemo(ex.value);ex.value=""};
  const ts=$("#tourSel");TOURS.forEach((t,i)=>ts.add(new Option(t.n,i)));ts.onchange=()=>{if(ts.value!==""){startTour(+ts.value);selectTab("man")}ts.value=""};
  $("#soundBtn").onclick=e=>{SOUND=!SOUND;e.target.setAttribute("aria-pressed",SOUND);if(!SOUND)allOff()};

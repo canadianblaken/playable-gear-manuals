@@ -15,13 +15,16 @@ node tests/cdp.mjs "file://$PWD/keystep-interactive-manual.html" tests/tour-walk
 node tests/cdp.mjs "file://$PWD/keystep-interactive-manual.html" tests/functional.js   # firmware behaviour + SysEx tools vs the simulation
 ```
 
-`src/1b-globals.js` is generated from the MIDI Control Center device file plus the firmware findings (`~/keysteppro/tools/gen_globals_js.py`, not in this repo).
+`src/1b-globals.js` is generated from the MIDI Control Center device file plus the firmware findings (`~/keysteppro/tools/gen_globals_js.py`, not in this repo). `src/1c-bulk.js` comes from the same file's recall plan (`~/keysteppro/tools/gen_bulk_js.py`).
+
+On macOS, set `CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`. `MIDI=1` grants Web MIDI with SysEx to the headless page, so a script can drive a real KeyStep Pro; `TIMEOUT` (ms) raises the 120 s evaluation limit for whole-project transfers.
 
 | part | contents |
 |---|---|
 | `0-head.html` | page, styles |
 | `1-data.js` | panel layout (MCC coordinates), scales, help text, chapters, tours |
 | `1b-globals.js` | generated table of the 158 global settings |
+| `1c-bulk.js` | generated project recall plan: every block MCC reads for a project (8951 requests) |
 | `2-audio.js` | stand-in instruments |
 | `3-seq.js` | projects, patterns, playback, recording, Shift functions |
 | `4-screens.js` | OLED and the Utility menu |
@@ -39,4 +42,4 @@ The Device tools tab only lists things that were worked out and then checked on 
 3. Add an assertion to `tests/functional.js` that runs the tool against the simulation.
 4. If the finding changes how the instrument behaves, add a firmware note (fifth field) to the matching `INFO` entry in `src/1-data.js`, and a tour step if it deserves one.
 
-Protocol reminders: the byte after the command is the project (0 = current, 1–16). Item data is only answered inside a session (`05 <proj>`), and reads return what is saved in flash. A stock `06 <proj>` commit flips every scene/pattern state it was not given, so writers must re-send all 96 states (see `writeProject`). Global IDs 128+ use commands 31/32 with `id-128`. A global SET gets no reply, so read it back.
+Protocol reminders: the byte after the command is the project (0 = current, 1–16). Item data is only answered inside a session (`05 <proj>`), and reads return what is saved in flash. A stock `06 <proj>` commit flips every scene/pattern state it was not given, so writers must re-send all 96 states (see `writeProject`). Global IDs 128+ use commands 31/32 with `id-128`. A global SET gets no reply, so read it back. The getter sends stored bytes unmasked, so a byte of 0xF7 or above (a chord note below the root) breaks the reply frame, and the SET keeps only 7 bits. One GET at a time: with 4 or more in flight the device drops replies.

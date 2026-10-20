@@ -42,4 +42,22 @@ SIMDEV.namesFw=false;await L.setName(3,"Ignored");ok("stock firmware ignores the
 const pr2=await writeProject(L,{project:4,shape:[60,64,67],tracks:[{n:1,root:0,scale:"user1",userMask:[0,1,3,5,7,8,10]}]});
 ok("user 1 scale mask written",pr2.length===0&&S.flash[3].user[0]===[0,1,3,5,7,8,10].reduce((m,i)=>m|1<<i,0),{pr2:pr2.slice(0,2),u:S.flash[3].user[0]});
 ok("bad name rejected",(()=>{try{displayName("this name is far too long");return false}catch(e){return true}})());
+/* whole project: recall, send to another slot, read back */
+ok("recall plan matches MCC (8951 blocks)",bulkPlan().length===8951,bulkPlan().length);
+reset();saveProject();S.flash[0].raw["121/76/3"]=5;S.flash[0].raw["122/95/2,17"]=1;
+const f1=await readProject(L,1);ok("recall reads project 1",f1.data.length===8951&&f1.project===1&&/track 2: \d+ pattern/.test(projectSummary(f1)),projectSummary(f1));
+f1.name="Copy Test";const pr3=await storeProject(L,9,f1);
+ok("store to project 9 verifies",pr3.length===0,pr3.slice(0,3));
+const nz=r=>Object.keys(r).sort().filter(k=>r[k]).map(k=>k+"="+r[k]);
+const sysexView=pj=>JSON.stringify(pj.tracks.map(t=>[t.valid,t.chord,t.chordOn,t.oct,t.pats.map(p=>[p.valid,p.root,p.scale,nz(p.raw)])]));
+ok("project 9 equals project 1 after store (SysEx-visible state)",sysexView(S.flash[8])===sysexView(S.flash[0])&&S.flash[8].raw["121/76/3"]===5&&S.flash[8].raw["122/95/2,17"]===1&&S.flash[8].name==="Copy Test");
+const f9=await readProject(L,9);ok("recall of the copy is identical",JSON.stringify(f9.data)===JSON.stringify(f1.data));
+/* chords entered with a note below the root: 0xF7 cuts the reply, 0xF8-0xFF vanish; neither can be written back */
+reset();saveProject();Object.assign(S.flash[0].tracks[0],{chord:{root:56,off:[-9,3]},chordOn:true,valid:true});Object.assign(S.flash[0].tracks[2],{chord:{root:60,off:[-2]},chordOn:true,valid:true});
+const f2=await readProject(L,1),cb=(it,i)=>f2.data.find(e=>e[0]===it&&e[1]===0x57&&e[2][0]===i)[3][0];
+ok("unreadable chord bytes recalled as null",cb(0x7B,2)===null&&cb(0x7B,3)===3&&cb(0x7D,2)===null&&cb(0x7B,1)===56,[cb(0x7B,2),cb(0x7B,3),cb(0x7D,2)]);
+ok("summary marks the note below the root",/track 1: .*chord G#3 \(below root\) B3/.test(projectSummary(f2)),projectSummary(f2));
+const pr4=await storeProject(L,10,f2);
+ok("store skips those chords and reports them, the rest verifies",pr4.length===2&&pr4.every(s=>/chord not sent/.test(s)),pr4);
+ok("file check rejects a damaged file",(()=>{const b=deep(f1);b.data[5][3]=[200];try{checkProjectFile(b);return false}catch(e){return true}})());
 selectTab("man");return R;

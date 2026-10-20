@@ -29,16 +29,19 @@ class Link{
 }
 class WebMidiLink extends Link{
  constructor(out,inp){super();this.out=out;this.inp=inp;this.inbox=[];this.part=[];this.sim=false;
-  inp.onmidimessage=e=>{const d=e.data;for(const b of d){if(b===0xF0)this.part=[b];else if(this.part.length){this.part.push(b);if(b===0xF7){this.inbox.push(this.part);this.part=[]}}}}}
- async send(bytes,o={}){this.inbox=[];devLog("→ "+hex(bytes),"tx");this.out.send(bytes);
+  inp.onmidimessage=e=>{const d=e.data;for(const b of d){if(b===0xF0)this.part=[b];else if(this.part.length){this.part.push(b);if(b===0xF7){this.inbox.push(this.part);this.part=[];if(this.wake)this.wake()}}}}}
+ /* quiet: skip the per-frame log during whole-project transfers (thousands of frames) */
+ async send(bytes,o={}){this.inbox=[];if(!this.quiet)devLog("→ "+hex(bytes),"tx");this.out.send(bytes);
   if(o.commit){await sleep(3000);return this.inbox}
-  if(o.reply){const t0=performance.now();while(performance.now()-t0<500){if(this.inbox.some(o.reply))break;await sleep(5)}this.inbox.forEach(r=>devLog("← "+hex(r),"tx"));return this.inbox}
+  if(o.reply){await new Promise(res=>{const t=setTimeout(()=>{this.wake=null;res()},500);this.wake=()=>{if(this.inbox.some(o.reply)){clearTimeout(t);this.wake=null;res()}}});
+   if(!this.quiet)this.inbox.forEach(r=>devLog("← "+hex(r),"tx"));return this.inbox}
   await sleep(12);return this.inbox}
  close(){this.inp.onmidimessage=null}
 }
 class SimLink extends Link{constructor(){super();this.sim=true}
- async send(bytes,o={}){devLog("→ "+hex(bytes),"tx");const out=SIMDEV.handle(bytes);out.forEach(r=>devLog("← "+hex(r),"tx"));if(o.commit)await sleep(150);dirty();return out}}
-const chordRaw=tr=>{const c=tr.chord;return c.root==null?Array(16).fill(0x7F):[c.root,...c.off.map(o=>o&127),...Array(15-c.off.length).fill(0x7F)]};
+ async send(bytes,o={}){if(!this.quiet)devLog("→ "+hex(bytes),"tx");const out=SIMDEV.handle(bytes);if(!this.quiet){out.forEach(r=>devLog("← "+hex(r),"tx"));dirty()}if(o.commit){await sleep(150);dirty()}return out}}
+/* the stored chord bytes: root, then signed offsets as 8-bit bytes (a note below the root is 0xF7..0xFF) */
+const chordRaw=tr=>{const c=tr.chord;return c.root==null?Array(16).fill(0x7F):[c.root,...c.off.map(o=>o&255),...Array(15-c.off.length).fill(0x7F)]};
 
 /* ---------- the simulated device: answers the same frames from the panel's state ---------- */
 const SIMDEV={namesFw:true,sess:null,
@@ -55,7 +58,10 @@ const SIMDEV={namesFw:true,sess:null,
    if(item===PROJECT_ITEM&&param===P_NAME&&cmd===0x0C){if(this.namesFw){const s=String.fromCharCode(...b.slice(12+k,12+k+16)).replace(/\0+$/,"");S.flash[pn].name=s||null;S.ram[pn].name=s||null;emit("dev:name");dirty()}return out}
    if(!this.sess||this.sess.p!==pn)this.sess={p:pn,buf:deep(S.flash[pn]),touched:new Set()};
    const buf=this.sess.buf;
-   if(cmd===0x0B){const vals=[];for(let j=0;j<n;j++){const ix=idxs.slice();ix[k-1]+=j;vals.push(this.getv(buf,item,param,ix)&127)}out.push([...PREFIX,0x0C,p,param,k,item,...idxs,n,...vals,0xF7],[...PREFIX,0x1C,0x00,0xF7]);return out}
+   /* like the device, stored bytes go out unmasked; on the wire 0xF7 ends the SysEx and 0xF8-0xFF are split off as real-time bytes */
+   if(cmd===0x0B){const vals=[];for(let j=0;j<n;j++){const ix=idxs.slice();ix[k-1]+=j;vals.push(this.getv(buf,item,param,ix)&255)}
+    const wire=[];for(const x of [...PREFIX,0x0C,p,param,k,item,...idxs,n,...vals,0xF7]){if(x>=0xF8)continue;wire.push(x);if(x===0xF7)break}
+    out.push(wire,[...PREFIX,0x1C,0x00,0xF7]);return out}
    const data=[...b.slice(12+k,12+k+n)];data.forEach((v,j)=>{const ix=idxs.slice();ix[k-1]+=j;this.setv(buf,item,param,ix,v);this.sess.touched.add(`${item}/${param}/${ix.join(",")}`)});return out}
   return out},
  track(buf,item){return buf.tracks[TRACK_ITEMS.indexOf(item)]},
@@ -64,7 +70,7 @@ const SIMDEV={namesFw:true,sess:null,
   if(item===PROJECT_ITEM){if(P_USER1.includes(param)){const m=buf.user[0],j=P_USER1.indexOf(param);return [m&127,m>>7,0][j]}if([0x68,0x69,0x6A].includes(param)){const m=buf.user[1],j=param-0x68;return [m&127,m>>7,0][j]}return buf.raw[param]||0}
   if(item===SCENE_ITEM&&param===P_SCENE_STATE)return buf.scenes[i0-1]?3:2;
   if(item===0x7A&&param===P_PATTERN_STATE)return buf.ctrl.pats[i0-1].valid?3:2;
-  const tr=this.track(buf,item);if(!tr)return 0;
+  const tr=this.track(buf,item);if(!tr)return buf.raw[item+"/"+param+"/"+ix.join(",")]||0;
   if(param===0x27)return tr.valid?3:2;
   if(param===P_MODE)return (clamp(tr.oct+3,0,7))|(tr.chordOn?CHORD_MODE_BIT:0);
   if(param===P_CHORD)return chordRaw(tr)[i0-1];
@@ -75,10 +81,11 @@ const SIMDEV={namesFw:true,sess:null,
   if(item===PROJECT_ITEM){if(P_USER1.includes(param)){const j=P_USER1.indexOf(param),m=buf.user[0];buf.user[0]=j===0?(m&~127)|v:j===1?(m&127)|((v&31)<<7):m}else if([0x68,0x69,0x6A].includes(param)){const j=param-0x68,m=buf.user[1];buf.user[1]=j===0?(m&~127)|v:j===1?(m&127)|((v&31)<<7):m}else buf.raw[param]=v;return}
   if(item===SCENE_ITEM&&param===P_SCENE_STATE){if(v===3&&!buf.scenes[i0-1])buf.scenes[i0-1]={pat:[0,0,0,0],dpat:0,chain:[[],[],[],[]],dchain:[],mute:[0,0,0,0],solo:-1,track:0};if(v===2)buf.scenes[i0-1]=null;return}
   if(item===0x7A&&param===P_PATTERN_STATE){buf.ctrl.pats[i0-1].valid=v===3;return}
-  const tr=this.track(buf,item);if(!tr)return;
+  const tr=this.track(buf,item);if(!tr){buf.raw[item+"/"+param+"/"+ix.join(",")]=v;return}
   if(param===0x27){tr.valid=v===3;return}
   if(param===P_MODE){tr.oct=clamp((v&7)-3,-3,2);tr.chordOn=!!(v&CHORD_MODE_BIT);tr.valid=true;return}
-  if(param===P_CHORD){const raw=chordRaw(tr);raw[i0-1]=v;const end=raw.indexOf(0x7F,1);tr.chord=raw[0]===0x7F?{root:null,off:[]}:{root:raw[0],off:raw.slice(1,end<0?16:end).map(o=>o>63?o-128:o)};tr.valid=true;return}
+  /* the setter stores the 7-bit value as is, so SysEx can only write offsets above the root */
+  if(param===P_CHORD){const raw=chordRaw(tr);raw[i0-1]=v;const end=raw.indexOf(0x7F,1);tr.chord=raw[0]===0x7F?{root:null,off:[]}:{root:raw[0],off:raw.slice(1,end<0?16:end).map(o=>o>127?o-256:o)};tr.valid=true;return}
   const pat=tr.pats[i0-1];if(!pat)return;
   if(param===P_PATTERN_STATE){pat.valid=v===3;return}if(param===P_ROOT){pat.root=v%12;return}if(param===P_SCALE){pat.scale=v;return}
   pat.raw[param+"/"+ix.join(",")]=v},
@@ -124,6 +131,60 @@ async function writeProject(link,song){const p=song.project,problems=[],tracks=s
 const NAME_OVERRIDES={"Friday I'm in Love":"Friday In Love","World Loves Violence":"World Loves Viol"};
 function displayName(t){const n=NAME_OVERRIDES[t]||t;if(n.length<1||n.length>16||!/^[\x20-\x7E]+$/.test(n))throw new Error(`name “${n}” must be 1–16 printable ASCII characters`);return n}
 
+/* ---------- whole project: MCC's recall plan (BULK, 1c-bulk.js), read and written value for value ----------
+   One request at a time: the device drops replies with 4 or more GETs in flight (2026-10-20). Reads return the
+   saved project. Store sends every scene/pattern state from the file, so the commit quirk flips nothing. */
+const PROJECT_FORMAT="keystep-pro-project";
+function bulkPlan(){const out=[];for(const [lo,hi,item,dims,n,params] of BULK)for(let I=lo;I<=hi;I++){
+  let paths=[[]];for(const d of dims)paths=paths.flatMap(p=>d.map(x=>[...p,x==="I"?I:x]));
+  for(const path of paths)for(const prm of params)out.push([item,prm,path,n])}return out}
+async function quietly(link,fn){link.quiet=true;try{return await fn()}finally{link.quiet=false;dirty()}}
+async function readProject(link,p,prog=()=>{}){const plan=bulkPlan(),data=[];
+ return quietly(link,async()=>{await link.open(p);
+  const fail=(prm,item,path)=>new Error(`no reply reading project ${p} (item ${item}, param ${prm}, index ${path.join(",")})`);
+  for(let i=0;i<plan.length;i++){const [item,prm,path,n]=plan[i];let v=await link.getMany(p,prm,item,path,n);if(v==null)throw fail(prm,item,path);
+   /* the getter sends stored bytes unmasked: 0xF7 ends the frame early and 0xF8-0xFF are split off as real-time bytes.
+      Re-read such a block value by value and keep what cannot be read as null (seen: chord notes below the root). */
+   if(v.length<n||v.some(x=>x>127)){const one=[];for(let j=0;j<n;j++){const ix=path.slice();ix[ix.length-1]+=j;const r=n===1?v:await link.getMany(p,prm,item,ix,1);if(r==null)throw fail(prm,item,ix);one.push(r.length===1&&r[0]<=127?r[0]:null)}v=one}
+   data.push([item,prm,path,v]);if(i%64===0)prog(i/plan.length)}
+  prog(1);return {format:PROJECT_FORMAT,version:1,firmware:"2.5.20",project:p,name:null,saved:new Date().toISOString(),data}})}
+function checkProjectFile(f){if(!f||f.format!==PROJECT_FORMAT||f.version!==1||!Array.isArray(f.data))throw new Error("not a KeyStep Pro project file from this page");
+ const plan=bulkPlan();if(f.data.length!==plan.length)throw new Error(`project file has ${f.data.length} blocks, expected ${plan.length}`);
+ f.data.forEach(([item,prm,path,v],i)=>{const q=plan[i];if(item!==q[0]||prm!==q[1]||path.join()!==q[2].join()||!Array.isArray(v)||v.length!==q[3]||v.some(x=>x!==null&&!(x>=0&&x<=127)))throw new Error(`project file block ${i+1} does not match the recall plan`)});return f}
+/* Data-state flags (project/scene/track/pattern) go last. A track sent over SysEx always reads back valid (3) even when
+   the file says default (2); its values are the file's, so verify accepts that (hardware, 2026-10-20).
+   MCC lists params 55 and 56 for indexes past the last track; the firmware does not store those and reads back filler. */
+const STATE_PARAMS=[0x25,P_SCENE_STATE,0x27,P_PATTERN_STATE],UNSTORED=new Set(["120/55/5","120/56/4","120/56/5"]);
+/* returns a list of problems; empty = every value read back as written.
+   Values the recall could not read (null) are not sent. A chord with an unreadable byte is not sent at all: the SET
+   stores 7 bits, so a note below the root cannot be written over SysEx either (emulated 2026-10-20). */
+async function storeProject(link,p,f,{verify=true,prog=()=>{}}={}){checkProjectFile(f);const N=f.data.length,problems=[];
+ const badChord=new Set(f.data.filter(e=>e[1]===P_CHORD&&e[3].includes(null)).map(e=>e[0]));
+ for(const item of badChord)problems.push(`${item===0x7A?"control track":"track "+(TRACK_ITEMS.indexOf(item)+1)} chord not sent: it has a note below its root, which SysEx cannot carry. Enter it again on the device.`);
+ const skip=e=>e[1]===P_CHORD&&badChord.has(e[0]);
+ const order=[...f.data.filter(e=>!STATE_PARAMS.includes(e[1])),...f.data.filter(e=>STATE_PARAMS.includes(e[1]))];
+ await quietly(link,async()=>{await link.open(p);
+  for(let i=0;i<N;i++){const e=order[i],[item,prm,path,v]=e;if(i%64===0)prog(verify?i/N/2:i/N);if(skip(e))continue;
+   if(!v.includes(null)){await link.setMany(p,prm,item,path,v);continue}
+   for(let j=0;j<v.length;j++)if(v[j]!==null){const ix=path.slice();ix[ix.length-1]+=j;await link.setMany(p,prm,item,ix,[v[j]])}}
+  await link.commit(p)});
+ if(f.name)await link.setName(p,displayName(f.name));
+ if(!verify){prog(1);return problems}
+ const back=await readProject(link,p,x=>prog(.5+x/2));
+ back.data.forEach(([item,prm,path,v],i)=>{const w=f.data[i][3];if(skip(f.data[i])||v.every((x,j)=>x===w[j]||w[j]===null)||prm===0x27&&w[0]===2&&v[0]===3||UNSTORED.has(`${item}/${prm}/${path.join(",")}`))return;problems.push(`item ${item} param ${prm} [${path.join(",")}] reads ${v.join(" ")}, wrote ${f.data[i][3].join(" ")}`)});
+ return problems}
+/* a short description of a project file: which patterns and scenes hold data, chords */
+function projectSummary(f){const get=(item,prm,i0)=>{const e=f.data.find(([it,pr,path])=>it===item&&pr===prm&&path[0]===i0);return e?e[3][0]:null};
+ const pats=t=>[...Array(16).keys()].filter(i=>get(TRACK_ITEMS[t],P_PATTERN_STATE,i+1)===3).length;
+ const scenes=[...Array(16).keys()].filter(i=>get(SCENE_ITEM,P_SCENE_STATE,i+1)===3).length;
+ /* offsets end at 0 (entered on the device) or 0x7F (written over SysEx); null = a note below the root, unreadable */
+ const chord=t=>{const item=TRACK_ITEMS[t],c=[...Array(16).keys()].map(i=>get(item,P_CHORD,i+1));if(c[0]==null||c[0]===0x7F)return "";
+  const offs=[];for(const o of c.slice(1)){if(o===0||o===0x7F)break;offs.push(o)}
+  return " chord "+[nm(c[0]),...offs.map(o=>o==null?"(below root)":nm(c[0]+o))].join(" ")+(get(item,P_MODE,1)&CHORD_MODE_BIT?" (on)":" (off)")};
+ return [0,1,2,3].map(t=>`track ${t+1}: ${pats(t)} pattern${pats(t)===1?"":"s"}${chord(t)}`).join("; ")+`; ${scenes} scene${scenes===1?"":"s"}`}
+function saveJSON(obj,fname){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(obj)],{type:"application/json"}));a.download=fname;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000)}
+const fileSafe=s=>s.replace(/[^\w .-]+/g,"").trim()||"project";
+
 /* ---------- feature registry ---------- */
 const FEATURES=[
  {id:"globals",title:"Global settings (all 158 IDs)",verified:"2026-10-18: full read of all globals on hardware; writes tested with Brightness (152).",needs:null,
@@ -158,6 +219,29 @@ const FEATURES=[
    el.querySelector("[data-a=go]").onclick=()=>busy(async()=>{const songs=JSON.parse(el.querySelector("[data-a=j]").value||"[]");let bad=0;
     for(const s of songs){if(!(s.project>=1&&s.project<=16))throw new Error(`${s.title}: project ${s.project} out of range`);const pr=await writeProject(DEV.link,s);bad+=!!pr.length;devLog(`P${s.project} ${s.title?displayName(s.title):""}: ${pr.length?"PROBLEM: "+pr.join("; "):"OK"}`,pr.length?"bad":"ok")}
     devLog(bad?`${bad} project(s) had problems`:`${songs.length} project(s) written and verified`,bad?"bad":"ok")})}},
+ {id:"projects",title:"Projects: recall, save to file, send",verified:"2026-10-20: project 15 recalled (36 s) and matched an independent read; sent to project 16 and played the same; project 16 restored from its file.",needs:null,
+  about:"What MIDI Control Center does with a project, value for value: Recall reads a saved project from the device using MCC's own list of parameters (under a minute over USB). Save it as a file, open it later, and send it to any project slot. Sending replaces everything in that slot and reads it all back to check (about three minutes). The name is kept in the file and sent with it if the project-names firmware is installed. One limit of the firmware's SysEx, so MCC has it too: a chord entered on the device with a note below its first note cannot be read or written over SysEx. Such a chord is marked in the file and not sent, and the target slot keeps its own chord on that track.",
+  render(el){const opts=[...Array(16).keys()].map(i=>`<option value="${i+1}">${i+1}</option>`).join("");
+   el.innerHTML=`<div class="row">Project <select data-a="p">${opts}</select><button class="sm" data-a="rc">Recall from device</button> or open a file <input type="file" accept=".json,application/json" data-a="f"></div>
+   <div class="row"><progress data-a="pg" max="1" value="0"></progress><span data-a="st"></span></div>
+   <div class="row" data-a="sum">No project loaded.</div>
+   <div class="row">Name <input type="text" data-a="nm" maxlength="16" placeholder="(optional)"><button class="sm" data-a="sv">Save to file</button></div>
+   <div class="row">Send to project <select data-a="to">${opts}</select><label><input type="checkbox" data-a="vf" checked> read back to verify</label><button class="sm" data-a="go">Send to device</button></div>`;
+   const q=a=>el.querySelector(`[data-a=${a}]`),go=q("go");let cur=null,armT=0;
+   const prog=x=>{q("pg").value=x;q("st").textContent=` ${Math.round(x*100)}%`};
+   const show=(f,src)=>{cur=f;q("nm").value=f.name||"";q("to").value=f.project;q("sum").textContent=`${src}: ${projectSummary(f)}`};
+   q("rc").onclick=()=>busy(async()=>{const p=+q("p").value,t0=performance.now();prog(0);const f=await readProject(DEV.link,p,prog);
+    show(f,`Project ${p}, recalled`);devLog(`project ${p} recalled: ${f.data.length} blocks in ${((performance.now()-t0)/1000).toFixed(1)} s`,"ok");emit("dev:recall")});
+   q("f").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{show(checkProjectFile(JSON.parse(await file.text())),file.name);devLog(`opened ${file.name}`,"ok")}catch(err){devLog("Error: "+err.message,"bad")}};
+   q("sv").onclick=()=>{if(!cur){devLog("Recall a project or open a file first.","bad");return}try{const n=q("nm").value.trim();cur.name=n?displayName(n):null;
+    saveJSON(cur,`KeyStep Pro P${cur.project} ${fileSafe(cur.name||"")} ${cur.saved.slice(0,10)}.json`.replace(/\s+/g," "))}catch(err){devLog("Error: "+err.message,"bad")}};
+   /* two clicks to overwrite a slot, no browser dialog */
+   const disarm=()=>{clearTimeout(armT);armT=0;go.textContent="Send to device"};
+   go.onclick=()=>{if(!cur){devLog("Recall a project or open a file first.","bad");return}const to=+q("to").value;
+    if(!armT){go.textContent=`Click again to replace project ${to}`;armT=setTimeout(disarm,4000);return}disarm();
+    busy(async()=>{const n=q("nm").value.trim();cur.name=n?displayName(n):null;prog(0);const t0=performance.now();
+     const pr=await storeProject(DEV.link,to,cur,{verify:q("vf").checked,prog});const s=((performance.now()-t0)/1000).toFixed(1);
+     devLog(pr.length?`PROBLEM: ${pr.length} value(s) differ after sending to project ${to}: ${pr.slice(0,5).join("; ")}${pr.length>5?" …":""}`:`project ${to} written${q("vf").checked?" and verified":""} in ${s} s`,pr.length?"bad":"ok");if(!pr.length)emit("dev:store")})}}},
 ];
 
 /* ---------- the tab ---------- */
