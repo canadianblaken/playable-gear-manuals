@@ -270,7 +270,7 @@ const FEATURES=[
    <div class="row">Send to project <select data-a="to">${opts}</select><label><input type="checkbox" data-a="vf" checked> read back to verify</label><button class="sm" data-a="go">Send to device</button></div>`;
    const q=a=>el.querySelector(`[data-a=${a}]`),go=q("go");let cur=null,armT=0;
    const prog=x=>{q("pg").value=x;q("st").textContent=` ${Math.round(x*100)}%`};
-   const show=(f,src)=>{cur=DEV.project=f;q("nm").value=f.name||"";q("to").value=f.project;q("sum").textContent=`${src}: ${projectSummary(f)}`;if(DEV.editorLoad)DEV.editorLoad()};
+   const show=(f,src)=>{cur=DEV.project=f;q("nm").value=f.name||"";q("to").value=f.project;q("sum").textContent=`${src}: ${projectSummary(f)}`;if(DEV.editorLoad)DEV.editorLoad();if(DEV.midiLoad)DEV.midiLoad()};
    DEV.showProject=show; /* the library loads into this tool */
    q("rc").onclick=()=>busy(async()=>{const p=+q("p").value,t0=performance.now();prog(0);const f=await readProject(DEV.link,p,prog);
     show(f,`Project ${p}, recalled`);devLog(`project ${p} recalled: ${f.data.length} blocks in ${((performance.now()-t0)/1000).toFixed(1)} s`,"ok");emit("dev:recall")});

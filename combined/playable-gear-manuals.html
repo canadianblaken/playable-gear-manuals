@@ -4135,6 +4135,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
 @media (max-width:560px){.ccmKnob{grid-template-columns:auto minmax(0,1fr)}.ccmKnob .pg{grid-column:1/-1}}
 .filebtn{display:inline-block}
 .feat .row.small{font-size:12.5px}
+.feat [hidden]{display:none!important}
 .edGrid{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:6px 0}
 @media (max-width:700px){.edGrid{grid-template-columns:repeat(8,minmax(0,1fr))}}
 .edCell{font:inherit;font-size:10px;line-height:1.2;padding:2px 3px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--fg);min-height:32px;display:flex;flex-direction:column;align-items:flex-start;overflow:hidden;cursor:pointer;text-align:left}
@@ -5524,7 +5525,7 @@ const FEATURES=[
    <div class=&quot;row&quot;>Send to project <select data-a=&quot;to&quot;>${opts}</select><label><input type=&quot;checkbox&quot; data-a=&quot;vf&quot; checked> read back to verify</label><button class=&quot;sm&quot; data-a=&quot;go&quot;>Send to device</button></div>`;
    const q=a=>el.querySelector(`[data-a=${a}]`),go=q(&quot;go&quot;);let cur=null,armT=0;
    const prog=x=>{q(&quot;pg&quot;).value=x;q(&quot;st&quot;).textContent=` ${Math.round(x*100)}%`};
-   const show=(f,src)=>{cur=DEV.project=f;q(&quot;nm&quot;).value=f.name||&quot;&quot;;q(&quot;to&quot;).value=f.project;q(&quot;sum&quot;).textContent=`${src}: ${projectSummary(f)}`;if(DEV.editorLoad)DEV.editorLoad()};
+   const show=(f,src)=>{cur=DEV.project=f;q(&quot;nm&quot;).value=f.name||&quot;&quot;;q(&quot;to&quot;).value=f.project;q(&quot;sum&quot;).textContent=`${src}: ${projectSummary(f)}`;if(DEV.editorLoad)DEV.editorLoad();if(DEV.midiLoad)DEV.midiLoad()};
    DEV.showProject=show; /* the library loads into this tool */
    q(&quot;rc&quot;).onclick=()=>busy(async()=>{const p=+q(&quot;p&quot;).value,t0=performance.now();prog(0);const f=await readProject(DEV.link,p,prog);
     show(f,`Project ${p}, recalled`);devLog(`project ${p} recalled: ${f.data.length} blocks in ${((performance.now()-t0)/1000).toFixed(1)} s`,&quot;ok&quot;);emit(&quot;dev:recall&quot;)});
@@ -5717,6 +5718,148 @@ const EDITOR_FEATURE={id:&quot;editor&quot;,title:&quot;Project editor: steps, n
   q(&quot;revert&quot;).onclick=()=>{load();say(&quot;Back to the loaded project.&quot;)};
   DEV.editorLoad=load;load()}};
 FEATURES.splice(FEATURES.findIndex(f=>f.id===&quot;projects&quot;)+1,0,EDITOR_FEATURE);
+/* ================= MIDI files: import a song part per track into patterns, export patterns as a .mid =================
+   Works on the project loaded in the Projects tool, like the editor, and sends nothing itself. Placement follows the
+   step format measured on hardware (2026-10-20): notes go on 16th-note steps, the offset from the step is kept as
+   time shift (±49% of a step), note length becomes the nearest gate (gateSteps), velocity is copied.
+   A pattern holds 64 steps, 16 notes per step and 192 notes; a longer part continues on the following patterns. */
+const MF_STEPS=64,MF_PPQ=96,MF_T16=MF_PPQ/4;
+/* ---------- Standard MIDI File reading ---------- */
+function mfParse(buf){const d=new Uint8Array(buf);let p=0;const u32=()=>(d[p++]<<24|d[p++]<<16|d[p++]<<8|d[p++])>>>0,u16=()=>d[p++]<<8|d[p++];
+ const str=n=>{const s=String.fromCharCode(...d.subarray(p,p+n));p+=n;return s};
+ const vlq=()=>{let v=0,b;do{if(p>=d.length)throw new Error(&quot;the file ends in the middle of an event&quot;);b=d[p++];v=v*128+(b&amp;127)}while(b&amp;128);return v};
+ if(d.length<14||str(4)!==&quot;MThd&quot;)throw new Error(&quot;not a MIDI file (no MThd header)&quot;);
+ const hl=u32(),format=u16(),ntrk=u16(),div=u16();p=8+hl;
+ if(div&amp;0x8000)throw new Error(&quot;SMPTE-timed MIDI files are not supported; export with bars and beats&quot;);
+ const tracks=[];let tempo=null,timesig=null;
+ for(let t=0;t<ntrk&amp;&amp;p<d.length;t++){if(p+8>d.length)break;const id=str(4),len=u32(),end=p+len;if(id!==&quot;MTrk&quot;){p=end;t--;continue}
+  let tick=0,run=0,name=&quot;&quot;;const notes=[],open=new Map();
+  while(p<end){tick+=vlq();let s=d[p];if(s<0x80){if(!run)throw new Error(&quot;running status without a status byte&quot;);s=run}else p++;
+   if(s===0xFF){const ty=d[p++],l=vlq(),start=p;
+    if(ty===0x03&amp;&amp;!name)name=new TextDecoder().decode(d.subarray(start,start+l)).trim();
+    if(ty===0x51&amp;&amp;l===3&amp;&amp;tempo==null)tempo=60e6/(d[start]<<16|d[start+1]<<8|d[start+2]);
+    if(ty===0x58&amp;&amp;l>=2&amp;&amp;!timesig)timesig=[d[start],2**d[start+1]];p=start+l;continue}
+   if(s===0xF0||s===0xF7){p+=vlq();continue}
+   run=s;const ty=s&amp;0xF0,ch=s&amp;15;
+   if(ty===0xC0||ty===0xD0){p++;continue}
+   const a=d[p++],b=d[p++];
+   if(ty===0x90&amp;&amp;b>0){const k=ch*128+a;if(!open.has(k))open.set(k,[]);open.get(k).push({ch,pitch:a,vel:b,start:tick})}
+   else if(ty===0x80||ty===0x90){const q=open.get(ch*128+a);if(q&amp;&amp;q.length){const n=q.shift();n.end=tick;notes.push(n)}}}
+  for(const q of open.values())for(const n of q){n.end=tick;notes.push(n)} /* hanging notes end with the track */
+  p=end;tracks.push({name,notes:notes.sort((x,y)=>x.start-y.start||x.pitch-y.pitch),endTick:tick})}
+ return {format,ppq:div,tempo,timesig:timesig||[4,4],tracks}}
+/* one part per track and channel that has notes */
+function mfParts(mf){const parts=[];mf.tracks.forEach((t,ti)=>{const chs=[...new Set(t.notes.map(n=>n.ch))];
+ for(const ch of chs){const notes=t.notes.filter(n=>n.ch===ch);parts.push({id:`${ti}/${ch}`,name:(t.name||`Track ${ti+1}`)+(chs.length>1?` (channel ${ch+1})`:&quot;&quot;),ch,notes})}});return parts}
+/* ---------- placing a part onto steps ---------- */
+/* returns {steps:[{notes}] over the whole part, length in steps, problems} with every note placed; nothing is dropped here */
+function mfPlace(part,mf){const t16=mf.ppq/4,barSteps=Math.max(1,Math.round(mf.timesig[0]*16/mf.timesig[1]));
+ const placed=part.notes.map(n=>{const pos=n.start/t16,step=Math.round(pos),shift=clamp(Math.round((pos-step)*100),-49,50);
+  return {step,pitch:n.pitch,vel:clamp(n.vel,1,127),gate:Graw(Math.max(1/16,(n.end-n.start)/t16)),shift:shift+49,rand:100}});
+ const lastEnd=Math.max(1,...part.notes.map(n=>n.end/t16),...placed.map(n=>n.step+1));const length=Math.ceil(lastEnd/barSteps)*barSteps;
+ const steps=Array.from({length},()=>({notes:[]}));placed.forEach(n=>{if(n.step<length)steps[n.step].notes.push(n)});
+ return {steps,length,barSteps}}
+/* split into patterns from pattern `first` (1-based); counts what cannot fit */
+function mfPlan(placed,first,maxPatterns){const need=Math.ceil(placed.length/MF_STEPS),use=Math.min(need,maxPatterns,17-first);
+ const pats=[];for(let i=0;i<use;i++){const st=placed.steps.slice(i*MF_STEPS,(i+1)*MF_STEPS);pats.push({pat:first+i,len:st.length,steps:st})}
+ const over=[];pats.forEach(p=>{p.steps.forEach((s,i)=>{if(s.notes.length>ED_MAX_STEP_NOTES)over.push(`pattern ${p.pat} step ${i+1}: ${s.notes.length} notes (16 max)`)});
+  const tot=p.steps.reduce((a,s)=>a+Math.min(s.notes.length,ED_MAX_STEP_NOTES),0);if(tot>ED_SLOTS)over.push(`pattern ${p.pat}: ${tot} notes (192 max)`)});
+ const cutSteps=Math.max(0,placed.length-use*MF_STEPS);return {pats,need,use,cutSteps,over}}
+/* write a plan into a project file; trims notes over the limits when allowed and says how many */
+function mfApply(f,item,plan,{trim=false,chainScene=0}={}){let dropped=0;
+ if(plan.over.length&amp;&amp;!trim)throw new Error(&quot;too many notes: &quot;+plan.over.join(&quot;; &quot;));
+ for(const p of plan.pats){const pt=edReadPattern(f,item,p.pat);if(pt.unreadable)throw new Error(`pattern ${p.pat} has unreadable note slots; pick another pattern`);
+  pt.len=p.len;let total=0;
+  pt.steps.forEach((s,i)=>{const src=p.steps[i]?p.steps[i].notes:[];const keep=[];for(const n of src.slice(0,ED_MAX_STEP_NOTES)){if(total>=ED_SLOTS)break;keep.push(n);total++}dropped+=src.length-keep.length;
+   s.notes=keep.map(n=>({pitch:n.pitch,gate:n.gate,vel:n.vel,shift:n.shift,rand:n.rand}));s.on=keep.length>0;s.passes=15});
+  edWritePattern(f,item,p.pat,pt)}
+ if(chainScene&amp;&amp;plan.pats.length){const t=TRACK_ITEMS.indexOf(item),sc=edReadScene(f,chainScene);sc.valid=true;sc.pats[t]=plan.pats[0].pat-1;
+  sc.chains[t]=plan.pats.length>1?plan.pats.map(p=>p.pat-1):[];sc.chainOn=sc.chains.some(c=>c.length);edWriteScene(f,chainScene,sc)}
+ return dropped}
+/* project tempo: params 0x46-0x48 = value x100 in three 7-bit parts, LSB first (12000 = 120.00 BPM, read on hardware) */
+function mfSetTempo(f,bpm){const v=Math.round(clamp(bpm,30,240)*100);edSet(f,PROJECT_ITEM,0x46,[1],v&amp;127);edSet(f,PROJECT_ITEM,0x47,[1],v>>7&amp;127);edSet(f,PROJECT_ITEM,0x48,[1],v>>14&amp;127)}
+function mfGetTempo(f){const a=edGet(f,PROJECT_ITEM,0x46,[1]),b=edGet(f,PROJECT_ITEM,0x47,[1]),c=edGet(f,PROJECT_ITEM,0x48,[1]);return a==null||b==null||c==null?120:(c<<14|b<<7|a)/100}
+/* ---------- writing a .mid: format 1, a tempo track, then one track per KeyStep track ---------- */
+function mfWrite({tempo,tracks}){const out=[],vlq=v=>{const b=[v&amp;127];while(v>>=7)b.unshift(v&amp;127|128);return b},u32=v=>[v>>>24&amp;255,v>>>16&amp;255,v>>>8&amp;255,v&amp;255];
+ const chunk=(id,body)=>{out.push(...[...id].map(c=>c.charCodeAt(0)),...u32(body.length),...body)};
+ chunk(&quot;MThd&quot;,[0,1,0,tracks.length+1,MF_PPQ>>8,MF_PPQ&amp;255]);
+ const us=Math.round(60e6/tempo);chunk(&quot;MTrk&quot;,[0,0xFF,0x51,3,us>>16&amp;255,us>>8&amp;255,us&amp;255,0,0xFF,0x58,4,4,2,24,8,0,0xFF,0x2F,0]);
+ for(const t of tracks){const ev=[];const nm=new TextEncoder().encode(t.name);
+  t.notes.forEach(n=>{ev.push([n.on,0x90|t.ch,n.pitch,n.vel]);ev.push([n.off,0x80|t.ch,n.pitch,0])});
+  ev.sort((a,b)=>a[0]-b[0]||(a[1]&amp;0xF0)-(b[1]&amp;0xF0)); /* note-offs before note-ons at the same tick */
+  const body=[0,0xFF,0x03,...vlq(nm.length),...nm];let last=0;for(const [t0,s,a,b] of ev){body.push(...vlq(t0-last),s,a,b);last=t0}body.push(0,0xFF,0x2F,0);chunk(&quot;MTrk&quot;,body)}
+ return new Uint8Array(out)}
+/* the notes of a chain of patterns, in ticks; steps play on their first pass (pass mask bit 0) */
+function mfExportTrack(f,item,patList){const notes=[];let at=0;
+ for(const pat of patList){const pt=edReadPattern(f,item,pat);
+  pt.steps.slice(0,pt.len).forEach((s,i)=>{if(!s.on||!(s.passes&amp;1))return;
+   for(const n of s.notes){const on=Math.max(0,Math.round((at+i+(n.shift-49)/100)*MF_T16));notes.push({pitch:n.pitch,vel:Math.max(1,n.vel),on,off:on+Math.max(1,Math.round(gateSteps(n.gate)*MF_T16))})}});
+  at+=pt.len}
+ return notes}
+
+/* ---------- the feature ---------- */
+const MIDIFILE_FEATURE={id:&quot;midifile&quot;,title:&quot;MIDI files: import a part per track, export&quot;,verified:&quot;Tested in the simulation (import, too-long and too-dense warnings, export round trip); the step format it writes was measured on a KeyStep Pro on 2026-10-20.&quot;,needs:null,
+ about:&quot;Import: open a .mid (for example a song part exported from Logic), choose which KeyStep track each part goes to and the pattern to start on. Notes snap to 16th-note steps; small timing offsets are kept as time shift, note lengths become gate lengths, velocity is kept. One pattern holds 64 steps (4 bars of 4/4); a longer part can continue on the following patterns and be chained in a scene. The result goes into the project loaded in the Projects tool: check it in the editor, then Send. Export: writes the chosen patterns of each track as a .mid.&quot;,
+ render(el){el.innerHTML=`<div class=&quot;row&quot; data-a=&quot;none&quot;>Load a project in the Projects tool first.</div><div data-a=&quot;ui&quot; hidden>
+   <h3>Import</h3><div class=&quot;row small&quot;><input type=&quot;file&quot; accept=&quot;.mid,.midi,audio/midi&quot; data-a=&quot;f&quot;><label><input type=&quot;checkbox&quot; data-a=&quot;tempo&quot;> use the file's tempo</label></div>
+   <div data-a=&quot;parts&quot; class=&quot;pg&quot;></div><div data-a=&quot;warn&quot;></div>
+   <div class=&quot;row&quot;><button class=&quot;sm2&quot; data-a=&quot;imp&quot;>Import into the loaded project</button></div>
+   <h3>Export</h3><div data-a=&quot;exp&quot;></div><div class=&quot;row&quot;><button class=&quot;sm2&quot; data-a=&quot;ex&quot;>Save .mid</button></div>
+   <p class=&quot;pg&quot; data-a=&quot;msg&quot; aria-live=&quot;polite&quot;></p></div>`;
+  const q=a=>el.querySelector(`[data-a=${a}]`);let mf=null,parts=[],rows=[],decision=null;
+  const say=(s,cls=&quot;&quot;)=>{q(&quot;msg&quot;).textContent=s;q(&quot;msg&quot;).className=&quot;pg &quot;+cls};
+  const load=()=>{const f=DEV.project;q(&quot;none&quot;).hidden=!!f;q(&quot;ui&quot;).hidden=!f;if(f)drawExport()};
+  const drawParts=()=>{const box=q(&quot;parts&quot;);box.innerHTML=&quot;&quot;;rows=[];decision=null;q(&quot;warn&quot;).innerHTML=&quot;&quot;;if(!mf)return;
+   const head=document.createElement(&quot;div&quot;);head.textContent=`${parts.length} part${parts.length===1?&quot;&quot;:&quot;s&quot;} with notes · ${mf.tempo?mf.tempo.toFixed(2)+&quot; BPM&quot;:&quot;no tempo in file (120)&quot;} · ${mf.timesig[0]}/${mf.timesig[1]}`;box.appendChild(head);
+   const t=document.createElement(&quot;table&quot;);t.className=&quot;t&quot;;t.innerHTML=&quot;<thead><tr><th>Part</th><th>Notes</th><th>Length</th><th>To track</th><th>From pattern</th></tr></thead>&quot;;const tb=document.createElement(&quot;tbody&quot;);t.appendChild(tb);
+   parts.forEach((p,i)=>{const pl=mfPlace(p,mf),tr=tb.insertRow();tr.insertCell().textContent=p.name;tr.insertCell().textContent=String(p.notes.length);
+    tr.insertCell().textContent=`${pl.length} steps (${pl.length/pl.barSteps} bar${pl.length/pl.barSteps===1?&quot;&quot;:&quot;s&quot;})`;
+    const ts=document.createElement(&quot;select&quot;);ts.add(new Option(&quot;— skip —&quot;,&quot;&quot;));[1,2,3,4].forEach(n=>ts.add(new Option(`Track ${n}`,n)));if(i<4)ts.value=String(i+1);
+    const ps=document.createElement(&quot;select&quot;);for(let k=1;k<=16;k++)ps.add(new Option(String(k),k));
+    ts.onchange=ps.onchange=()=>{decision=null;q(&quot;warn&quot;).innerHTML=&quot;&quot;};tr.insertCell().append(ts);tr.insertCell().append(ps);rows.push({part:p,placed:pl,ts,ps})});
+   box.appendChild(t)};
+  q(&quot;f&quot;).onchange=async e=>{const file=e.target.files[0];if(!file)return;try{mf=mfParse(await file.arrayBuffer());parts=mfParts(mf);q(&quot;tempo&quot;).checked=!!mf.tempo;
+    drawParts();say(parts.length?`Opened ${file.name}.`:`${file.name} has no notes.`,parts.length?&quot;ok&quot;:&quot;bad&quot;)}catch(err){mf=null;parts=[];drawParts();say(&quot;Could not read the file: &quot;+err.message,&quot;bad&quot;)}};
+  /* checks first; a part that does not fit asks before it spills onto more patterns, too many notes ask before trimming */
+  const ask=(text,choices)=>{const w=q(&quot;warn&quot;);w.innerHTML=&quot;&quot;;const box=document.createElement(&quot;div&quot;);box.className=&quot;feat&quot;;const p=document.createElement(&quot;p&quot;);p.className=&quot;need&quot;;p.textContent=text;box.appendChild(p);
+   const r=document.createElement(&quot;div&quot;);r.className=&quot;row&quot;;for(const [label,fn] of choices){const b=document.createElement(&quot;button&quot;);b.className=&quot;sm2&quot;;b.textContent=label;b.onclick=fn;r.append(b)}box.appendChild(r);w.appendChild(box)};
+  const run=()=>{if(!mf||!DEV.project)return say(&quot;Open a MIDI file and load a project first.&quot;,&quot;bad&quot;);
+   const chosen=rows.filter(r=>r.ts.value);if(!chosen.length)return say(&quot;Choose a track for at least one part.&quot;,&quot;bad&quot;);
+   const tracks=chosen.map(r=>+r.ts.value);if(new Set(tracks).size!==tracks.length)return say(&quot;Two parts are going to the same track; pick different tracks.&quot;,&quot;bad&quot;);
+   decision=decision||{spill:{},trim:false};
+   for(const r of chosen){const id=r.part.id,first=+r.ps.value,free=(17-first)*MF_STEPS;
+    if(r.placed.length>MF_STEPS&amp;&amp;decision.spill[id]==null){const n=Math.ceil(r.placed.length/MF_STEPS),avail=Math.min(n,17-first);
+     ask(`“${r.part.name}” is ${r.placed.length} steps, but only ${MF_STEPS} steps fit in pattern ${first} of track ${r.ts.value}. Would you like to add the rest to other patterns? It needs patterns ${first}–${first+avail-1}${n>avail?` and still ${r.placed.length-free} steps will not fit (patterns run out at 16)`:&quot;&quot;}, chained in scene 1.`,
+      [[`Add to patterns ${first}–${first+avail-1}`,()=>{decision.spill[id]=true;run()}],[`Only the first ${MF_STEPS} steps`,()=>{decision.spill[id]=false;run()}],[&quot;Cancel&quot;,()=>{decision=null;q(&quot;warn&quot;).innerHTML=&quot;&quot;;say(&quot;Import cancelled.&quot;)}]]);return}}
+   const plans=chosen.map(r=>({r,plan:mfPlan(r.placed,+r.ps.value,r.placed.length>MF_STEPS&amp;&amp;decision.spill[r.part.id]?16:1)}));
+   const over=plans.flatMap(x=>x.plan.over.map(o=>`track ${x.r.ts.value} ${o}`));
+   if(over.length&amp;&amp;!decision.trim){ask(`Too many notes for the KeyStep Pro: ${over.slice(0,4).join(&quot;; &quot;)}${over.length>4?` and ${over.length-4} more`:&quot;&quot;}. Import anyway and leave the extra notes out?`,
+     [[&quot;Import, leaving extras out&quot;,()=>{decision.trim=true;run()}],[&quot;Cancel&quot;,()=>{decision=null;q(&quot;warn&quot;).innerHTML=&quot;&quot;;say(&quot;Import cancelled.&quot;)}]]);return}
+   const work=JSON.parse(JSON.stringify(DEV.project));let dropped=0;const done=[];
+   try{for(const {r,plan} of plans){const item=TRACK_ITEMS[+r.ts.value-1];dropped+=mfApply(work,item,plan,{trim:decision.trim,chainScene:plan.pats.length>1?1:0});
+     done.push(`“${r.part.name}” → track ${r.ts.value}, pattern${plan.pats.length>1?&quot;s&quot;:&quot;&quot;} ${plan.pats.map(p=>p.pat).join(&quot;, &quot;)}${plan.cutSteps?` (last ${plan.cutSteps} steps left out)`:&quot;&quot;}`)}
+    if(q(&quot;tempo&quot;).checked&amp;&amp;mf.tempo)mfSetTempo(work,mf.tempo)}catch(err){return say(&quot;Import failed: &quot;+err.message,&quot;bad&quot;)}
+   delete work.__ix;work.saved=new Date().toISOString();q(&quot;warn&quot;).innerHTML=&quot;&quot;;decision=null;DEV.showProject(work,&quot;MIDI import&quot;);
+   say(`Imported: ${done.join(&quot;; &quot;)}${dropped?`; ${dropped} note(s) over the limits left out`:&quot;&quot;}${q(&quot;tempo&quot;).checked&amp;&amp;mf.tempo?`; tempo ${mf.tempo.toFixed(2)} BPM`:&quot;&quot;}. Check it in the editor, then Send.`,&quot;ok&quot;);emit(&quot;midifile:import&quot;)};
+  q(&quot;imp&quot;).onclick=run;
+  const drawExport=()=>{const f=DEV.project,box=q(&quot;exp&quot;);box.innerHTML=&quot;&quot;;const t=document.createElement(&quot;table&quot;);t.className=&quot;t&quot;;
+   t.innerHTML=&quot;<thead><tr><th>Track</th><th>Patterns (in order)</th><th>MIDI channel</th></tr></thead>&quot;;const tb=document.createElement(&quot;tbody&quot;);t.appendChild(tb);
+   const s1=edReadScene(f,1);
+   for(let ti=0;ti<4;ti++){const tr=tb.insertRow();tr.insertCell().textContent=`Track ${ti+1}`;const inp=document.createElement(&quot;input&quot;);inp.type=&quot;text&quot;;inp.style.width=&quot;9em&quot;;inp.dataset.track=ti;
+    const used=[...Array(16).keys()].filter(p=>edReadPattern(f,TRACK_ITEMS[ti],p+1).steps.some(s=>s.notes.length));
+    inp.value=(s1.valid&amp;&amp;s1.chains[ti].length?s1.chains[ti].map(x=>x+1):used.length?[used[0]+1]:[]).join(&quot; &quot;);inp.placeholder=&quot;e.g. 1 2 3&quot;;
+    const ch=document.createElement(&quot;select&quot;);ch.dataset.track=ti;for(let c=0;c<16;c++)ch.add(new Option(String(c+1),c));ch.value=String(ti);tr.insertCell().append(inp);tr.insertCell().append(ch)}
+   box.appendChild(t)};
+  q(&quot;ex&quot;).onclick=()=>{const f=DEV.project;if(!f)return;const tracks=[];
+   for(const inp of q(&quot;exp&quot;).querySelectorAll(&quot;input&quot;)){const ti=+inp.dataset.track,toks=inp.value.trim().split(/[\s,]+/).filter(Boolean);if(!toks.length)continue;
+    const pats=toks.map(Number);if(pats.some(p=>!(Number.isInteger(p)&amp;&amp;p>=1&amp;&amp;p<=16)))return say(`Track ${ti+1}: patterns are numbers 1–16.`,&quot;bad&quot;);
+    tracks.push({name:`KeyStep track ${ti+1}`,ch:+q(&quot;exp&quot;).querySelector(`select[data-track=&quot;${ti}&quot;]`).value,notes:mfExportTrack(f,TRACK_ITEMS[ti],pats)})}
+   if(!tracks.length)return say(&quot;List patterns for at least one track.&quot;,&quot;bad&quot;);
+   const blob=new Blob([mfWrite({tempo:mfGetTempo(f),tracks})],{type:&quot;audio/midi&quot;}),a=document.createElement(&quot;a&quot;);a.href=URL.createObjectURL(blob);
+   a.download=`KeyStep Pro P${f.project}${f.name?&quot; &quot;+fileSafe(f.name):&quot;&quot;}.mid`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+   say(`Saved ${tracks.reduce((s,t)=>s+t.notes.length,0)} notes on ${tracks.length} track(s) at ${mfGetTempo(f).toFixed(2)} BPM.`,&quot;ok&quot;);emit(&quot;midifile:export&quot;)};
+  DEV.midiLoad=load;load()}};
+FEATURES.splice(FEATURES.findIndex(f=>f.id===&quot;editor&quot;)+1,0,MIDIFILE_FEATURE);
 /* ================= Synth CC mapper: MIDI Guide catalog -> the five Control-mode knob assignments =================
    The catalog (1d-midiguide.js) is MIDI Guide by Pencil Research, CC BY-SA 4.0, unpacked on first use.
    A mapping is plain data, apart from the panel, so a later device-transfer action can write mappingGlobals(m)

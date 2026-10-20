@@ -101,5 +101,34 @@ eq("t").value="3";eq("t").onchange();eq("grid").children[2].click();const addIn=
 ok("editor UI: added notes show on the step",/D4 F#4/.test(eq("grid").children[2].textContent),eq("grid").children[2].textContent);
 eq("apply").click();const kept=edReadPattern(DEV.project,0x7D,1);
 ok("editor UI: Keep puts the edit into the Projects tool",kept.steps[2].notes.map(n=>noteName(n.pitch)).join(" ")==="D4 F#4"&&/Edited in the editor/.test(document.querySelector("#featList").textContent));
+/* MIDI files: a generated .mid with an off-grid note, a long note, a part longer than a pattern and a 17-note chord */
+const T=MF_T16,mid=mfWrite({tempo:100,tracks:[
+ {name:"Lead",ch:0,notes:[{pitch:60,vel:90,on:0,off:T/2},{pitch:62,vel:80,on:2*T+T/4,off:2*T+T/4+T*1.5},{pitch:64,vel:70,on:4*T,off:8*T}]},
+ {name:"Bass",ch:1,notes:Array.from({length:25},(_,i)=>({pitch:36+i%12,vel:100,on:i*4*T,off:i*4*T+T}))},
+ {name:"Pad",ch:2,notes:Array.from({length:17},(_,i)=>({pitch:48+i,vel:60,on:0,off:4*T}))}]});
+const mfx=mfParse(mid.buffer),mparts=mfParts(mfx);
+ok("MIDI file parses: 3 parts, tempo 100, names",mparts.length===3&&Math.round(mfx.tempo)===100&&mparts.map(p=>p.name).join()==="Lead,Bass,Pad"&&mparts[1].notes.length===25,mparts.map(p=>p.name));
+const lead=mfPlace(mparts[0],mfx);const ln=s=>lead.steps[s].notes[0];
+ok("placement: step, time shift, gate, velocity",ln(0).gate===7&&ln(2).shift===74&&ln(2).gate===15&&ln(2).vel===80&&ln(4).gate===Graw(4)&&lead.length===16,[ln(0),ln(2),ln(4),lead.length]);
+ok("a long part is 112 steps (7 bars)",mfPlace(mparts[1],mfx).length===112);
+ok("plan without spilling keeps 64 steps and reports the rest",(()=>{const pl=mfPlan(mfPlace(mparts[1],mfx),1,1);return pl.pats.length===1&&pl.cutSteps===48})());
+ok("over-dense step is reported",mfPlan(mfPlace(mparts[2],mfx),1,1).over.some(o=>/17 notes/.test(o)));
+/* through the interface: warning for the long part, choose to add to other patterns, confirm leaving extras out */
+reset();saveProject();DEV.showProject(await readProject(L,1),"test");
+const mfBox=[...document.querySelectorAll("#featList .feat")].find(b=>/MIDI files/.test(b.textContent)),mq=a=>mfBox.querySelector(`[data-a=${a}]`);
+await mq("f").onchange({target:{files:[new File([mid],"test.mid")]}});
+const sels=mq("parts").querySelectorAll("tbody select");ok("parts listed with track choices",sels.length===6&&sels[0].value==="1"&&sels[2].value==="2"&&sels[4].value==="3");
+mq("imp").click();ok("too-long part asks: only 64 steps fit, add the rest to other patterns?",/only 64 steps fit in pattern 1 of track 2\. Would you like to add the rest to other patterns\?/.test(mq("warn").textContent),mq("warn").textContent);
+[...mq("warn").querySelectorAll("button")].find(b=>/Add to patterns 1–2/.test(b.textContent)).click();
+ok("then the 17-note chord asks before leaving notes out",/Too many notes/.test(mq("warn").textContent),mq("warn").textContent);
+[...mq("warn").querySelectorAll("button")].find(b=>/leaving extras out/.test(b.textContent)).click();
+const ip=DEV.project,b1=edReadPattern(ip,0x7C,1),b2=edReadPattern(ip,0x7C,2),pad=edReadPattern(ip,0x7D,1),s1x=edReadScene(ip,1);
+ok("imported: bass over patterns 1 (64 steps) and 2 (48), chained in scene 1",b1.len===64&&b2.len===48&&b1.steps[0].notes[0].pitch===36&&b2.steps[0].notes[0].pitch===40&&s1x.chains[1].join()==="0,1"&&s1x.valid,{l1:b1.len,l2:b2.len,ch:s1x.chains[1]});
+ok("imported: chord trimmed to 16, lead in track 1, tempo 100",pad.steps[0].notes.length===16&&edReadPattern(ip,0x7B,1).steps[2].notes[0].shift===74&&mfGetTempo(ip)===100&&/1 note\(s\) over the limits left out/.test(mq("msg").textContent),mq("msg").textContent);
+/* export and read back */
+const back=mfParse(mfWrite({tempo:mfGetTempo(ip),tracks:[{name:"L",ch:0,notes:mfExportTrack(ip,0x7B,[1])},{name:"B",ch:1,notes:mfExportTrack(ip,0x7C,[1,2])}]}).buffer);
+const bl=back.tracks[1].notes,bb=back.tracks[2].notes;
+ok("export: lead timing and lengths survive a round trip",bl.length===3&&bl[1].start===2*T+T/4&&bl[1].end-bl[1].start===T*1.5&&bl[2].end-bl[2].start===4*T&&Math.round(back.tempo)===100,bl);
+ok("export: chained bass patterns play in order, 25 notes",bb.length===25&&bb[16].start===16*4*T,{n:bb.length,s16:bb[16]&&bb[16].start});
 ok("file check rejects a damaged file",(()=>{const b=deep(f1);b.data[5][3]=[200];try{checkProjectFile(b);return false}catch(e){return true}})());
 selectTab("man");return R;
