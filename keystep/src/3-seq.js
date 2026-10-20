@@ -9,6 +9,7 @@ function newProject(){return {name:null,bpm:120,swing:50,tracks:[0,1,2,3].map(ne
  ctrl:{pats:Array.from({length:16},newCtrlPat),cur:0},scenes:Array.from({length:16},()=>null),user:[0xFFF,0xFFF],raw:{}}}
 const GDEF=new Int16Array(160);GLOBALS.forEach(g=>GDEF[g.id]=g.d);GDEF[153]=1;GDEF[152]=1;GDEF[143]=1;GDEF[144]=1;GDEF[145]=1;GDEF[146]=1;GDEF[142]=1;
 [0,1,2,3,4].forEach(i=>GDEF[28+i]=74+i); // the manual's defaults: Pitch 74 … Randomness 78
+GDEF[82]=36; // Drum Map low note: a MIDI note, 36 on a KeyStep Pro (live read 2026-10-18; the MCC file says 0)
 GDEF[74]=GDEF[79]=9; // drum channel 10 (0-based 9, as the device reports; the MCC file says 10)
 
 /* track defaults (what the encoders set when no step is held) */

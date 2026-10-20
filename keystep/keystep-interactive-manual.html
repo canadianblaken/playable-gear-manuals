@@ -133,7 +133,7 @@ table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
 .feat input[type=text]{width:12em}
 .feat textarea{width:100%;font:12px ui-monospace,monospace;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);min-height:4em}
 #devLog:empty{display:none}#devLog{font:11.5px/1.45 ui-monospace,monospace;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;max-height:180px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
-#devLog .tx{color:var(--muted)}#devLog .ok{color:var(--ok)}#devLog .bad{color:var(--bad)}
+#devLog .tx{color:var(--muted)}#devLog .ok{color:var(--ok)}.pg.warn{color:var(--warn)}.drGrid{overflow-x:auto;margin:6px 0}.drT td{text-align:center;padding:1px 3px;font-size:11px}.drT td:first-child{text-align:left;white-space:nowrap}.drT td.hit{color:var(--accent)}#devLog .bad{color:var(--bad)}
 .gtab{max-height:340px;overflow:auto}
 .gtab td:last-child{white-space:nowrap}
 .pill{display:inline-block;font-size:11px;border-radius:999px;padding:0 7px;border:1px solid var(--line);color:var(--muted)}
@@ -511,6 +511,7 @@ function newProject(){return {name:null,bpm:120,swing:50,tracks:[0,1,2,3].map(ne
  ctrl:{pats:Array.from({length:16},newCtrlPat),cur:0},scenes:Array.from({length:16},()=>null),user:[0xFFF,0xFFF],raw:{}}}
 const GDEF=new Int16Array(160);GLOBALS.forEach(g=>GDEF[g.id]=g.d);GDEF[153]=1;GDEF[152]=1;GDEF[143]=1;GDEF[144]=1;GDEF[145]=1;GDEF[146]=1;GDEF[142]=1;
 [0,1,2,3,4].forEach(i=>GDEF[28+i]=74+i); // the manual's defaults: Pitch 74 … Randomness 78
+GDEF[82]=36; // Drum Map low note: a MIDI note, 36 on a KeyStep Pro (live read 2026-10-18; the MCC file says 0)
 GDEF[74]=GDEF[79]=9; // drum channel 10 (0-based 9, as the device reports; the MCC file says 10)
 
 /* track defaults (what the encoders set when no step is held) */
@@ -1140,7 +1141,7 @@ async function toggleMidi(){const b=$("#midiBtn");if(MOUT||MIN){MOUT=null;if(MIN
   b.setAttribute("aria-pressed","true");b.textContent=`MIDI: ${MOUT?MOUT.name:"no out"}`}catch(e){alert("MIDI access was refused.")}}
 const tms=t=>t==null?undefined:Math.max(performance.now(),t*1000);
 function midiNote(t,midi,vel,t0,t1){if(!MOUT)return;const ch=outCh(t);if(ch==null)return;MOUT.send([0x90|ch,midi,vel],tms(t0));MOUT.send([0x80|ch,midi,0],tms(t1))}
-function midiDrum(l,vel,t0,t1){if(!MOUT)return;const ch=S.globals[79];if(ch>15)return;const n=S.globals[81]?S.globals[83+l]:S.globals[82]+36+l;MOUT.send([0x90|ch,n&127,vel],tms(t0));MOUT.send([0x80|ch,n&127,0],tms(t1))}
+function midiDrum(l,vel,t0,t1){if(!MOUT)return;const ch=S.globals[79];if(ch>15)return;const n=S.globals[81]?S.globals[83+l]:S.globals[82]+l;MOUT.send([0x90|ch,n&127,vel],tms(t0));MOUT.send([0x80|ch,n&127,0],tms(t1))}
 function midiOn(t,midi,vel){if(!MOUT)return;const ch=outCh(t);if(ch!=null)MOUT.send([0x90|ch,midi,vel])}
 function midiOff(t,midi){if(!MOUT)return;const ch=outCh(t);if(ch!=null)MOUT.send([0x80|ch,midi,0])}
 /* Control-mode knob i: S.cc and Control-track steps hold the knob position 0-127; Min/Max (48-57) scale it on the way out
@@ -1312,7 +1313,8 @@ const chordRaw=tr=>{const c=tr.chord;return c.root==null?[0x7F,...Array(15).fill
    step pass mask 0x31 is 15 (plays on all four passes); pattern defaults: swing 25 (= 0), step count 15 (= 16 steps), bits 20, mode 26, pitch 60, gate 7, velocity 100, time shift 49 (= 0), randomness 100 */
 /* project-item values: index 1 keeps the plain key (older files), other indexes are their own values */
 const pjKey=(param,ix)=>ix[0]===1&&ix.length===1?param:param+"/"+ix.join(",");
-const SIM_SLOT_PARAMS=[0x32,0x6D,0x6E,0x6F,0x70,0x71],SIM_STEP_DEFAULTS={0x31:15},SIM_PAT_DEFAULTS={0x61:25,0x62:15,0x63:20,0x64:26,0x6D:60,0x6E:7,0x6F:100,0x70:49,0x71:100};
+/* drum slots (0x36, 0x75-0x79) read 127 when empty, as on a KeyStep Pro */
+const SIM_SLOT_PARAMS=[0x32,0x6D,0x6E,0x6F,0x70,0x71,0x36,0x75,0x76,0x77,0x78,0x79],SIM_STEP_DEFAULTS={0x31:15,0x33:15,0x35:15},SIM_PAT_DEFAULTS={0x61:25,0x62:15,0x63:20,0x64:26,0x6D:60,0x6E:7,0x6F:100,0x70:49,0x71:100,0x72:25,0x73:15,0x74:16};
 const SIMDEV={namesFw:true,sess:null,
  handle(b){const out=[];
   if(b[1]===0x7E&&b[3]===0x06&&b[4]===0x01)return [[0xF0,0x7E,0x7F,0x06,0x02,0x00,0x20,0x6B,0x02,0x00,0x09,0x00,0x25,0x14,0x05,0x02,0xF7]];
@@ -1341,7 +1343,7 @@ const SIMDEV={namesFw:true,sess:null,
   if(item===0x7A&&param===P_PATTERN_STATE)return buf.ctrl.pats[i0-1].valid?3:2;
   const tr=this.track(buf,item);if(!tr)return buf.raw[item+"/"+param+"/"+ix.join(",")]||0;
   if(param===0x27)return tr.valid?3:2;
-  if(param===P_MODE)return (clamp(tr.oct+3,0,7))|(tr.chordOn?CHORD_MODE_BIT:0);
+  if(param===P_MODE)return (clamp(tr.oct+3,0,7))|(tr.chordOn?CHORD_MODE_BIT:0)|(tr.mode!=="seq"?0x40:0); // 0x40: drum (track 1) or arpeggio
   if(param===P_CHORD)return chordRaw(tr)[i0-1];
   const pat=tr.pats[i0-1];if(!pat)return 0;
   if(param===P_PATTERN_STATE)return pat.valid?3:2;if(param===P_ROOT)return pat.root;if(param===P_SCALE)return pat.scale;
@@ -1353,7 +1355,7 @@ const SIMDEV={namesFw:true,sess:null,
   if(item===0x7A&&param===P_PATTERN_STATE){buf.ctrl.pats[i0-1].valid=v===3;return}
   const tr=this.track(buf,item);if(!tr){buf.raw[item+"/"+param+"/"+ix.join(",")]=v;return}
   if(param===0x27){tr.valid=v===3;return}
-  if(param===P_MODE){tr.oct=clamp((v&7)-3,-3,2);tr.chordOn=!!(v&CHORD_MODE_BIT);tr.valid=true;return}
+  if(param===P_MODE){tr.oct=clamp((v&7)-3,-3,2);tr.chordOn=!!(v&CHORD_MODE_BIT);tr.mode=v&0x40?(item===0x7B?"drum":"arp"):"seq";tr.valid=true;return}
   /* the setter stores the 7-bit value as is, so SysEx can only write offsets above the root */
   if(param===P_CHORD){const raw=chordRaw(tr);raw[i0-1]=v;const end=raw.findIndex((x,k)=>k>0&&(x===0x7F||x===0));tr.chord=raw[0]===0x7F?{root:null,off:[]}:{root:raw[0],off:raw.slice(1,end<0?16:end).map(o=>o>127?o-256:o)};tr.valid=true;return}
   const pat=tr.pats[i0-1];if(!pat)return;
@@ -1437,7 +1439,9 @@ const STATE_PARAMS=[0x25,P_SCENE_STATE,0x27,P_PATTERN_STATE],UNSTORED=new Set(["
 /* returns a list of problems; empty = every value read back as written.
    Values the recall could not read (null) are not sent. A chord with an unreadable byte is not sent at all: the SET
    stores 7 bits, so a note below the root cannot be written over SysEx either (emulated 2026-10-20). */
-async function storeProject(link,p,f,{verify=true,prog=()=>{}}={}){checkProjectFile(f);const N=f.data.length,problems=[];
+async function storeProject(link,p,f,{verify=true,prog=()=>{}}={}){checkProjectFile(f);
+ f=JSON.parse(JSON.stringify(f));const fixed=drumFixEmpty(f);if(fixed)devLog(`empty drum slots sent as the KeyStep stores them (${fixed} values)`);
+ const N=f.data.length,problems=[];
  const badChord=new Set(f.data.filter(e=>e[1]===P_CHORD&&e[3].includes(null)).map(e=>e[0]));
  for(const item of badChord)problems.push(`${item===0x7A?"control track":"track "+(TRACK_ITEMS.indexOf(item)+1)} chord not sent: it has a note below its root, which SysEx cannot carry. Enter it again on the device.`);
  const skip=e=>e[1]===P_CHORD&&badChord.has(e[0]);
@@ -1708,6 +1712,44 @@ function edWriteScene(f,sc,s){const w=(p,path,v)=>edSet(f,SCENE_ITEM,p,path,v),o
  w(SC_P.state,[sc],s.valid?3:2);s.pats.forEach((p,t)=>{if(!(p>=0&&p<=15))throw new Error("scene patterns are 1–16");w(SC_P.pat,[sc,t+1],p)});
  w(SC_P.mute,[sc],s.mute&15);w(SC_P.track,[sc],old&~0xF|s.track&7|(s.chainOn?8:0));
  s.chains.forEach((c,t)=>{if(c.length>16||c.some(p=>!(p>=0&&p<=15)))throw new Error("a chain is up to 16 patterns, 1–16");for(let i=0;i<16;i++)w(SC_P.chain,[sc,t+1,i+1],i<c.length?c[i]:ED_EMPTY)})}
+/* drum patterns (track 1 in drum mode), from the firmware setter 0800d900 and a beat saved on a KeyStep Pro (2026-10-20):
+   per lane a 64-step on mask (0x34, index lane*10 + byte, 7 steps per byte) and a length (0x33, [pattern, 1, lane]);
+   192 hit slots like the sequencer's: 0x36 step, 0x75 lane 0-23, 0x76-0x79 gate/velocity/time shift/randomness, 0x35 pass mask,
+   filled from slot 0 lane by lane. An empty slot holds 127 in every field; a slot with any other lane counts as used, and with
+   192 of those every new hit says "192 notes limit" until the pattern is erased on the device. Drum mode is bit 0x40 of 0x56. */
+const DR_P={len:0x73,laneLen:0x33,mask:0x34,pass:0x35,step:0x36,lane:0x75,gate:0x76,vel:0x77,shift:0x78,rand:0x79};
+const DR_NOTE=["lane","gate","vel","shift","rand"],DRUM_LANES=24,DRUM_MODE_BIT=0x40,DRUM_ITEM=0x7B;
+function edReadDrum(f,pat){const g=(p,path)=>edGet(f,DRUM_ITEM,p,path);
+ const dp={len:(g(DR_P.len,[pat])??15)+1,laneLen:Array.from({length:DRUM_LANES},(_,l)=>(g(DR_P.laneLen,[pat,1,l+1])??15)+1),hits:[],unreadable:0};
+ for(let s=0;s<ED_SLOTS;s++){const path=slotPath(pat,s),st=g(DR_P.step,path);if(st===null){dp.unreadable++;continue}if(st===ED_EMPTY||st==null||st>63)continue;
+  const h=Object.fromEntries(DR_NOTE.map(k=>[k,g(DR_P[k],path)]));h.step=st;h.pass=g(DR_P.pass,path)??15;
+  if(DR_NOTE.some(k=>h[k]==null)||h.lane>=DRUM_LANES){dp.unreadable++;continue}dp.hits.push(h)}
+ return dp}
+function edWriteDrum(f,pat,dp){const s=(p,path,v)=>edSet(f,DRUM_ITEM,p,path,v),hits=dp.hits.slice().sort((a,b)=>a.lane-b.lane||a.step-b.step);
+ if(hits.length>ED_SLOTS)throw new Error(`${hits.length} drum hits in the pattern; the KeyStep Pro holds ${ED_SLOTS}`);
+ if(!(dp.len>=1&&dp.len<=64))throw new Error("pattern length is 1–64 steps");
+ hits.forEach((h,i)=>{if(!(h.lane>=0&&h.lane<DRUM_LANES&&h.step>=0&&h.step<64))throw new Error("a drum hit is outside 24 lanes × 64 steps");
+  if(i&&hits[i-1].lane===h.lane&&hits[i-1].step===h.step)throw new Error(`lane ${h.lane+1} has two hits on step ${h.step+1}`)});
+ s(P_PATTERN_STATE,[pat],3);s(DR_P.len,[pat],dp.len-1);dp.laneLen.forEach((n,l)=>s(DR_P.laneLen,[pat,1,l+1],n-1));
+ const mask=Array(DRUM_LANES*10).fill(0);hits.forEach(h=>{mask[h.lane*10+Math.floor(h.step/7)]|=1<<h.step%7});mask.forEach((v,i)=>s(DR_P.mask,slotPath(pat,i),v));
+ hits.forEach((h,i)=>{const path=slotPath(pat,i);s(DR_P.step,path,h.step);s(DR_P.pass,path,h.pass??15);DR_NOTE.forEach(k=>s(DR_P[k],path,h[k]))});
+ for(let i=hits.length;i<ED_SLOTS;i++){const path=slotPath(pat,i);s(DR_P.step,path,ED_EMPTY);s(DR_P.pass,path,15);DR_NOTE.forEach(k=>s(DR_P[k],path,ED_EMPTY))}}
+function edSetDrumMode(f,on){const m=edGet(f,DRUM_ITEM,P_MODE,[1])??0;edSet(f,DRUM_ITEM,P_MODE,[1],on?m|DRUM_MODE_BIT:m&~DRUM_MODE_BIT)}
+/* empty drum slots as the device writes them (127 everywhere). Untouched patterns carry lane 60 there: harmless while the
+   pattern is marked default (the device resets it on load, hardware 2026-10-20), but in a pattern marked as holding data
+   (track 1's sequencer patterns share the marker) every slot counts as used. */
+function drumFixEmpty(f){let n=0;for(let pat=1;pat<=16;pat++)if(edGet(f,DRUM_ITEM,P_PATTERN_STATE,[pat])===3)for(let s=0;s<ED_SLOTS;s++){const path=slotPath(pat,s);
+  if(edGet(f,DRUM_ITEM,DR_P.step,path)!==ED_EMPTY)continue;for(const k of DR_NOTE){const v=edGet(f,DRUM_ITEM,DR_P[k],path);if(v!==undefined&&v!==ED_EMPTY){edSet(f,DRUM_ITEM,DR_P[k],path,ED_EMPTY);n++}}}
+ return n}
+/* drum map (globals 81-106): Chromatic plays Low Note + lane, Custom plays Note 1-24; the stored values are MIDI notes */
+const drumMapNotes=gl=>Array.from({length:DRUM_LANES},(_,l)=>gl[81]?gl[83+l]:gl[82]+l);
+/* sequencer steps to drum hits: each note lands on the lane that plays it; fold moves other notes by octaves onto the map */
+function stepsToDrum(pt,notes,fold=false){const lane=new Map();notes.forEach((n,l)=>{if(!lane.has(n))lane.set(n,l)});
+ const find=p=>{if(lane.has(p))return lane.get(p);if(!fold)return null;for(let k=1;k<11;k++)for(const q of [p-12*k,p+12*k])if(lane.has(q))return lane.get(q);return null};
+ const hits=[],missed=new Map();let doubled=0;
+ pt.steps.forEach((st,i)=>{if(!st.on||i>=pt.len||!st.passes)return;for(const n of st.notes){const l=find(n.pitch);if(l==null){missed.set(n.pitch,(missed.get(n.pitch)||0)+1);continue}
+  if(hits.some(h=>h.lane===l&&h.step===i)){doubled++;continue}hits.push({lane:l,step:i,gate:n.gate,vel:n.vel,shift:n.shift,rand:n.rand,pass:st.passes})}});
+ return {dp:{len:pt.len,laneLen:Array(DRUM_LANES).fill(pt.len),hits},missed,doubled}}
 const noteName=p=>p==null?"?":nm(p);
 function parseNote(s){const m=String(s).trim().match(/^([A-Ga-g])(#|b)?(-?\d)$/);if(!m)return null;const v=12*(+m[3]+1)+NN.indexOf(m[1].toUpperCase())+(m[2]==="#"?1:m[2]==="b"?-1:0);return v>=0&&v<=127?v:null}
 
@@ -1719,6 +1761,12 @@ const EDITOR_FEATURE={id:"editor",title:"Project editor: steps, notes, scenes",v
    <div class="row small">Length <input type="number" data-a="len" min="1" max="64" style="width:4em"> Root <select data-a="root">${NN.map((n,i)=>`<option value="${i}">${n}</option>`).join("")}</select> Scale <select data-a="scale">${SCALE_NAMES.map(([v,n])=>`<option value="${v}">${n}</option>`).join("")}</select></div>
    <div class="edGrid" data-a="grid" role="grid" aria-label="Steps"></div>
    <div data-a="step" class="edStep"></div>
+   <h3>Turn into drums</h3>
+   <p class="pg">Puts the notes of the pattern above on track 1's drum lanes, each note on the lane that plays it, and switches track 1 to drum mode. Track 1 then plays the drums while you play a synth on tracks 2–4.</p>
+   <div class="row small">Drum map <output data-a="dmap"></output><button class="sm2" data-a="dmapread">Read from KeyStep</button></div>
+   <div class="row small">Into drum pattern <select data-a="dto">${[...Array(16).keys()].map(i=>`<option value="${i+1}">${i+1}</option>`).join("")}</select>
+    <label><input type="checkbox" data-a="dfold"> move other notes by octaves onto the map</label><button class="sm2" data-a="dconv">Turn into drums</button></div>
+   <div data-a="dgrid" class="drGrid"></div>
    <h3>Scenes</h3><div data-a="scenes" class="gtab"></div>
    <div class="row"><button class="sm2" data-a="apply">Keep these edits in the loaded project</button><button class="sm2" data-a="revert">Undo unsaved edits</button></div>
    <p class="pg" data-a="msg" aria-live="polite"></p></div>`;
@@ -1726,7 +1774,7 @@ const EDITOR_FEATURE={id:"editor",title:"Project editor: steps, notes, scenes",v
   const say=(s,cls="")=>{q("msg").textContent=s;q("msg").className="pg "+cls};
   const item=()=>TRACK_ITEMS[+q("t").value-1],pat=()=>+q("pat").value;
   /* edits go to a working copy; "Keep" puts it in the Projects tool, ready for Send */
-  const load=()=>{f=DEV.project;q("none").hidden=!!f;q("ui").hidden=!f;if(!f)return;work=JSON.parse(JSON.stringify(f));dirtyEd=false;loadPat();drawScenes();say("")};
+  const load=()=>{f=DEV.project;q("none").hidden=!!f;q("ui").hidden=!f;if(!f)return;work=JSON.parse(JSON.stringify(f));dirtyEd=false;loadPat();drawScenes();drawDrum(+q("dto").value);say("")};
   const loadPat=()=>{pt=edReadPattern(work,item(),pat());q("len").value=pt.len;q("root").value=pt.root;q("scale").value=pt.scale;
    const mode=edGet(work,item(),P_MODE,[1])??0;
    q("pst").textContent=` ${pt.valid?"holds data":"default (empty)"}${mode&0x40?(item()===0x7B?" · track 1 is in drum mode: this edits its sequencer-mode patterns":" · this track is in arpeggio mode: its steps play when it is switched back to sequencer"):""}${pt.unreadable?` · ${pt.unreadable} note slot(s) could not be read, so this pattern is read-only`:""}`;drawGrid();drawStep()};
@@ -1765,6 +1813,22 @@ const EDITOR_FEATURE={id:"editor",title:"Project editor: steps, notes, scenes",v
     ch.onchange=()=>{const chains=[[],[],[],[],[]];let cur=-1;for(const tok of ch.value.trim().split(/\s+/).filter(Boolean)){const m=tok.match(/^([1-5]):(\d+)?$/);if(m){cur=+m[1]-1;if(m[2])chains[cur].push(+m[2]-1)}else if(/^\d+$/.test(tok)&&cur>=0)chains[cur].push(+tok-1);else return say(`Chains look like 1:1 2 3 2:4; “${tok}” is not understood.`,"bad")}
      s.chains=chains;s.chainOn=chains.some(c=>c.length);s.valid=used.checked=true;save()};tr.insertCell().append(ch)}
    box.appendChild(t)};
+  /* drums: the map comes from the KeyStep when asked, else the device defaults (Chromatic from note 36) */
+  const drawMap=()=>{const m=DEV.drumMap||{notes:drumMapNotes(GDEF),src:"KeyStep default"};q("dmap").textContent=`${m.src}: lane 1 = ${noteName(m.notes[0])} (${m.notes[0]}) … lane 24 = ${noteName(m.notes[23])} (${m.notes[23]})`;return m};
+  const drawDrum=pat=>{const dp=edReadDrum(work,pat),notes=drawMap().notes,box=q("dgrid");box.innerHTML="";const used=[...new Set(dp.hits.map(h=>h.lane))].sort((a,b)=>a-b);
+   if(!used.length){box.textContent=`Drum pattern ${pat} is empty.`;return}
+   const t=document.createElement("table");t.className="t drT";const hr=t.createTHead().insertRow();hr.insertCell().textContent=`Drum ${pat}`;for(let i=0;i<dp.len;i++)hr.insertCell().textContent=String(i+1);
+   const tb=t.createTBody();for(const l of used){const tr=tb.insertRow();tr.insertCell().textContent=`${l+1} · ${noteName(notes[l])}`;for(let i=0;i<dp.len;i++){const h=dp.hits.find(x=>x.lane===l&&x.step===i);const c=tr.insertCell();if(h){c.textContent="●";c.className="hit";c.title=`velocity ${h.vel}`}}}
+   box.appendChild(t)};
+  q("dmapread").onclick=async()=>{if(!DEV.link)return say("Connect first (KeyStep pill at the top), or keep the default map.","bad");
+   try{const gl={};for(const id of [81,82,...Array.from({length:24},(_,l)=>83+l)]){const v=await DEV.link.getGlobal(id);if(v==null)throw new Error(`no reply reading drum map setting ${id}`);gl[id]=v}
+    DEV.drumMap={notes:drumMapNotes(gl),src:gl[81]?"Custom (from KeyStep)":"Chromatic (from KeyStep)"};drawDrum(+q("dto").value);say("Drum map read from the KeyStep.","ok")}catch(e){say(e.message,"bad")}};
+  q("dconv").onclick=()=>{if(pt.unreadable)return say("This pattern has note slots the recall could not read, so it can't be converted.","bad");const to=+q("dto").value,m=drawMap();
+   const {dp,missed,doubled}=stepsToDrum(pt,m.notes,q("dfold").checked);if(!dp.hits.length)return say(`No note of this pattern is on the drum map (${noteName(m.notes[0])}–${noteName(m.notes[23])}). Tick “move other notes by octaves” or pick another pattern.`,"bad");
+   try{edWriteDrum(work,to,dp);edSetDrumMode(work,true);dirtyEd=true}catch(e){return say(e.message,"bad")}drawDrum(to);emit("editor:drums");
+   const miss=[...missed].map(([p,n])=>`${noteName(p)}×${n}`).join(" ");
+   say(`${dp.hits.length} hits on drum pattern ${to}; track 1 is set to drum mode.${miss?` Not on the map, left out: ${miss}.`:""}${doubled?` ${doubled} note(s) landed on a lane that already had a hit on that step.`:""} Keep these edits, then send.`,miss?"warn":"ok")};
+  q("dto").onchange=()=>drawDrum(+q("dto").value);
   q("t").onchange=q("pat").onchange=()=>{selStep=0;loadPat()};
   q("len").onchange=()=>{const v=Math.round(+q("len").value);if(!(v>=1&&v<=64)){q("len").value=pt.len;return say("Length is 1–64 steps.","bad")}pt.len=v;commitPat();drawGrid()};
   q("root").onchange=()=>{pt.root=+q("root").value;commitPat()};q("scale").onchange=()=>{pt.scale=+q("scale").value;commitPat()};

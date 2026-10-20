@@ -368,7 +368,7 @@ async function toggleMidi(){const b=$("#midiBtn");if(MOUT||MIN){MOUT=null;if(MIN
   b.setAttribute("aria-pressed","true");b.textContent=`MIDI: ${MOUT?MOUT.name:"no out"}`}catch(e){alert("MIDI access was refused.")}}
 const tms=t=>t==null?undefined:Math.max(performance.now(),t*1000);
 function midiNote(t,midi,vel,t0,t1){if(!MOUT)return;const ch=outCh(t);if(ch==null)return;MOUT.send([0x90|ch,midi,vel],tms(t0));MOUT.send([0x80|ch,midi,0],tms(t1))}
-function midiDrum(l,vel,t0,t1){if(!MOUT)return;const ch=S.globals[79];if(ch>15)return;const n=S.globals[81]?S.globals[83+l]:S.globals[82]+36+l;MOUT.send([0x90|ch,n&127,vel],tms(t0));MOUT.send([0x80|ch,n&127,0],tms(t1))}
+function midiDrum(l,vel,t0,t1){if(!MOUT)return;const ch=S.globals[79];if(ch>15)return;const n=S.globals[81]?S.globals[83+l]:S.globals[82]+l;MOUT.send([0x90|ch,n&127,vel],tms(t0));MOUT.send([0x80|ch,n&127,0],tms(t1))}
 function midiOn(t,midi,vel){if(!MOUT)return;const ch=outCh(t);if(ch!=null)MOUT.send([0x90|ch,midi,vel])}
 function midiOff(t,midi){if(!MOUT)return;const ch=outCh(t);if(ch!=null)MOUT.send([0x80|ch,midi,0])}
 /* Control-mode knob i: S.cc and Control-track steps hold the knob position 0-127; Min/Max (48-57) scale it on the way out

@@ -49,7 +49,8 @@ const chordRaw=tr=>{const c=tr.chord;return c.root==null?[0x7F,...Array(15).fill
    step pass mask 0x31 is 15 (plays on all four passes); pattern defaults: swing 25 (= 0), step count 15 (= 16 steps), bits 20, mode 26, pitch 60, gate 7, velocity 100, time shift 49 (= 0), randomness 100 */
 /* project-item values: index 1 keeps the plain key (older files), other indexes are their own values */
 const pjKey=(param,ix)=>ix[0]===1&&ix.length===1?param:param+"/"+ix.join(",");
-const SIM_SLOT_PARAMS=[0x32,0x6D,0x6E,0x6F,0x70,0x71],SIM_STEP_DEFAULTS={0x31:15},SIM_PAT_DEFAULTS={0x61:25,0x62:15,0x63:20,0x64:26,0x6D:60,0x6E:7,0x6F:100,0x70:49,0x71:100};
+/* drum slots (0x36, 0x75-0x79) read 127 when empty, as on a KeyStep Pro */
+const SIM_SLOT_PARAMS=[0x32,0x6D,0x6E,0x6F,0x70,0x71,0x36,0x75,0x76,0x77,0x78,0x79],SIM_STEP_DEFAULTS={0x31:15,0x33:15,0x35:15},SIM_PAT_DEFAULTS={0x61:25,0x62:15,0x63:20,0x64:26,0x6D:60,0x6E:7,0x6F:100,0x70:49,0x71:100,0x72:25,0x73:15,0x74:16};
 const SIMDEV={namesFw:true,sess:null,
  handle(b){const out=[];
   if(b[1]===0x7E&&b[3]===0x06&&b[4]===0x01)return [[0xF0,0x7E,0x7F,0x06,0x02,0x00,0x20,0x6B,0x02,0x00,0x09,0x00,0x25,0x14,0x05,0x02,0xF7]];
@@ -78,7 +79,7 @@ const SIMDEV={namesFw:true,sess:null,
   if(item===0x7A&&param===P_PATTERN_STATE)return buf.ctrl.pats[i0-1].valid?3:2;
   const tr=this.track(buf,item);if(!tr)return buf.raw[item+"/"+param+"/"+ix.join(",")]||0;
   if(param===0x27)return tr.valid?3:2;
-  if(param===P_MODE)return (clamp(tr.oct+3,0,7))|(tr.chordOn?CHORD_MODE_BIT:0);
+  if(param===P_MODE)return (clamp(tr.oct+3,0,7))|(tr.chordOn?CHORD_MODE_BIT:0)|(tr.mode!=="seq"?0x40:0); // 0x40: drum (track 1) or arpeggio
   if(param===P_CHORD)return chordRaw(tr)[i0-1];
   const pat=tr.pats[i0-1];if(!pat)return 0;
   if(param===P_PATTERN_STATE)return pat.valid?3:2;if(param===P_ROOT)return pat.root;if(param===P_SCALE)return pat.scale;
@@ -90,7 +91,7 @@ const SIMDEV={namesFw:true,sess:null,
   if(item===0x7A&&param===P_PATTERN_STATE){buf.ctrl.pats[i0-1].valid=v===3;return}
   const tr=this.track(buf,item);if(!tr){buf.raw[item+"/"+param+"/"+ix.join(",")]=v;return}
   if(param===0x27){tr.valid=v===3;return}
-  if(param===P_MODE){tr.oct=clamp((v&7)-3,-3,2);tr.chordOn=!!(v&CHORD_MODE_BIT);tr.valid=true;return}
+  if(param===P_MODE){tr.oct=clamp((v&7)-3,-3,2);tr.chordOn=!!(v&CHORD_MODE_BIT);tr.mode=v&0x40?(item===0x7B?"drum":"arp"):"seq";tr.valid=true;return}
   /* the setter stores the 7-bit value as is, so SysEx can only write offsets above the root */
   if(param===P_CHORD){const raw=chordRaw(tr);raw[i0-1]=v;const end=raw.findIndex((x,k)=>k>0&&(x===0x7F||x===0));tr.chord=raw[0]===0x7F?{root:null,off:[]}:{root:raw[0],off:raw.slice(1,end<0?16:end).map(o=>o>127?o-256:o)};tr.valid=true;return}
   const pat=tr.pats[i0-1];if(!pat)return;
@@ -174,7 +175,9 @@ const STATE_PARAMS=[0x25,P_SCENE_STATE,0x27,P_PATTERN_STATE],UNSTORED=new Set(["
 /* returns a list of problems; empty = every value read back as written.
    Values the recall could not read (null) are not sent. A chord with an unreadable byte is not sent at all: the SET
    stores 7 bits, so a note below the root cannot be written over SysEx either (emulated 2026-10-20). */
-async function storeProject(link,p,f,{verify=true,prog=()=>{}}={}){checkProjectFile(f);const N=f.data.length,problems=[];
+async function storeProject(link,p,f,{verify=true,prog=()=>{}}={}){checkProjectFile(f);
+ f=JSON.parse(JSON.stringify(f));const fixed=drumFixEmpty(f);if(fixed)devLog(`empty drum slots sent as the KeyStep stores them (${fixed} values)`);
+ const N=f.data.length,problems=[];
  const badChord=new Set(f.data.filter(e=>e[1]===P_CHORD&&e[3].includes(null)).map(e=>e[0]));
  for(const item of badChord)problems.push(`${item===0x7A?"control track":"track "+(TRACK_ITEMS.indexOf(item)+1)} chord not sent: it has a note below its root, which SysEx cannot carry. Enter it again on the device.`);
  const skip=e=>e[1]===P_CHORD&&badChord.has(e[0]);

@@ -101,6 +101,26 @@ eq("t").value="3";eq("t").onchange();eq("grid").children[2].click();const addIn=
 ok("editor UI: added notes show on the step",/D4 F#4/.test(eq("grid").children[2].textContent),eq("grid").children[2].textContent);
 eq("apply").click();const kept=edReadPattern(DEV.project,0x7D,1);
 ok("editor UI: Keep puts the edit into the Projects tool",kept.steps[2].notes.map(n=>noteName(n.pitch)).join(" ")==="D4 F#4"&&/Edited in the editor/.test($("#feat-projects").textContent)&&!$("#feat-projects [data-a=chg]").hidden);
+/* steps to drum hits: the beat entered on a KeyStep Pro on 2026-10-20 (lane 1 on 1 5 9 13, lane 3 on 5 13, lane 7 on 3 7 11 15) must come out as it stored it */
+const fd=deep(fe);const sq=edReadPattern(fd,0x7C,5);sq.len=16;[[36,[0,4,8,12]],[38,[4,12]],[42,[2,6,10,14]]].forEach(([p,st])=>st.forEach(i=>{sq.steps[i].on=true;sq.steps[i].notes.push({pitch:p,gate:7,vel:100,shift:49,rand:100})}));
+sq.steps[3].on=true;sq.steps[3].notes.push({pitch:72,gate:7,vel:90,shift:49,rand:100});edWritePattern(fd,0x7C,5,sq);
+const dmap=drumMapNotes(GDEF),cv=stepsToDrum(sq,dmap),cvf=stepsToDrum(sq,dmap,true);
+ok("drums: default map is Chromatic from note 36",dmap[0]===36&&dmap[23]===59,dmap.slice(0,3));
+ok("drums: notes off the map are reported, octave fold places them",cv.dp.hits.length===10&&cv.missed.get(72)===1&&cvf.dp.hits.length===11&&cvf.dp.hits.some(h=>h.lane===12&&h.step===3),[cv.dp.hits.length,[...cv.missed]]);
+edWriteDrum(fd,1,cv.dp);edSetDrumMode(fd,true);const dg=(prm,path)=>edGet(fd,0x7B,prm,path);
+ok("drums: lane masks as the device stores them",dg(0x34,[1,1,1])===17&&dg(0x34,[1,1,2])===34&&dg(0x34,[1,1,21])===16&&dg(0x34,[1,1,22])===32&&dg(0x34,[1,1,61])===68&&dg(0x34,[1,1,62])===8&&dg(0x34,[1,1,63])===1&&dg(0x34,[1,1,3])===0,[1,2,21,22,61,62].map(i=>dg(0x34,[1,1,i])));
+ok("drums: hit slots in lane order, empty slots 127 everywhere",[...Array(11).keys()].map(i=>dg(0x36,[1,1,i+1])).join()==="0,4,8,12,4,12,2,6,10,14,127"&&[...Array(11).keys()].map(i=>dg(0x75,[1,1,i+1])).join()==="0,0,0,0,2,2,6,6,6,6,127"&&dg(0x77,[1,3,64])===127&&dg(0x35,[1,3,64])===15);
+ok("drums: track 1 switched to drum mode, nothing else in the mode byte",dg(0x56,[1])===((edGet(fe,0x7B,0x56,[1])??0)|0x40));
+const rd=edReadDrum(fd,1);ok("drums: read back",rd.hits.length===10&&rd.len===16&&rd.hits.filter(h=>h.lane===6).map(h=>h.step+1).join()==="3,7,11,15");
+ok("drums: two hits on one lane and step refused",(()=>{try{edWriteDrum(fd,2,{len:16,laneLen:Array(24).fill(16),hits:[{lane:1,step:2,gate:7,vel:1,shift:49,rand:100},{lane:1,step:2,gate:7,vel:1,shift:49,rand:100}]});return false}catch(e){return /two hits/.test(e.message)}})());
+const blk=await blankProject(9);[2,3].forEach(p=>edSet(blk,0x7B,0x28,[p],2));edSet(blk,0x7B,0x28,[2],3);const blFix=drumFixEmpty(blk);
+ok("drums: Store writes empty drum slots as 127 in patterns marked as holding data (lane 60 fills them on the device), leaves default patterns",blFix===192*5&&edGet(blk,0x7B,0x75,[2,1,1])===127&&edGet(blk,0x7B,0x75,[3,1,1])===60,[blFix,edGet(blk,0x7B,0x75,[2,1,1]),edGet(blk,0x7B,0x75,[3,1,1])]);
+const pr7=await storeProject(L,10,fd);const f10=await readProject(L,10);
+ok("drums: converted project sent and read back",pr7.length===0&&edReadDrum(f10,1).hits.length===10&&edGet(f10,0x7B,0x75,[3,1,1])===127&&(edGet(f10,0x7B,0x56,[1])&0x40),[pr7.slice(0,3),edReadDrum(f10,1).hits.length,edGet(f10,0x7B,0x75,[3,1,1]),edGet(f10,0x7B,0x56,[1])]);
+/* the drum UI: convert the pattern on screen */
+DEV.showProject(deep(fd),"test");eq("t").value="2";eq("pat").value="5";eq("t").onchange();eq("dto").value="4";eq("dconv").click();
+ok("drums UI: Turn into drums fills the grid and says what was left out",eq("dgrid").querySelectorAll("td.hit").length===10&&/10 hits on drum pattern 4/.test(eq("msg").textContent)&&/C4×1|C5×1/.test(eq("msg").textContent),eq("msg").textContent);
+eq("apply").click();ok("drums UI: Keep puts the drum pattern in the working project",edReadDrum(DEV.project,4).hits.length===10&&(edGet(DEV.project,0x7B,0x56,[1])&0x40));
 /* MIDI files: a generated .mid with an off-grid note, a long note, a part longer than a pattern and a 17-note chord */
 const T=MF_T16,mid=mfWrite({tempo:100,tracks:[
  {name:"Lead",ch:0,notes:[{pitch:60,vel:90,on:0,off:T/2},{pitch:62,vel:80,on:2*T+T/4,off:2*T+T/4+T*1.5},{pitch:64,vel:70,on:4*T,off:8*T}]},
