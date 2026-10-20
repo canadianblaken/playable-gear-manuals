@@ -16,8 +16,8 @@ const A=[
  [()=>{loadDemo("Quick tour");tap("play")},()=>{tap("t1trk");down("trans");down("k19");up("k19");up("trans")},()=>tap("trans"),()=>{down("trans");tap("t2trk");up("trans")},()=>two("shift","trans")],
  [()=>{tap("stop");tap("t3trk");tap("control")},()=>turnEnc(1,1),()=>{tap("stepedit");tap("s0");turnEnc(0,1)},()=>{tap("stepedit");tap("t3trk")}],
  [()=>{tap("t1trk");two("shift","t1trk")},()=>{for(let i=0;i<4;i++)turnKnob("sel",1);clickKnob("sel")},()=>{turnKnob("sel",1);clickKnob("sel")},async()=>{selectTab("dev");$("#devPort").value="sim";await devConnect();document.querySelector("[data-a=readall]").click();await W(1500)}],
- [()=>selectTab("dev"),async()=>{$("#devPort").value="sim";await devConnect()},async()=>{const f=document.querySelectorAll("#featList .feat")[1];f.querySelector("[data-a=p]").value="2";f.querySelector("[data-a=n]").value="Song Two";f.querySelector("[data-a=go]").click();await W(300)},
-  async()=>{const f=document.querySelectorAll("#featList .feat")[2];f.querySelector("[data-a=p]").value="2";f.querySelector("[data-a=go]").click();for(let i=0;i<100&&DEV.busy;i++)await W(100);await W(100)},()=>{selectTab("man");two("project","s1")}],
+ [()=>selectTab("dev"),async()=>{$("#devPort").value="sim";await devConnect()},async()=>{const f=$("#feat-names");f.querySelector("[data-a=p]").value="2";f.querySelector("[data-a=n]").value="Song Two";f.querySelector("[data-a=go]").click();await W(300)},
+  async()=>{const f=$("#feat-trackkey");f.querySelector("[data-a=p]").value="2";f.querySelector("[data-a=go]").click();for(let i=0;i<100&&DEV.busy;i++)await W(100);await W(100)},()=>{selectTab("man");two("project","s1")}],
 ];
 for(let i=0;i<TOURS.length;i++){const T=TOURS[i],acts=A[i];stop();$("#resetBtn").onclick();loadDemo("Quick tour");startTour(i);if(!acts){res[T.n]="NO ACTIONS";continue}
  for(let k=0;k<acts.length;k++){const before=tour.k;try{await acts[k]()}catch(e){res[T.n]=`step ${k+1} threw ${e.message}`;break}await W(80);if(tour.k===before){res[T.n]=`stuck at step ${k+1}: ${T.steps[k].s.slice(0,70)}`;break}}

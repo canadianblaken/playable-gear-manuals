@@ -78,7 +78,7 @@ function mfExportTrack(f,item,patList){const notes=[];let at=0;
  return notes}
 
 /* ---------- the feature ---------- */
-const MIDIFILE_FEATURE={id:"midifile",title:"MIDI files: import a part per track, export",verified:"Tested in the simulation (import, too-long and too-dense warnings, export round trip); the step format it writes was measured on a KeyStep Pro on 2026-10-20.",needs:null,
+const MIDIFILE_FEATURE={id:"midifile",title:"MIDI file import / export: a part per track",verified:"Tested in the simulation (import, too-long and too-dense warnings, export round trip); the step format it writes was measured on a KeyStep Pro on 2026-10-20.",needs:null,
  about:"Import: open a .mid (for example a song part exported from Logic), choose which KeyStep track each part goes to and the pattern to start on. Notes snap to 16th-note steps; small timing offsets are kept as time shift, note lengths become gate lengths, velocity is kept. One pattern holds 64 steps (4 bars of 4/4); a longer part can continue on the following patterns and be chained in a scene. The result goes into the project loaded in the Projects tool: check it in the editor, then Send. Export: writes the chosen patterns of each track as a .mid.",
  render(el){el.innerHTML=`<div class="row" data-a="none">Load a project in the Projects tool first.</div><div data-a="ui" hidden>
    <h3>Import</h3><div class="row small"><input type="file" accept=".mid,.midi,audio/midi" data-a="f"><label><input type="checkbox" data-a="tempo"> use the file's tempo</label></div>

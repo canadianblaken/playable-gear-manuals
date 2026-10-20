@@ -115,7 +115,7 @@ ok("plan without spilling keeps 64 steps and reports the rest",(()=>{const pl=mf
 ok("over-dense step is reported",mfPlan(mfPlace(mparts[2],mfx),1,1).over.some(o=>/17 notes/.test(o)));
 /* through the interface: warning for the long part, choose to add to other patterns, confirm leaving extras out */
 reset();saveProject();DEV.showProject(await readProject(L,1),"test");
-const mfBox=[...document.querySelectorAll("#featList .feat")].find(b=>/MIDI files/.test(b.textContent)),mq=a=>mfBox.querySelector(`[data-a=${a}]`);
+const mfBox=[...document.querySelectorAll("#featList .feat")].find(b=>/MIDI file import/.test(b.textContent)),mq=a=>mfBox.querySelector(`[data-a=${a}]`);
 await mq("f").onchange({target:{files:[new File([mid],"test.mid")]}});
 const sels=mq("parts").querySelectorAll("tbody select");ok("parts listed with track choices",sels.length===6&&sels[0].value==="1"&&sels[2].value==="2"&&sels[4].value==="3");
 mq("imp").click();ok("too-long part asks: only 64 steps fit, add the rest to other patterns?",/only 64 steps fit in pattern 1 of track 2\. Would you like to add the rest to other patterns\?/.test(mq("warn").textContent),mq("warn").textContent);

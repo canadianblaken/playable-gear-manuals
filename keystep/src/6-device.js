@@ -230,13 +230,13 @@ async function libImport(obj,fname){if(obj&&obj.format===BACKUP_FORMAT){checkBac
 const FEATURES=[
  {id:"globals",title:"Global settings (all 158 IDs)",verified:"2026-10-18: full read of all globals on hardware; writes tested with Brightness (152).",needs:null,
   about:"Every Utility setting, including the ones MCC does not show: Program Change Send and Fixed Velocity per track, Brightness and Transpose Latch. A SET gets no reply, so the tool reads the value back.",
-  render(el){el.innerHTML=`<div class="row"><button class="sm" data-a="readall">Read all</button><label><input type="checkbox" data-a="hid"> only the settings MCC hides</label></div><div class="gtab"><table class="t"><thead><tr><th>ID</th><th>Setting</th><th>Value</th></tr></thead><tbody></tbody></table></div>`;
+  render(el){el.innerHTML=`<p class="pg">The values are read from the KeyStep Pro when you connect; until then the menus are empty.</p><div class="row"><button class="sm" data-a="readall">Read all</button><label><input type="checkbox" data-a="hid"> only the settings MCC hides</label></div><div class="gtab"><table class="t"><thead><tr><th>ID</th><th>Setting</th><th>Value</th></tr></thead><tbody></tbody></table></div>`;
    const tb=el.querySelector("tbody"),hidBox=el.querySelector("[data-a=hid]");
    const draw=()=>{tb.innerHTML="";let grp="";for(const g of GLOBALS){if(hidBox.checked&&!g.hidden)continue;if(g.g!==grp){grp=g.g;tb.insertAdjacentHTML("beforeend",`<tr><th colspan="3">${grp}</th></tr>`)}
      const tr=document.createElement("tr");const v=DEV.gvals[g.id];const opts=optsOf({id:g.id});
      tr.innerHTML=`<td>${g.id}</td><td>${g.n}</td><td><select ${v==null?"disabled":""}>${v==null?"<option>–</option>":opts.map(o=>`<option value="${o[0]}" ${o[0]===v?"selected":""}>${o[1]}</option>`).join("")}</select></td>`;
      tr.querySelector("select").onchange=async e=>{const nv=+e.target.value;await busy(async()=>{await DEV.link.setGlobal(g.id,nv);const rb=await DEV.link.getGlobal(g.id);DEV.gvals[g.id]=rb;devLog(`global ${g.id} ${g.n} = ${rb}${rb===nv?"":" (expected "+nv+")"}`,rb===nv?"ok":"bad")});draw()};tb.appendChild(tr)}};
-   hidBox.onchange=draw;el.querySelector("[data-a=readall]").onclick=()=>busy(async()=>{let n=0;for(const g of GLOBALS){if(hidBox.checked&&!g.hidden)continue;DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}devLog(`read ${n} settings`,"ok");emit("dev:read");draw()});draw()}},
+   DEV.globalsDraw=draw;hidBox.onchange=draw;el.querySelector("[data-a=readall]").onclick=()=>busy(async()=>{let n=0;for(const g of GLOBALS){if(hidBox.checked&&!g.hidden)continue;DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}devLog(`read ${n} settings`,"ok");emit("dev:read");draw()});draw()}},
  {id:"names",title:"Project names",verified:"2026-10-19: the name shows on the device, survives a power cycle and Save Project; Erase Project clears it.",needs:"the project-names firmware (KeyStepPro_2.5.20_project_names.kspf). Stock 2.5.20 ignores this message.",
   about:"Writes a 1–16 character name for one project slot. The name belongs to the slot: saving another project into it keeps the slot's name.",
   render(el){el.innerHTML=`<div class="row">Project <select data-a="p">${[...Array(16).keys()].map(i=>`<option value="${i+1}">${i+1}</option>`).join("")}</select><input type="text" data-a="n" maxlength="16" placeholder="Name (16 max)"><button class="sm" data-a="go">Send</button></div>`;
@@ -340,7 +340,9 @@ async function busy(fn){if(!DEV.link){devLog("Connect first.","bad");return}if(D
 async function devConnect(){const sel=$("#devPort").value;if(DEV.link&&DEV.link.close)DEV.link.close();DEV.link=null;DEV.gvals={};
  if(sel==="sim"){DEV.link=new SimLink();SIMDEV.namesFw=$("#simNames").checked}
  else{const [oi,ii]=sel.split("|");const out=[...DEV.ports.outputs.values()].find(o=>o.id===oi),inp=[...DEV.ports.inputs.values()].find(i=>i.id===ii);if(!out||!inp){devLog("Port not found.","bad");return}DEV.link=new WebMidiLink(out,inp)}
- const id=await DEV.link.identity();if(id){const v=id.slice(12,16);devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");$("#devState").innerHTML=DEV.link.sim?'<span class="pill sim">simulation</span>':'<span class="pill real">KeyStep Pro</span>';emit("dev:connect")}
+ const id=await DEV.link.identity();if(id){const v=id.slice(12,16);devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");$("#devState").innerHTML=DEV.link.sim?'<span class="pill sim">simulation</span>':'<span class="pill real">KeyStep Pro</span>';
+  await busy(async()=>{devLog("Reading the global settings…");let n=0;await quietly(DEV.link,async()=>{for(const g of GLOBALS){DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}});devLog(`read ${n} global settings`,"ok")});
+  if(DEV.globalsDraw)DEV.globalsDraw();emit("dev:connect")}
  else{devLog("No identity reply. Check the ports and that SysEx permission was granted.","bad");DEV.link=null}}
 async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">Simulated KeyStep Pro (this page)</option>';
  if(!navigator.requestMIDIAccess){devLog("This browser has no Web MIDI (use Chrome or Edge; Firefox needs the site permission add-on).","bad");return}
@@ -348,11 +350,20 @@ async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">
  const outs=[...DEV.ports.outputs.values()],ins=[...DEV.ports.inputs.values()];
  for(const o of outs){const i=ins.find(x=>x.name===o.name)||ins.find(x=>/keystep/i.test(x.name))||ins[0];if(!i)continue;const opt=new Option(`${o.name} (out) ⇄ ${i.name} (in)`,o.id+"|"+i.id);s.add(opt);if(/keystep/i.test(o.name))s.value=opt.value}
  devLog(`${outs.length} MIDI output(s) found`)}
+/* Device tools open under the keyboard (#devWide, the wide left column); the right column keeps a jump list */
+const FEATURE_ORDER=["projects","midifile","editor","library","backup","setlist","trackkey","names","globals"],FEATURE_KEY=new Set(["midifile"]);
+const FEATURE_SHORT={projects:"Projects",midifile:"MIDI file import / export",editor:"Step editor",library:"Library",backup:"Backup",setlist:"Set list",trackkey:"Chord & key",names:"Names",globals:"Global settings"};
+function featJump(id){const box=$("#feat-"+id);if(!box)return;const c=$("#devCol");if(c&&c.contains(box)&&c.scrollTo)c.scrollTo({top:Math.max(0,box.offsetTop-c.offsetTop-8),behavior:"smooth"});else box.scrollIntoView({behavior:"smooth"})}
+function featNav(){const nav=document.createElement("div");nav.className="featNav";nav.setAttribute("role","navigation");nav.setAttribute("aria-label","Device tools");
+ for(const f of FEATURES){const b=document.createElement("button");b.type="button";b.textContent=FEATURE_SHORT[f.id]||f.title.split(":")[0];if(FEATURE_KEY.has(f.id))b.className="hi";b.onclick=()=>featJump(f.id);nav.appendChild(b)}return nav}
 function renderDevice(){const pane=$("#paneDev");if(pane.dataset.built)return;pane.dataset.built=1;
+ FEATURES.sort((a,b)=>FEATURE_ORDER.indexOf(a.id)-FEATURE_ORDER.indexOf(b.id));$("#devWide").appendChild(pane);
  pane.innerHTML=`<div class="card"><h2>Device tools <span id="devState"></span></h2>
   <p class="pg">Talks SysEx to a KeyStep Pro on USB (Chrome/Edge, Web MIDI with SysEx permission) or to the simulated one in this page. Everything here was worked out from firmware 2.5.20 and tested on hardware; new tools are added as they are solved. Unofficial: back up your projects with MIDI Control Center before writing.</p>
   <div class="feat"><div class="row"><select id="devPort"><option value="sim">Simulated KeyStep Pro (this page)</option></select><button class="sm" id="devScanBtn">Find MIDI ports</button><button class="sm" id="devConnBtn">Connect</button><button class="sm2" id="devStopBtn" title="Stop the transfer that is running">Stop</button></div>
   <div class="row"><label><input type="checkbox" id="simNames" checked> simulation runs the project-names firmware</label></div></div>
-  <div id="featList"></div><h3>Log</h3><div id="devLog"></div></div>`;
+  <div data-a="nav"></div><div id="featList"></div><h3>Log</h3><div id="devLog"></div></div>`;
+ pane.querySelector("[data-a=nav]").appendChild(featNav());
+ const note=$("#paneDevNote");note.innerHTML=`<h2>Device tools</h2><p class="pg">The tools are open under the keyboard, where there is room to edit. Jump to one:</p>`;note.appendChild(featNav());
  $("#devScanBtn").onclick=devScan;$("#devStopBtn").onclick=()=>{if(DEV.busy){DEV.stop=true;devLog("Stopping…")}};$("#devConnBtn").onclick=()=>devConnect().catch(e=>devLog("Error: "+e.message,"bad"));$("#simNames").onchange=e=>{SIMDEV.namesFw=e.target.checked};
- const list=$("#featList");for(const f of FEATURES){const box=document.createElement("div");box.className="feat";box.innerHTML=`<h3>${f.title}</h3><div class="meta"><b>Verified</b> ${f.verified}${f.needs?` <span class="need">Needs ${f.needs}</span>`:""}</div><p class="pg">${f.about}</p><div class="body"></div>`;list.appendChild(box);f.render(box.querySelector(".body"))}}
+ const list=$("#featList");for(const f of FEATURES){const box=document.createElement("div");box.className="feat"+(FEATURE_KEY.has(f.id)?" key":"");box.id="feat-"+f.id;box.innerHTML=`<h3>${f.title}</h3><div class="meta"><b>Verified</b> ${f.verified}${f.needs?` <span class="need">Needs ${f.needs}</span>`:""}</div><p class="pg">${f.about}</p><div class="body"></div>`;list.appendChild(box);f.render(box.querySelector(".body"))}}

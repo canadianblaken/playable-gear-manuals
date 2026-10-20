@@ -78,6 +78,12 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
 .filebtn{display:inline-block}
 .feat .row.small{font-size:12.5px}
 .feat [hidden]{display:none!important}
+#devWide{margin-top:14px}#devWide .feat{font-size:13.5px}#devWide .card{margin-bottom:0}
+.featNav{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}
+.featNav button{font:inherit;font-size:12.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.featNav button.hi{border-color:var(--accent);color:var(--accent);font-weight:600}
+.feat.key{border-color:var(--accent);border-width:2px}
+#paneDevNote .featNav{flex-direction:column;align-items:flex-start}
 .edGrid{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:6px 0}
 @media (max-width:700px){.edGrid{grid-template-columns:repeat(8,minmax(0,1fr))}}
 .edCell{font:inherit;font-size:10px;line-height:1.2;padding:2px 3px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--fg);min-height:32px;display:flex;flex-direction:column;align-items:flex-start;overflow:hidden;cursor:pointer;text-align:left}
@@ -147,6 +153,7 @@ table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
     <div class="panelZoom" role="group" aria-label="Keyboard size"><span>Keyboard size</span><button id="panelZoomOut" aria-label="Make keyboard smaller">−</button><output id="panelZoomValue" aria-live="polite">100%</output><button id="panelZoomIn" aria-label="Make keyboard larger">+</button><button id="panelZoomFit">Fit</button></div>
     <div id="panelViewport"><svg id="device" viewBox="30 140 1250 460" role="application" aria-label="KeyStep Pro front panel"></svg></div>
     <div class="screenRow"><canvas id="oledBig" width="512" height="128" aria-label="OLED display, enlarged"></canvas><div class="ledinfo" id="ledInfo"></div></div>
+    <div id="devWide" hidden></div>
   </div>
   <div id="sideCol">
     <div class="tabs" role="tablist"><button role="tab" id="tabMan" aria-selected="true">Manual</button><button role="tab" id="tabDev" aria-selected="false">Device tools</button><button role="tab" id="tabCC" aria-selected="false">Synth CC</button></div>
@@ -176,6 +183,7 @@ table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
       </div>
     </div>
     <div id="paneDev" hidden></div>
+    <div id="paneDevNote" class="card" hidden></div>
     <div id="paneCC" hidden></div>
   </div>
 </main>

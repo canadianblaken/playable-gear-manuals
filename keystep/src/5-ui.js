@@ -437,7 +437,8 @@ function loadDemo(name){const pr=DEMOS[name]();stop();S.ram[S.proj]=pr;S.flash[S
  S.cur=1;msg(name);dirty()}
 
 /* ---------- tabs, buttons, boot ---------- */
-function selectTab(w){$("#tabMan").setAttribute("aria-selected",w==="man");$("#tabDev").setAttribute("aria-selected",w==="dev");$("#tabCC").setAttribute("aria-selected",w==="cc");$("#paneMan").hidden=w!=="man";$("#paneDev").hidden=w!=="dev";$("#paneCC").hidden=w!=="cc";if(w==="dev"){renderDevice();emit("tab:dev")}if(w==="cc"){renderCCMap();emit("tab:cc")}try{localStorage.setItem("ksp.tab",w)}catch(e){}}
+function selectTab(w){$("#tabMan").setAttribute("aria-selected",w==="man");$("#tabDev").setAttribute("aria-selected",w==="dev");$("#tabCC").setAttribute("aria-selected",w==="cc");$("#paneMan").hidden=w!=="man";$("#paneDev").hidden=w!=="dev";$("#paneCC").hidden=w!=="cc";if(w==="dev"){renderDevice();emit("tab:dev")}$("#devWide").hidden=w!=="dev";$("#paneDevNote").hidden=w!=="dev";$("#paneDev").hidden=w!=="dev";
+ if(w==="dev"){const c=$("#devCol"),t=$("#devWide");if(c.scrollTo)c.scrollTo({top:Math.max(0,t.offsetTop-c.offsetTop-8),behavior:"smooth"})}if(w==="cc"){renderCCMap();emit("tab:cc")}try{localStorage.setItem("ksp.tab",w)}catch(e){}}
 function initPanelZoom(){
  let zoom=100;
  try{const saved=Number(localStorage.getItem("ksp.panelZoom"));if(Number.isFinite(saved)&&saved>=50&&saved<=250)zoom=saved}catch(e){}

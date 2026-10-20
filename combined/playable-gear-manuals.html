@@ -4136,6 +4136,12 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
 .filebtn{display:inline-block}
 .feat .row.small{font-size:12.5px}
 .feat [hidden]{display:none!important}
+#devWide{margin-top:14px}#devWide .feat{font-size:13.5px}#devWide .card{margin-bottom:0}
+.featNav{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}
+.featNav button{font:inherit;font-size:12.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.featNav button.hi{border-color:var(--accent);color:var(--accent);font-weight:600}
+.feat.key{border-color:var(--accent);border-width:2px}
+#paneDevNote .featNav{flex-direction:column;align-items:flex-start}
 .edGrid{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:6px 0}
 @media (max-width:700px){.edGrid{grid-template-columns:repeat(8,minmax(0,1fr))}}
 .edCell{font:inherit;font-size:10px;line-height:1.2;padding:2px 3px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--fg);min-height:32px;display:flex;flex-direction:column;align-items:flex-start;overflow:hidden;cursor:pointer;text-align:left}
@@ -4205,6 +4211,7 @@ table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
     <div class=&quot;panelZoom&quot; role=&quot;group&quot; aria-label=&quot;Keyboard size&quot;><span>Keyboard size</span><button id=&quot;panelZoomOut&quot; aria-label=&quot;Make keyboard smaller&quot;>−</button><output id=&quot;panelZoomValue&quot; aria-live=&quot;polite&quot;>100%</output><button id=&quot;panelZoomIn&quot; aria-label=&quot;Make keyboard larger&quot;>+</button><button id=&quot;panelZoomFit&quot;>Fit</button></div>
     <div id=&quot;panelViewport&quot;><svg id=&quot;device&quot; viewBox=&quot;30 140 1250 460&quot; role=&quot;application&quot; aria-label=&quot;KeyStep Pro front panel&quot;></svg></div>
     <div class=&quot;screenRow&quot;><canvas id=&quot;oledBig&quot; width=&quot;512&quot; height=&quot;128&quot; aria-label=&quot;OLED display, enlarged&quot;></canvas><div class=&quot;ledinfo&quot; id=&quot;ledInfo&quot;></div></div>
+    <div id=&quot;devWide&quot; hidden></div>
   </div>
   <div id=&quot;sideCol&quot;>
     <div class=&quot;tabs&quot; role=&quot;tablist&quot;><button role=&quot;tab&quot; id=&quot;tabMan&quot; aria-selected=&quot;true&quot;>Manual</button><button role=&quot;tab&quot; id=&quot;tabDev&quot; aria-selected=&quot;false&quot;>Device tools</button><button role=&quot;tab&quot; id=&quot;tabCC&quot; aria-selected=&quot;false&quot;>Synth CC</button></div>
@@ -4234,6 +4241,7 @@ table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
       </div>
     </div>
     <div id=&quot;paneDev&quot; hidden></div>
+    <div id=&quot;paneDevNote&quot; class=&quot;card&quot; hidden></div>
     <div id=&quot;paneCC&quot; hidden></div>
   </div>
 </main>
@@ -4461,7 +4469,7 @@ const TOURS=[
   {s:&quot;Turn to ON and push. New notes on Track 2 now use the Velocity encoder value.&quot;,t:&quot;sel&quot;,ev:&quot;global:156&quot;},
   {s:&quot;Open the Device tools tab: this setting is global ID 156, which MCC does not show. Read it from the simulated device.&quot;,t:null,ev:&quot;dev:read&quot;}]},
  {n:&quot;Device tools: write a song setup to the simulated KeyStep&quot;,steps:[
-  {s:&quot;Open the Device tools tab (top of the right column).&quot;,t:null,ev:&quot;tab:dev&quot;},
+  {s:&quot;Open the Device tools tab (top of the right column). The tools open under the keyboard.&quot;,t:null,ev:&quot;tab:dev&quot;},
   {s:&quot;Choose “Simulated KeyStep Pro” as the device and connect.&quot;,t:null,ev:&quot;dev:connect&quot;},
   {s:&quot;In “Project names”, name project 2 and send it (the simulation runs the project-names firmware).&quot;,t:null,ev:&quot;dev:name&quot;},
   {s:&quot;In “Chord and key per track”, write a chord and scale to project 2, track 2.&quot;,t:null,ev:&quot;dev:trackkey&quot;},
@@ -5230,7 +5238,8 @@ function loadDemo(name){const pr=DEMOS[name]();stop();S.ram[S.proj]=pr;S.flash[S
  S.cur=1;msg(name);dirty()}
 
 /* ---------- tabs, buttons, boot ---------- */
-function selectTab(w){$(&quot;#tabMan&quot;).setAttribute(&quot;aria-selected&quot;,w===&quot;man&quot;);$(&quot;#tabDev&quot;).setAttribute(&quot;aria-selected&quot;,w===&quot;dev&quot;);$(&quot;#tabCC&quot;).setAttribute(&quot;aria-selected&quot;,w===&quot;cc&quot;);$(&quot;#paneMan&quot;).hidden=w!==&quot;man&quot;;$(&quot;#paneDev&quot;).hidden=w!==&quot;dev&quot;;$(&quot;#paneCC&quot;).hidden=w!==&quot;cc&quot;;if(w===&quot;dev&quot;){renderDevice();emit(&quot;tab:dev&quot;)}if(w===&quot;cc&quot;){renderCCMap();emit(&quot;tab:cc&quot;)}try{localStorage.setItem(&quot;ksp.tab&quot;,w)}catch(e){}}
+function selectTab(w){$(&quot;#tabMan&quot;).setAttribute(&quot;aria-selected&quot;,w===&quot;man&quot;);$(&quot;#tabDev&quot;).setAttribute(&quot;aria-selected&quot;,w===&quot;dev&quot;);$(&quot;#tabCC&quot;).setAttribute(&quot;aria-selected&quot;,w===&quot;cc&quot;);$(&quot;#paneMan&quot;).hidden=w!==&quot;man&quot;;$(&quot;#paneDev&quot;).hidden=w!==&quot;dev&quot;;$(&quot;#paneCC&quot;).hidden=w!==&quot;cc&quot;;if(w===&quot;dev&quot;){renderDevice();emit(&quot;tab:dev&quot;)}$(&quot;#devWide&quot;).hidden=w!==&quot;dev&quot;;$(&quot;#paneDevNote&quot;).hidden=w!==&quot;dev&quot;;$(&quot;#paneDev&quot;).hidden=w!==&quot;dev&quot;;
+ if(w===&quot;dev&quot;){const c=$(&quot;#devCol&quot;),t=$(&quot;#devWide&quot;);if(c.scrollTo)c.scrollTo({top:Math.max(0,t.offsetTop-c.offsetTop-8),behavior:&quot;smooth&quot;})}if(w===&quot;cc&quot;){renderCCMap();emit(&quot;tab:cc&quot;)}try{localStorage.setItem(&quot;ksp.tab&quot;,w)}catch(e){}}
 function initPanelZoom(){
  let zoom=100;
  try{const saved=Number(localStorage.getItem(&quot;ksp.panelZoom&quot;));if(Number.isFinite(saved)&amp;&amp;saved>=50&amp;&amp;saved<=250)zoom=saved}catch(e){}
@@ -5485,13 +5494,13 @@ async function libImport(obj,fname){if(obj&amp;&amp;obj.format===BACKUP_FORMAT){
 const FEATURES=[
  {id:&quot;globals&quot;,title:&quot;Global settings (all 158 IDs)&quot;,verified:&quot;2026-10-18: full read of all globals on hardware; writes tested with Brightness (152).&quot;,needs:null,
   about:&quot;Every Utility setting, including the ones MCC does not show: Program Change Send and Fixed Velocity per track, Brightness and Transpose Latch. A SET gets no reply, so the tool reads the value back.&quot;,
-  render(el){el.innerHTML=`<div class=&quot;row&quot;><button class=&quot;sm&quot; data-a=&quot;readall&quot;>Read all</button><label><input type=&quot;checkbox&quot; data-a=&quot;hid&quot;> only the settings MCC hides</label></div><div class=&quot;gtab&quot;><table class=&quot;t&quot;><thead><tr><th>ID</th><th>Setting</th><th>Value</th></tr></thead><tbody></tbody></table></div>`;
+  render(el){el.innerHTML=`<p class=&quot;pg&quot;>The values are read from the KeyStep Pro when you connect; until then the menus are empty.</p><div class=&quot;row&quot;><button class=&quot;sm&quot; data-a=&quot;readall&quot;>Read all</button><label><input type=&quot;checkbox&quot; data-a=&quot;hid&quot;> only the settings MCC hides</label></div><div class=&quot;gtab&quot;><table class=&quot;t&quot;><thead><tr><th>ID</th><th>Setting</th><th>Value</th></tr></thead><tbody></tbody></table></div>`;
    const tb=el.querySelector(&quot;tbody&quot;),hidBox=el.querySelector(&quot;[data-a=hid]&quot;);
    const draw=()=>{tb.innerHTML=&quot;&quot;;let grp=&quot;&quot;;for(const g of GLOBALS){if(hidBox.checked&amp;&amp;!g.hidden)continue;if(g.g!==grp){grp=g.g;tb.insertAdjacentHTML(&quot;beforeend&quot;,`<tr><th colspan=&quot;3&quot;>${grp}</th></tr>`)}
      const tr=document.createElement(&quot;tr&quot;);const v=DEV.gvals[g.id];const opts=optsOf({id:g.id});
      tr.innerHTML=`<td>${g.id}</td><td>${g.n}</td><td><select ${v==null?&quot;disabled&quot;:&quot;&quot;}>${v==null?&quot;<option>–</option>&quot;:opts.map(o=>`<option value=&quot;${o[0]}&quot; ${o[0]===v?&quot;selected&quot;:&quot;&quot;}>${o[1]}</option>`).join(&quot;&quot;)}</select></td>`;
      tr.querySelector(&quot;select&quot;).onchange=async e=>{const nv=+e.target.value;await busy(async()=>{await DEV.link.setGlobal(g.id,nv);const rb=await DEV.link.getGlobal(g.id);DEV.gvals[g.id]=rb;devLog(`global ${g.id} ${g.n} = ${rb}${rb===nv?&quot;&quot;:&quot; (expected &quot;+nv+&quot;)&quot;}`,rb===nv?&quot;ok&quot;:&quot;bad&quot;)});draw()};tb.appendChild(tr)}};
-   hidBox.onchange=draw;el.querySelector(&quot;[data-a=readall]&quot;).onclick=()=>busy(async()=>{let n=0;for(const g of GLOBALS){if(hidBox.checked&amp;&amp;!g.hidden)continue;DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}devLog(`read ${n} settings`,&quot;ok&quot;);emit(&quot;dev:read&quot;);draw()});draw()}},
+   DEV.globalsDraw=draw;hidBox.onchange=draw;el.querySelector(&quot;[data-a=readall]&quot;).onclick=()=>busy(async()=>{let n=0;for(const g of GLOBALS){if(hidBox.checked&amp;&amp;!g.hidden)continue;DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}devLog(`read ${n} settings`,&quot;ok&quot;);emit(&quot;dev:read&quot;);draw()});draw()}},
  {id:&quot;names&quot;,title:&quot;Project names&quot;,verified:&quot;2026-10-19: the name shows on the device, survives a power cycle and Save Project; Erase Project clears it.&quot;,needs:&quot;the project-names firmware (KeyStepPro_2.5.20_project_names.kspf). Stock 2.5.20 ignores this message.&quot;,
   about:&quot;Writes a 1–16 character name for one project slot. The name belongs to the slot: saving another project into it keeps the slot's name.&quot;,
   render(el){el.innerHTML=`<div class=&quot;row&quot;>Project <select data-a=&quot;p&quot;>${[...Array(16).keys()].map(i=>`<option value=&quot;${i+1}&quot;>${i+1}</option>`).join(&quot;&quot;)}</select><input type=&quot;text&quot; data-a=&quot;n&quot; maxlength=&quot;16&quot; placeholder=&quot;Name (16 max)&quot;><button class=&quot;sm&quot; data-a=&quot;go&quot;>Send</button></div>`;
@@ -5595,7 +5604,9 @@ async function busy(fn){if(!DEV.link){devLog(&quot;Connect first.&quot;,&quot;ba
 async function devConnect(){const sel=$(&quot;#devPort&quot;).value;if(DEV.link&amp;&amp;DEV.link.close)DEV.link.close();DEV.link=null;DEV.gvals={};
  if(sel===&quot;sim&quot;){DEV.link=new SimLink();SIMDEV.namesFw=$(&quot;#simNames&quot;).checked}
  else{const [oi,ii]=sel.split(&quot;|&quot;);const out=[...DEV.ports.outputs.values()].find(o=>o.id===oi),inp=[...DEV.ports.inputs.values()].find(i=>i.id===ii);if(!out||!inp){devLog(&quot;Port not found.&quot;,&quot;bad&quot;);return}DEV.link=new WebMidiLink(out,inp)}
- const id=await DEV.link.identity();if(id){const v=id.slice(12,16);devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?&quot; — simulated&quot;:&quot;&quot;}`,&quot;ok&quot;);$(&quot;#devState&quot;).innerHTML=DEV.link.sim?'<span class=&quot;pill sim&quot;>simulation</span>':'<span class=&quot;pill real&quot;>KeyStep Pro</span>';emit(&quot;dev:connect&quot;)}
+ const id=await DEV.link.identity();if(id){const v=id.slice(12,16);devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?&quot; — simulated&quot;:&quot;&quot;}`,&quot;ok&quot;);$(&quot;#devState&quot;).innerHTML=DEV.link.sim?'<span class=&quot;pill sim&quot;>simulation</span>':'<span class=&quot;pill real&quot;>KeyStep Pro</span>';
+  await busy(async()=>{devLog(&quot;Reading the global settings…&quot;);let n=0;await quietly(DEV.link,async()=>{for(const g of GLOBALS){DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}});devLog(`read ${n} global settings`,&quot;ok&quot;)});
+  if(DEV.globalsDraw)DEV.globalsDraw();emit(&quot;dev:connect&quot;)}
  else{devLog(&quot;No identity reply. Check the ports and that SysEx permission was granted.&quot;,&quot;bad&quot;);DEV.link=null}}
 async function devScan(){const s=$(&quot;#devPort&quot;);s.innerHTML='<option value=&quot;sim&quot;>Simulated KeyStep Pro (this page)</option>';
  if(!navigator.requestMIDIAccess){devLog(&quot;This browser has no Web MIDI (use Chrome or Edge; Firefox needs the site permission add-on).&quot;,&quot;bad&quot;);return}
@@ -5603,14 +5614,23 @@ async function devScan(){const s=$(&quot;#devPort&quot;);s.innerHTML='<option va
  const outs=[...DEV.ports.outputs.values()],ins=[...DEV.ports.inputs.values()];
  for(const o of outs){const i=ins.find(x=>x.name===o.name)||ins.find(x=>/keystep/i.test(x.name))||ins[0];if(!i)continue;const opt=new Option(`${o.name} (out) ⇄ ${i.name} (in)`,o.id+&quot;|&quot;+i.id);s.add(opt);if(/keystep/i.test(o.name))s.value=opt.value}
  devLog(`${outs.length} MIDI output(s) found`)}
+/* Device tools open under the keyboard (#devWide, the wide left column); the right column keeps a jump list */
+const FEATURE_ORDER=[&quot;projects&quot;,&quot;midifile&quot;,&quot;editor&quot;,&quot;library&quot;,&quot;backup&quot;,&quot;setlist&quot;,&quot;trackkey&quot;,&quot;names&quot;,&quot;globals&quot;],FEATURE_KEY=new Set([&quot;midifile&quot;]);
+const FEATURE_SHORT={projects:&quot;Projects&quot;,midifile:&quot;MIDI file import / export&quot;,editor:&quot;Step editor&quot;,library:&quot;Library&quot;,backup:&quot;Backup&quot;,setlist:&quot;Set list&quot;,trackkey:&quot;Chord &amp; key&quot;,names:&quot;Names&quot;,globals:&quot;Global settings&quot;};
+function featJump(id){const box=$(&quot;#feat-&quot;+id);if(!box)return;const c=$(&quot;#devCol&quot;);if(c&amp;&amp;c.contains(box)&amp;&amp;c.scrollTo)c.scrollTo({top:Math.max(0,box.offsetTop-c.offsetTop-8),behavior:&quot;smooth&quot;});else box.scrollIntoView({behavior:&quot;smooth&quot;})}
+function featNav(){const nav=document.createElement(&quot;div&quot;);nav.className=&quot;featNav&quot;;nav.setAttribute(&quot;role&quot;,&quot;navigation&quot;);nav.setAttribute(&quot;aria-label&quot;,&quot;Device tools&quot;);
+ for(const f of FEATURES){const b=document.createElement(&quot;button&quot;);b.type=&quot;button&quot;;b.textContent=FEATURE_SHORT[f.id]||f.title.split(&quot;:&quot;)[0];if(FEATURE_KEY.has(f.id))b.className=&quot;hi&quot;;b.onclick=()=>featJump(f.id);nav.appendChild(b)}return nav}
 function renderDevice(){const pane=$(&quot;#paneDev&quot;);if(pane.dataset.built)return;pane.dataset.built=1;
+ FEATURES.sort((a,b)=>FEATURE_ORDER.indexOf(a.id)-FEATURE_ORDER.indexOf(b.id));$(&quot;#devWide&quot;).appendChild(pane);
  pane.innerHTML=`<div class=&quot;card&quot;><h2>Device tools <span id=&quot;devState&quot;></span></h2>
   <p class=&quot;pg&quot;>Talks SysEx to a KeyStep Pro on USB (Chrome/Edge, Web MIDI with SysEx permission) or to the simulated one in this page. Everything here was worked out from firmware 2.5.20 and tested on hardware; new tools are added as they are solved. Unofficial: back up your projects with MIDI Control Center before writing.</p>
   <div class=&quot;feat&quot;><div class=&quot;row&quot;><select id=&quot;devPort&quot;><option value=&quot;sim&quot;>Simulated KeyStep Pro (this page)</option></select><button class=&quot;sm&quot; id=&quot;devScanBtn&quot;>Find MIDI ports</button><button class=&quot;sm&quot; id=&quot;devConnBtn&quot;>Connect</button><button class=&quot;sm2&quot; id=&quot;devStopBtn&quot; title=&quot;Stop the transfer that is running&quot;>Stop</button></div>
   <div class=&quot;row&quot;><label><input type=&quot;checkbox&quot; id=&quot;simNames&quot; checked> simulation runs the project-names firmware</label></div></div>
-  <div id=&quot;featList&quot;></div><h3>Log</h3><div id=&quot;devLog&quot;></div></div>`;
+  <div data-a=&quot;nav&quot;></div><div id=&quot;featList&quot;></div><h3>Log</h3><div id=&quot;devLog&quot;></div></div>`;
+ pane.querySelector(&quot;[data-a=nav]&quot;).appendChild(featNav());
+ const note=$(&quot;#paneDevNote&quot;);note.innerHTML=`<h2>Device tools</h2><p class=&quot;pg&quot;>The tools are open under the keyboard, where there is room to edit. Jump to one:</p>`;note.appendChild(featNav());
  $(&quot;#devScanBtn&quot;).onclick=devScan;$(&quot;#devStopBtn&quot;).onclick=()=>{if(DEV.busy){DEV.stop=true;devLog(&quot;Stopping…&quot;)}};$(&quot;#devConnBtn&quot;).onclick=()=>devConnect().catch(e=>devLog(&quot;Error: &quot;+e.message,&quot;bad&quot;));$(&quot;#simNames&quot;).onchange=e=>{SIMDEV.namesFw=e.target.checked};
- const list=$(&quot;#featList&quot;);for(const f of FEATURES){const box=document.createElement(&quot;div&quot;);box.className=&quot;feat&quot;;box.innerHTML=`<h3>${f.title}</h3><div class=&quot;meta&quot;><b>Verified</b> ${f.verified}${f.needs?` <span class=&quot;need&quot;>Needs ${f.needs}</span>`:&quot;&quot;}</div><p class=&quot;pg&quot;>${f.about}</p><div class=&quot;body&quot;></div>`;list.appendChild(box);f.render(box.querySelector(&quot;.body&quot;))}}
+ const list=$(&quot;#featList&quot;);for(const f of FEATURES){const box=document.createElement(&quot;div&quot;);box.className=&quot;feat&quot;+(FEATURE_KEY.has(f.id)?&quot; key&quot;:&quot;&quot;);box.id=&quot;feat-&quot;+f.id;box.innerHTML=`<h3>${f.title}</h3><div class=&quot;meta&quot;><b>Verified</b> ${f.verified}${f.needs?` <span class=&quot;need&quot;>Needs ${f.needs}</span>`:&quot;&quot;}</div><p class=&quot;pg&quot;>${f.about}</p><div class=&quot;body&quot;></div>`;list.appendChild(box);f.render(box.querySelector(&quot;.body&quot;))}}
 /* ================= Project editor: steps, notes, pattern settings and scenes of a project file =================
    Works on the project loaded in the Projects tool (DEV.project, a file from readProject) and sends nothing itself:
    Send in the Projects tool writes the edited file. Layout from the firmware setter 0800d3c0 and MCC's recall plan:
@@ -5798,7 +5818,7 @@ function mfExportTrack(f,item,patList){const notes=[];let at=0;
  return notes}
 
 /* ---------- the feature ---------- */
-const MIDIFILE_FEATURE={id:&quot;midifile&quot;,title:&quot;MIDI files: import a part per track, export&quot;,verified:&quot;Tested in the simulation (import, too-long and too-dense warnings, export round trip); the step format it writes was measured on a KeyStep Pro on 2026-10-20.&quot;,needs:null,
+const MIDIFILE_FEATURE={id:&quot;midifile&quot;,title:&quot;MIDI file import / export: a part per track&quot;,verified:&quot;Tested in the simulation (import, too-long and too-dense warnings, export round trip); the step format it writes was measured on a KeyStep Pro on 2026-10-20.&quot;,needs:null,
  about:&quot;Import: open a .mid (for example a song part exported from Logic), choose which KeyStep track each part goes to and the pattern to start on. Notes snap to 16th-note steps; small timing offsets are kept as time shift, note lengths become gate lengths, velocity is kept. One pattern holds 64 steps (4 bars of 4/4); a longer part can continue on the following patterns and be chained in a scene. The result goes into the project loaded in the Projects tool: check it in the editor, then Send. Export: writes the chosen patterns of each track as a .mid.&quot;,
  render(el){el.innerHTML=`<div class=&quot;row&quot; data-a=&quot;none&quot;>Load a project in the Projects tool first.</div><div data-a=&quot;ui&quot; hidden>
    <h3>Import</h3><div class=&quot;row small&quot;><input type=&quot;file&quot; accept=&quot;.mid,.midi,audio/midi&quot; data-a=&quot;f&quot;><label><input type=&quot;checkbox&quot; data-a=&quot;tempo&quot;> use the file's tempo</label></div>
