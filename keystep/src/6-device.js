@@ -205,6 +205,23 @@ async function restoreBackup(link,b,projects,{globals=false,verify=true,prog=()=
   for(const [i,id] of ids.entries()){stopCheck();await link.setGlobal(id,b.globals[id]);if(verify){const rb=await link.getGlobal(id);if(rb!==b.globals[id])bad.push(`global ${id} reads ${rb}, wrote ${b.globals[id]}`)}prog((list.length+i/ids.length*.05)/parts)}});res.globals=bad}
  prog(1);return res}
 
+/* ---------- project library: project files kept in this browser (IndexedDB; a project file is ~0.5 MB) ---------- */
+const LIB={db:null};
+function libOpen(){if(LIB.db)return Promise.resolve(LIB.db);return new Promise((res,rej)=>{if(!window.indexedDB)return rej(new Error("this browser has no IndexedDB here"));
+ const r=indexedDB.open("ksp-library",1);r.onupgradeneeded=()=>r.result.createObjectStore("projects",{keyPath:"id",autoIncrement:true});
+ r.onsuccess=()=>res(LIB.db=r.result);r.onerror=()=>rej(new Error("the library could not be opened: "+(r.error&&r.error.message)))})}
+async function libTx(mode,fn){const db=await libOpen();return new Promise((res,rej)=>{const t=db.transaction("projects",mode),st=t.objectStore("projects"),r=fn(st);
+ t.oncomplete=()=>res(r&&r.result);t.onerror=t.onabort=()=>rej(new Error("library: "+(t.error&&t.error.message)))})}
+const libList=()=>libTx("readonly",st=>st.getAll());
+const libGet=id=>libTx("readonly",st=>st.get(id));
+/* entries: {id, name, added, source, file}; the file is checked before it goes in */
+const libAdd=async(file,name,source)=>{checkProjectFile(file);return libTx("readwrite",st=>st.add({name:String(name).slice(0,60)||"Untitled",added:new Date().toISOString(),source:String(source||"").slice(0,120),file}))};
+const libRename=async(id,name)=>{const e=await libGet(id);if(!e)throw new Error("not in the library");e.name=String(name).slice(0,60)||e.name;return libTx("readwrite",st=>st.put(e))};
+const libDelete=id=>libTx("readwrite",st=>st.delete(id));
+/* a project file adds one entry, a backup file one per project */
+async function libImport(obj,fname){if(obj&&obj.format===BACKUP_FORMAT){checkBackupFile(obj);for(const f of obj.projects)await libAdd(f,`P${f.project}${f.name?" "+f.name:""} (backup ${obj.saved.slice(0,10)})`,fname);return obj.projects.length}
+ checkProjectFile(obj);await libAdd(obj,obj.name||`P${obj.project} (${obj.saved.slice(0,10)})`,fname);return 1}
+
 /* ---------- feature registry ---------- */
 const FEATURES=[
  {id:"globals",title:"Global settings (all 158 IDs)",verified:"2026-10-18: full read of all globals on hardware; writes tested with Brightness (152).",needs:null,
@@ -249,7 +266,8 @@ const FEATURES=[
    <div class="row">Send to project <select data-a="to">${opts}</select><label><input type="checkbox" data-a="vf" checked> read back to verify</label><button class="sm" data-a="go">Send to device</button></div>`;
    const q=a=>el.querySelector(`[data-a=${a}]`),go=q("go");let cur=null,armT=0;
    const prog=x=>{q("pg").value=x;q("st").textContent=` ${Math.round(x*100)}%`};
-   const show=(f,src)=>{cur=f;q("nm").value=f.name||"";q("to").value=f.project;q("sum").textContent=`${src}: ${projectSummary(f)}`};
+   const show=(f,src)=>{cur=DEV.project=f;q("nm").value=f.name||"";q("to").value=f.project;q("sum").textContent=`${src}: ${projectSummary(f)}`};
+   DEV.showProject=show; /* the library loads into this tool */
    q("rc").onclick=()=>busy(async()=>{const p=+q("p").value,t0=performance.now();prog(0);const f=await readProject(DEV.link,p,prog);
     show(f,`Project ${p}, recalled`);devLog(`project ${p} recalled: ${f.data.length} blocks in ${((performance.now()-t0)/1000).toFixed(1)} s`,"ok");emit("dev:recall")});
    q("f").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{show(checkProjectFile(JSON.parse(await file.text())),file.name);devLog(`opened ${file.name}`,"ok")}catch(err){devLog("Error: "+err.message,"bad")}};
@@ -262,6 +280,26 @@ const FEATURES=[
     busy(async()=>{const n=q("nm").value.trim();cur.name=n?displayName(n):null;prog(0);const t0=performance.now();
      const pr=await storeProject(DEV.link,to,cur,{verify:q("vf").checked,prog});const s=((performance.now()-t0)/1000).toFixed(1);
      devLog(pr.length?`PROBLEM: ${pr.length} value(s) differ after sending to project ${to}: ${pr.slice(0,5).join("; ")}${pr.length>5?" …":""}`:`project ${to} written${q("vf").checked?" and verified":""} in ${s} s`,pr.length?"bad":"ok");if(!pr.length)emit("dev:store")})}}},
+ {id:"library",title:"Project library (this browser)",verified:"Browser only, no device messages; tested in the simulation.",needs:null,
+  about:"Keeps project files in this browser so they are at hand without file dialogs. Add the project loaded in the Projects tool above, or import project and backup files (a backup adds each of its projects). Load puts an entry back into the Projects tool, ready to send. The library lives in this browser profile only: export important projects as files too.",
+  render(el){el.innerHTML=`<div class="row"><input type="text" data-a="nm" maxlength="60" placeholder="Name for the entry"><button class="sm2" data-a="add">Add the loaded project</button><label class="sm2 filebtn">Import files<input type="file" data-a="f" accept=".json,application/json" multiple hidden></label></div>
+   <div data-a="list" class="pg">Opening the library…</div>`;
+   const q=a=>el.querySelector(`[data-a=${a}]`),list=q("list");
+   const draw=async()=>{let items;try{items=await libList()}catch(e){list.textContent="The library is not available: "+e.message;return}
+    list.innerHTML="";if(!items.length){list.textContent="The library is empty.";return}
+    items.sort((a,b)=>b.added.localeCompare(a.added));const t=document.createElement("table");t.className="t";list.appendChild(t);
+    for(const it of items){const tr=t.insertRow(),c1=tr.insertCell(),c2=tr.insertCell(),c3=tr.insertCell();
+     const b=document.createElement("b");b.textContent=it.name;c1.append(b,document.createElement("br"),`P${it.file.project} · added ${it.added.slice(0,16).replace("T"," ")}${it.source?" · "+it.source:""}`);
+     c2.textContent=projectSummary(it.file);c2.className="pg";
+     for(const [label,fn] of [["Load",()=>{if(!DEV.showProject)return devLog("Open the Device tools tab first.","bad");DEV.showProject(it.file,`Library “${it.name}”`);devLog(`loaded “${it.name}” into Projects`,"ok");emit("lib:load")}],
+       ["Rename",async()=>{const n=q("nm").value.trim();if(!n)return devLog("Type the new name in the name box first.","bad");await libRename(it.id,n);q("nm").value="";draw()}],
+       ["Save file",()=>saveJSON(it.file,`KeyStep Pro ${fileSafe(it.name)}.json`)],
+       ["Delete",async()=>{await libDelete(it.id);devLog(`deleted “${it.name}” from the library`);draw()}]]){
+      const bt=document.createElement("button");bt.className="sm2";bt.textContent=label;bt.onclick=()=>Promise.resolve(fn()).catch(e=>devLog("Error: "+e.message,"bad"));c3.append(bt," ")}}};
+   q("add").onclick=async()=>{if(!DEV.project)return devLog("Recall a project or open a file in the Projects tool first.","bad");
+    try{const n=q("nm").value.trim()||DEV.project.name||`P${DEV.project.project} (${DEV.project.saved.slice(0,10)})`;await libAdd(DEV.project,n,"Projects tool");q("nm").value="";devLog(`added “${n}” to the library`,"ok");emit("lib:add");draw()}catch(e){devLog("Error: "+e.message,"bad")}};
+   q("f").onchange=async e=>{let n=0;for(const file of e.target.files){try{n+=await libImport(JSON.parse(await file.text()),file.name)}catch(err){devLog(`${file.name}: ${err.message}`,"bad")}}e.target.value="";if(n)devLog(`added ${n} project(s) to the library`,"ok");draw()};
+   DEV.libDraw=draw;draw()}},
  {id:"backup",title:"Backup: all projects in one file",verified:"2026-10-20: all 16 projects and the settings backed up in 9.7 min; project 16 restored from it and verified. Restoring global settings is tested only in the simulation.",needs:null,
   about:"Recalls all 16 projects, plus the global settings, into one file (about ten minutes; Stop ends it early with nothing saved). Restore sends the projects you tick back to their own slots and checks each one, about three minutes per project. Global settings are restored only if you ask. Project names are not in the backup: the firmware has no way to read them back. A few stored bytes cannot be read over SysEx (seen in never-used parts of a project); restore leaves those as they are in the slot.",
   render(el){el.innerHTML=`<div class="row"><button class="sm" data-a="bk">Back up all 16</button><label><input type="checkbox" data-a="gl" checked> include global settings</label></div>

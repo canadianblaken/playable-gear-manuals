@@ -68,5 +68,15 @@ ok("restore puts back only the ticked project and the globals",rs[2].length===0&
 DEV.busy=true;DEV.stop=false;let sets=0;const sm=L.setMany;L.setMany=async(...a)=>{if(++sets===100)DEV.stop=true;return sm.apply(L,a)};const keep2=JSON.stringify(S.flash[4]);let stopped=false;
 try{await storeProject(L,5,bk.projects[0])}catch(e){stopped=e.message==="stopped"}L.setMany=sm;DEV.busy=false;DEV.stop=false;
 ok("Stop during a send leaves the slot unchanged",stopped&&JSON.stringify(S.flash[4])===keep2,{stopped});
+/* project library (IndexedDB): import a backup and a project, rename, load into the Projects tool, delete */
+for(const it of await libList())await libDelete(it.id);
+ok("library imports a backup as one entry per project",(await libImport(deep(bk),"bk.json"))===3&&(await libList()).length===3);
+await libImport(deep(f1),"p1.json");let items=await libList();const e1=items.find(x=>x.source==="p1.json");
+await libRename(e1.id,"Renamed");ok("library rename and get",(await libGet(e1.id)).name==="Renamed"&&(await libGet(e1.id)).file.data.length===8951);
+await DEV.libDraw();const row=[...document.querySelectorAll("#featList table.t tr")].find(r=>r.textContent.includes("Renamed"));DEV.project=null;
+[...row.querySelectorAll("button")].find(b=>b.textContent==="Load").click();
+ok("library Load puts the project into the Projects tool",DEV.project&&DEV.project.data.length===8951&&/Library “Renamed”/.test(document.querySelector("#featList").textContent));
+ok("library refuses a damaged project",await libAdd({format:"x"},"bad","").then(()=>false,()=>true));
+for(const it of await libList())await libDelete(it.id);ok("library delete",(await libList()).length===0);
 ok("file check rejects a damaged file",(()=>{const b=deep(f1);b.data[5][3]=[200];try{checkProjectFile(b);return false}catch(e){return true}})());
 selectTab("man");return R;
