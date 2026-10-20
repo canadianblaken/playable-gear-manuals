@@ -126,6 +126,20 @@ const ip=DEV.project,b1=edReadPattern(ip,0x7C,1),b2=edReadPattern(ip,0x7C,2),pad
 ok("MIDI tool sits in the right-column instructions box",$("#paneDevNote").contains(mfBox));
 ok("imported: bass over patterns 1 (64 steps) and 2 (48), chained in scene 1",b1.len===64&&b2.len===48&&b1.steps[0].notes[0].pitch===36&&b2.steps[0].notes[0].pitch===40&&s1x.chains[1].join()==="0,1"&&s1x.valid,{l1:b1.len,l2:b2.len,ch:s1x.chains[1]});
 ok("imported: chord trimmed to 16, lead in track 1, tempo 100",pad.steps[0].notes.length===16&&edReadPattern(ip,0x7B,1).steps[2].notes[0].shift===74&&mfGetTempo(ip)===100&&/1 note\(s\) over the limits left out/.test(mq("msg").textContent),mq("msg").textContent);
+/* several files: verse and chorus parts on the same tracks, one after another, chained in scene 2 */
+const verse=mfWrite({tempo:100,tracks:[{name:"Lead",ch:0,notes:[{pitch:72,vel:90,on:0,off:T}]},{name:"Bass",ch:1,notes:Array.from({length:25},(_,i)=>({pitch:36+i%12,vel:100,on:i*4*T,off:i*4*T+T}))}]});
+const chorus=mfWrite({tempo:100,tracks:[{name:"Lead",ch:0,notes:[{pitch:74,vel:90,on:0,off:T}]},{name:"Bass",ch:1,notes:[{pitch:43,vel:100,on:0,off:T}]}]});
+DEV.showProject(await blankProject(1),"blank");mq("clear").click();
+await mq("f").onchange({target:{files:[new File([verse],"verse.mid"),new File([chorus],"chorus.mid")]}});
+const rsel=[...mq("parts").querySelectorAll("tbody tr")].map(tr=>[...tr.querySelectorAll("select")].map(s=>s.value).join("/"));
+ok("two files listed; chorus parts default to the next free patterns",rsel.join(" ")==="1/1 2/1 1/2 2/3"&&/4 parts from 2 files/.test(mq("parts").textContent),rsel);
+mq("scene").value="2";const csel=mq("parts").querySelectorAll("tbody tr")[3].querySelectorAll("select")[1];csel.value="2";csel.onchange();mq("imp").click();
+[...mq("warn").querySelectorAll("button")].find(b=>/Add to patterns/.test(b.textContent)).click();
+ok("overlapping patterns on a track are refused",/both use track 2, pattern 2/.test(mq("msg").textContent),mq("msg").textContent);
+csel.value="3";csel.onchange();mq("imp").click();[...mq("warn").querySelectorAll("button")].find(b=>/Add to patterns/.test(b.textContent)).click();
+const mp=DEV.project,scv=edReadScene(mp,2);
+ok("verse and chorus imported one after another, chained in scene 2",edReadPattern(mp,0x7B,2).steps[0].notes[0].pitch===74&&edReadPattern(mp,0x7C,3).steps[0].notes[0].pitch===43&&scv.valid&&scv.chains[0].join()==="0,1"&&scv.chains[1].join()==="0,1,2"&&scv.pats[1]===0,{c:scv.chains});
+mq("clear").click();ok("Clear list empties the parts",/No MIDI files added yet/.test(mq("parts").textContent));
 /* export and read back */
 const back=mfParse(mfWrite({tempo:mfGetTempo(ip),tracks:[{name:"L",ch:0,notes:mfExportTrack(ip,0x7B,[1])},{name:"B",ch:1,notes:mfExportTrack(ip,0x7C,[1,2])}]}).buffer);
 const bl=back.tracks[1].notes,bb=back.tracks[2].notes;

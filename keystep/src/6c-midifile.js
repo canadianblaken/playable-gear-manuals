@@ -79,48 +79,66 @@ function mfExportTrack(f,item,patList){const notes=[];let at=0;
 
 /* ---------- the feature ---------- */
 const MIDIFILE_FEATURE={id:"midifile",title:"MIDI file import / export: a part per track",verified:"Tested in the simulation (import, too-long and too-dense warnings, export round trip); the step format it writes was measured on a KeyStep Pro on 2026-10-20.",needs:null,
- about:"Import: open a .mid (for example a song part exported from Logic), choose which KeyStep track each part goes to and the pattern to start on. Notes snap to 16th-note steps; small timing offsets are kept as time shift, note lengths become gate lengths, velocity is kept. One pattern holds 64 steps (4 bars of 4/4); a longer part can continue on the following patterns and be chained in a scene. The result goes into the project loaded in the Projects tool, or into a new empty project: check it in the editor, then Send. Export: writes the chosen patterns of each track as a .mid.",
+ about:"Import: open one or more .mid files (for example song parts exported from Logic); every track or channel with notes becomes a part. Choose the KeyStep track for each part and the pattern it starts on: parts on the same track go one after another (a verse on patterns 1–2, the chorus on 3–4). Notes snap to 16th-note steps; small timing offsets are kept as time shift, note lengths become gate lengths, velocity is kept. One pattern holds 64 steps (4 bars of 4/4); a longer part can continue on the following patterns, and each track's imported patterns can be chained in a scene. The result goes into the project loaded in the Projects tool, or into a new empty project: check it in the editor, then Send. Export: writes the chosen patterns of each track as a .mid.",
  render(el){el.innerHTML=`<div class="row" data-a="none">Load a project in the Projects tool first, or <button class="sm2" data-a="blank">start from a new empty project</button></div><div data-a="ui" hidden>
-   <h3>Import</h3><div class="row small"><input type="file" accept=".mid,.midi,audio/midi" data-a="f"><label><input type="checkbox" data-a="tempo"> use the file's tempo</label></div>
-   <div data-a="parts" class="pg"></div><div data-a="warn"></div>
+   <h3>Import</h3><div class="row small"><label class="sm2 filebtn">Add MIDI files<input type="file" accept=".mid,.midi,audio/midi" data-a="f" multiple hidden></label><button class="sm2" data-a="clear">Clear list</button><label><input type="checkbox" data-a="tempo"> use the first file's tempo</label></div>
+   <div data-a="parts" class="pg">No MIDI files added yet.</div>
+   <div class="row small">Chain each track's imported patterns in <select data-a="scene"><option value="0">no scene</option>${[...Array(16).keys()].map(i=>`<option value="${i+1}" ${i?"":"selected"}>scene ${i+1}</option>`).join("")}</select></div>
+   <div data-a="warn"></div>
    <div class="row"><button class="sm2" data-a="imp">Import into the loaded project</button></div>
    <h3>Export</h3><div data-a="exp"></div><div class="row"><button class="sm2" data-a="ex">Save .mid</button></div>
    <p class="pg" data-a="msg" aria-live="polite"></p></div>`;
-  const q=a=>el.querySelector(`[data-a=${a}]`);let mf=null,parts=[],rows=[],decision=null;
+  const q=a=>el.querySelector(`[data-a=${a}]`);let parts=[],rows=[],decision=null,nfiles=0;
   const say=(s,cls="")=>{q("msg").textContent=s;q("msg").className="pg "+cls};
   const load=()=>{const f=DEV.project;q("none").hidden=!!f;q("ui").hidden=!f;if(f)drawExport()};
-  const drawParts=()=>{const box=q("parts");box.innerHTML="";rows=[];decision=null;q("warn").innerHTML="";if(!mf)return;
-   const head=document.createElement("div");head.textContent=`${parts.length} part${parts.length===1?"":"s"} with notes · ${mf.tempo?mf.tempo.toFixed(2)+" BPM":"no tempo in file (120)"} · ${mf.timesig[0]}/${mf.timesig[1]}`;box.appendChild(head);
-   const t=document.createElement("table");t.className="t";t.innerHTML="<thead><tr><th>Part</th><th>Notes</th><th>Length</th><th>To track</th><th>From pattern</th></tr></thead>";const tb=document.createElement("tbody");t.appendChild(tb);
-   parts.forEach((p,i)=>{const pl=mfPlace(p,mf),tr=tb.insertRow();tr.insertCell().textContent=p.name;tr.insertCell().textContent=String(p.notes.length);
+  const sceneNo=()=>+q("scene").value;
+  const span=r=>r.placed.length>MF_STEPS?Math.ceil(r.placed.length/MF_STEPS):1;
+  /* next free pattern on a track after the rows above this one */
+  const nextFree=(upTo,track)=>{let next=1;for(const r of rows.slice(0,upTo))if(r.ts.value===String(track))next=Math.max(next,+r.ps.value+span(r));return Math.min(next,16)};
+  const drawParts=()=>{const box=q("parts");box.innerHTML="";rows=[];decision=null;q("warn").innerHTML="";
+   if(!parts.length){box.textContent="No MIDI files added yet.";return}
+   const head=document.createElement("div");head.textContent=`${parts.length} part${parts.length===1?"":"s"} from ${nfiles} file${nfiles===1?"":"s"}`;box.appendChild(head);
+   const t=document.createElement("table");t.className="t";t.innerHTML="<thead><tr><th>File</th><th>Part</th><th>Notes</th><th>Length</th><th>To track</th><th>From pattern</th></tr></thead>";const tb=document.createElement("tbody");t.appendChild(tb);
+   parts.forEach((p,i)=>{const pl=mfPlace(p,p.mf),tr=tb.insertRow();tr.insertCell().textContent=p.file;tr.insertCell().textContent=p.name;tr.insertCell().textContent=String(p.notes.length);
     tr.insertCell().textContent=`${pl.length} steps (${pl.length/pl.barSteps} bar${pl.length/pl.barSteps===1?"":"s"})`;
-    const ts=document.createElement("select");ts.add(new Option("— skip —",""));[1,2,3,4].forEach(n=>ts.add(new Option(`Track ${n}`,n)));if(i<4)ts.value=String(i+1);
+    const ts=document.createElement("select");ts.add(new Option("— skip —",""));[1,2,3,4].forEach(n=>ts.add(new Option(`Track ${n}`,n)));ts.value=p.index<4?String(p.index+1):"";
     const ps=document.createElement("select");for(let k=1;k<=16;k++)ps.add(new Option(String(k),k));
-    ts.onchange=ps.onchange=()=>{decision=null;q("warn").innerHTML=""};tr.insertCell().append(ts);tr.insertCell().append(ps);rows.push({part:p,placed:pl,ts,ps})});
+    const row={part:p,placed:pl,ts,ps};rows.push(row);if(ts.value)ps.value=String(nextFree(i,ts.value));
+    ts.onchange=()=>{if(ts.value)ps.value=String(nextFree(rows.indexOf(row),ts.value));decision=null;q("warn").innerHTML=""};ps.onchange=()=>{decision=null;q("warn").innerHTML=""};
+    tr.insertCell().append(ts);tr.insertCell().append(ps)});
    box.appendChild(t)};
-  q("f").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{mf=mfParse(await file.arrayBuffer());parts=mfParts(mf);q("tempo").checked=!!mf.tempo;
-    drawParts();say(parts.length?`Opened ${file.name}.`:`${file.name} has no notes.`,parts.length?"ok":"bad")}catch(err){mf=null;parts=[];drawParts();say("Could not read the file: "+err.message,"bad")}};
+  q("f").onchange=async e=>{const files=[...e.target.files];if(e.target.value!==undefined)e.target.value="";let added=0;const bad=[];
+   for(const file of files){try{const mf=mfParse(await file.arrayBuffer()),ps=mfParts(mf);nfiles++;ps.forEach((p,k)=>{p.mf=mf;p.file=file.name;p.index=k;p.uid=`${nfiles}/${p.id}`});parts.push(...ps);added+=ps.length;
+     if(nfiles===1)q("tempo").checked=!!mf.tempo}catch(err){bad.push(`${file.name}: ${err.message}`)}}
+   drawParts();say([added?`Added ${added} part${added===1?"":"s"}.`:"",bad.length?"Could not read "+bad.join("; "):""].filter(Boolean).join(" "),bad.length?"bad":"ok")};
+  q("clear").onclick=()=>{parts=[];nfiles=0;drawParts();say("List cleared.")};
   /* checks first; a part that does not fit asks before it spills onto more patterns, too many notes ask before trimming */
   const ask=(text,choices)=>{const w=q("warn");w.innerHTML="";const box=document.createElement("div");box.className="feat";const p=document.createElement("p");p.className="need";p.textContent=text;box.appendChild(p);
    const r=document.createElement("div");r.className="row";for(const [label,fn] of choices){const b=document.createElement("button");b.className="sm2";b.textContent=label;b.onclick=fn;r.append(b)}box.appendChild(r);w.appendChild(box)};
-  const run=()=>{if(!mf||!DEV.project)return say("Open a MIDI file and load a project first.","bad");
+  const cancel=()=>{decision=null;q("warn").innerHTML="";say("Import cancelled.")};
+  const run=()=>{if(!parts.length||!DEV.project)return say("Add a MIDI file and load a project first.","bad");
    const chosen=rows.filter(r=>r.ts.value);if(!chosen.length)return say("Choose a track for at least one part.","bad");
-   const tracks=chosen.map(r=>+r.ts.value);if(new Set(tracks).size!==tracks.length)return say("Two parts are going to the same track; pick different tracks.","bad");
-   decision=decision||{spill:{},trim:false};
-   for(const r of chosen){const id=r.part.id,first=+r.ps.value,free=(17-first)*MF_STEPS;
+   decision=decision||{spill:{},trim:false};const sc=sceneNo();
+   for(const r of chosen){const id=r.part.uid,first=+r.ps.value,free=(17-first)*MF_STEPS;
     if(r.placed.length>MF_STEPS&&decision.spill[id]==null){const n=Math.ceil(r.placed.length/MF_STEPS),avail=Math.min(n,17-first);
-     ask(`“${r.part.name}” is ${r.placed.length} steps, but only ${MF_STEPS} steps fit in pattern ${first} of track ${r.ts.value}. Would you like to add the rest to other patterns? It needs patterns ${first}–${first+avail-1}${n>avail?` and still ${r.placed.length-free} steps will not fit (patterns run out at 16)`:""}, chained in scene 1.`,
-      [[`Add to patterns ${first}–${first+avail-1}`,()=>{decision.spill[id]=true;run()}],[`Only the first ${MF_STEPS} steps`,()=>{decision.spill[id]=false;run()}],["Cancel",()=>{decision=null;q("warn").innerHTML="";say("Import cancelled.")}]]);return}}
-   const plans=chosen.map(r=>({r,plan:mfPlan(r.placed,+r.ps.value,r.placed.length>MF_STEPS&&decision.spill[r.part.id]?16:1)}));
+     ask(`“${r.part.name}” is ${r.placed.length} steps, but only ${MF_STEPS} steps fit in pattern ${first} of track ${r.ts.value}. Would you like to add the rest to other patterns? It needs patterns ${first}–${first+avail-1}${n>avail?` and still ${r.placed.length-free} steps will not fit (patterns run out at 16)`:""}${sc?`, chained in scene ${sc}`:""}.`,
+      [[`Add to patterns ${first}–${first+avail-1}`,()=>{decision.spill[id]=true;run()}],[`Only the first ${MF_STEPS} steps`,()=>{decision.spill[id]=false;run()}],["Cancel",cancel]]);return}}
+   const plans=chosen.map(r=>({r,plan:mfPlan(r.placed,+r.ps.value,r.placed.length>MF_STEPS&&decision.spill[r.part.uid]?16:1)}));
+   /* parts may share a track as long as their patterns do not overlap */
+   const owner={};for(const {r,plan} of plans)for(const p of plan.pats){const k=`${r.ts.value}/${p.pat}`;if(owner[k]){decision=null;return say(`“${owner[k]}” and “${r.part.name}” both use track ${r.ts.value}, pattern ${p.pat}. Change one of their From patterns.`,"bad")}owner[k]=r.part.name}
    const over=plans.flatMap(x=>x.plan.over.map(o=>`track ${x.r.ts.value} ${o}`));
    if(over.length&&!decision.trim){ask(`Too many notes for the KeyStep Pro: ${over.slice(0,4).join("; ")}${over.length>4?` and ${over.length-4} more`:""}. Import anyway and leave the extra notes out?`,
-     [["Import, leaving extras out",()=>{decision.trim=true;run()}],["Cancel",()=>{decision=null;q("warn").innerHTML="";say("Import cancelled.")}]]);return}
-   const work=JSON.parse(JSON.stringify(DEV.project));let dropped=0;const done=[];
-   try{for(const {r,plan} of plans){const item=TRACK_ITEMS[+r.ts.value-1];dropped+=mfApply(work,item,plan,{trim:decision.trim,chainScene:plan.pats.length>1?1:0});
+     [["Import, leaving extras out",()=>{decision.trim=true;run()}],["Cancel",cancel]]);return}
+   const work=JSON.parse(JSON.stringify(DEV.project));let dropped=0;const done=[],perTrack={};
+   const tempoFile=parts.map(p=>p.mf).find(m=>m.tempo);
+   try{for(const {r,plan} of plans){const item=TRACK_ITEMS[+r.ts.value-1];dropped+=mfApply(work,item,plan,{trim:decision.trim});(perTrack[r.ts.value]=perTrack[r.ts.value]||[]).push(...plan.pats.map(p=>p.pat));
      done.push(`“${r.part.name}” → track ${r.ts.value}, pattern${plan.pats.length>1?"s":""} ${plan.pats.map(p=>p.pat).join(", ")}${plan.cutSteps?` (last ${plan.cutSteps} steps left out)`:""}`)}
-    if(q("tempo").checked&&mf.tempo)mfSetTempo(work,mf.tempo)}catch(err){return say("Import failed: "+err.message,"bad")}
+    /* the scene plays each track's first imported pattern, then its chain in the order of the list */
+    if(sc){const s=edReadScene(work,sc);s.valid=true;for(const [t,pats] of Object.entries(perTrack)){const ti=+t-1,list=pats.slice(0,16);s.pats[ti]=list[0]-1;s.chains[ti]=list.length>1?list.map(x=>x-1):[]}
+     s.chainOn=s.chains.some(c=>c.length);edWriteScene(work,sc,s)}
+    if(q("tempo").checked&&tempoFile)mfSetTempo(work,tempoFile.tempo)}catch(err){return say("Import failed: "+err.message,"bad")}
    delete work.__ix;work.saved=new Date().toISOString();q("warn").innerHTML="";decision=null;DEV.showProject(work,"MIDI import");
-   say(`Imported: ${done.join("; ")}${dropped?`; ${dropped} note(s) over the limits left out`:""}${q("tempo").checked&&mf.tempo?`; tempo ${mf.tempo.toFixed(2)} BPM`:""}. Check it in the editor, then Send.`,"ok");emit("midifile:import")};
+   say(`Imported: ${done.join("; ")}${sc?`; chained in scene ${sc}`:""}${dropped?`; ${dropped} note(s) over the limits left out`:""}${q("tempo").checked&&tempoFile?`; tempo ${tempoFile.tempo.toFixed(2)} BPM`:""}. Check it in the editor, then Send.`,"ok");emit("midifile:import")};
   q("imp").onclick=run;
   const drawExport=()=>{const f=DEV.project,box=q("exp");box.innerHTML="";const t=document.createElement("table");t.className="t";
    t.innerHTML="<thead><tr><th>Track</th><th>Patterns (in order)</th><th>MIDI channel</th></tr></thead>";const tb=document.createElement("tbody");t.appendChild(tb);
