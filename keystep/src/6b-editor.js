@@ -46,8 +46,8 @@ function parseNote(s){const m=String(s).trim().match(/^([A-Ga-g])(#|b)?(-?\d)$/)
 
 /* ---------- the editor (a Device tools feature; needs no connection) ---------- */
 const EDITOR_FEATURE={id:"editor",title:"Project editor: steps, notes, scenes",verified:"2026-10-20: patterns written to project 16 and recorded over USB MIDI while playing: notes land on their steps, time shift +25% plays 31 ms late at 120 BPM, gate measured for all 128 values. Randomness and scenes not yet checked by ear.",needs:null,
- about:"Edits the project loaded in the Projects tool above: the notes of each step, pattern length, root and scale, and the scenes (which pattern each track plays, mutes, chains). Nothing is sent until you use Send in the Projects tool. Sequencer-mode data only; drum lanes and arpeggio settings are kept as they are. Gate lengths, time shift and step positions were measured on a KeyStep Pro.",
- render(el){el.innerHTML=`<div class="row" data-a="none">Load a project in the Projects tool first, or <button class="sm2" data-a="blank">start from a new empty project</button></div><div data-a="ui" hidden>
+ about:"Edits the working project (the bar above): the notes of each step, pattern length, root and scale, and the scenes (which pattern each track plays, mutes, chains). Nothing is sent until you use Send in the project bars tool. Sequencer-mode data only; drum lanes and arpeggio settings are kept as they are. Gate lengths, time shift and step positions were measured on a KeyStep Pro.",
+ render(el){el.innerHTML=`<div class="row" data-a="none">No working project yet: recall one, open a file (bar above), or <button class="sm2" data-a="blank">start a new empty project</button></div><div data-a="ui" hidden>
    <div class="row">Track <select data-a="t">${[1,2,3,4].map(t=>`<option value="${t}">${t}</option>`).join("")}</select> Pattern <select data-a="pat">${[...Array(16).keys()].map(i=>`<option value="${i+1}">${i+1}</option>`).join("")}</select><span class="pg" data-a="pst"></span></div>
    <div class="row small">Length <input type="number" data-a="len" min="1" max="64" style="width:4em"> Root <select data-a="root">${NN.map((n,i)=>`<option value="${i}">${n}</option>`).join("")}</select> Scale <select data-a="scale">${SCALE_NAMES.map(([v,n])=>`<option value="${v}">${n}</option>`).join("")}</select></div>
    <div class="edGrid" data-a="grid" role="grid" aria-label="Steps"></div>
@@ -101,7 +101,7 @@ const EDITOR_FEATURE={id:"editor",title:"Project editor: steps, notes, scenes",v
   q("t").onchange=q("pat").onchange=()=>{selStep=0;loadPat()};
   q("len").onchange=()=>{const v=Math.round(+q("len").value);if(!(v>=1&&v<=64)){q("len").value=pt.len;return say("Length is 1–64 steps.","bad")}pt.len=v;commitPat();drawGrid()};
   q("root").onchange=()=>{pt.root=+q("root").value;commitPat()};q("scale").onchange=()=>{pt.scale=+q("scale").value;commitPat()};
-  q("apply").onclick=()=>{if(!work)return;delete work.__ix;work.saved=new Date().toISOString();DEV.showProject(work,"Edited in the editor");say("Kept. Send it with the Projects tool above, or add it to the library.","ok");emit("editor:keep");load()};
+  q("apply").onclick=()=>{if(!work)return;delete work.__ix;work.saved=new Date().toISOString();DEV.showProject(work,"Edited in the editor");say("Kept in the working project. Send it from the bar above, or save it to a file.","ok");emit("editor:keep");load()};
   q("revert").onclick=()=>{load();say("Back to the loaded project.")};
   q("blank").onclick=newBlankProject;DEV.editorLoad=load;load()}};
 FEATURES.splice(FEATURES.findIndex(f=>f.id==="projects")+1,0,EDITOR_FEATURE);

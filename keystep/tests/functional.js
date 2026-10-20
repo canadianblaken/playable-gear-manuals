@@ -75,7 +75,7 @@ await libImport(deep(f1),"p1.json");let items=await libList();const e1=items.fin
 await libRename(e1.id,"Renamed");ok("library rename and get",(await libGet(e1.id)).name==="Renamed"&&(await libGet(e1.id)).file.data.length===8951);
 await DEV.libDraw();const row=[...document.querySelectorAll("#featList table.t tr")].find(r=>r.textContent.includes("Renamed"));DEV.project=null;
 [...row.querySelectorAll("button")].find(b=>b.textContent==="Load").click();
-ok("library Load puts the project into the Projects tool",DEV.project&&DEV.project.data.length===8951&&/Library “Renamed”/.test(document.querySelector("#featList").textContent));
+ok("library Load puts the project into the Projects tool",DEV.project&&DEV.project.data.length===8951&&/Library “Renamed”/.test($("#feat-projects").textContent));
 ok("library refuses a damaged project",await libAdd({format:"x"},"bad","").then(()=>false,()=>true));
 for(const it of await libList())await libDelete(it.id);ok("library delete",(await libList()).length===0);
 /* gate table measured on hardware: stored value -> steps */
@@ -96,11 +96,11 @@ ok("editor: scene patterns, mutes, chain read back",sc2.valid&&sc2.pats.join()==
 const pr5=await storeProject(L,11,fe);const f11=await readProject(L,11);const pe3=edReadPattern(f11,0x7C,3);
 ok("editor: edited project sent and read back",pr5.length===0&&pe3.steps[0].notes.map(n=>n.pitch).join()==="60,64,67"&&pe3.len===8&&edReadScene(f11,2).chains[0].join()==="0,1,2",pr5.slice(0,3));
 /* the editor UI: pick a step, add a note, keep */
-const edBox=[...document.querySelectorAll("#featList .feat")].find(b=>/Project editor/.test(b.textContent));const eq=a=>edBox.querySelector(`[data-a=${a}]`);
+const edBox=$("#feat-editor");const eq=a=>edBox.querySelector(`[data-a=${a}]`);
 eq("t").value="3";eq("t").onchange();eq("grid").children[2].click();const addIn=eq("step").querySelector("input[type=text]");addIn.value="D4 F#4";[...eq("step").querySelectorAll("button")].find(b=>b.textContent==="Add").click();
 ok("editor UI: added notes show on the step",/D4 F#4/.test(eq("grid").children[2].textContent),eq("grid").children[2].textContent);
 eq("apply").click();const kept=edReadPattern(DEV.project,0x7D,1);
-ok("editor UI: Keep puts the edit into the Projects tool",kept.steps[2].notes.map(n=>noteName(n.pitch)).join(" ")==="D4 F#4"&&/Edited in the editor/.test(document.querySelector("#featList").textContent));
+ok("editor UI: Keep puts the edit into the Projects tool",kept.steps[2].notes.map(n=>noteName(n.pitch)).join(" ")==="D4 F#4"&&/Edited in the editor/.test($("#feat-projects").textContent)&&!$("#feat-projects [data-a=chg]").hidden);
 /* MIDI files: a generated .mid with an off-grid note, a long note, a part longer than a pattern and a 17-note chord */
 const T=MF_T16,mid=mfWrite({tempo:100,tracks:[
  {name:"Lead",ch:0,notes:[{pitch:60,vel:90,on:0,off:T/2},{pitch:62,vel:80,on:2*T+T/4,off:2*T+T/4+T*1.5},{pitch:64,vel:70,on:4*T,off:8*T}]},
@@ -123,7 +123,7 @@ mq("imp").click();ok("too-long part asks: only 64 steps fit, add the rest to oth
 ok("then the 17-note chord asks before leaving notes out",/Too many notes/.test(mq("warn").textContent),mq("warn").textContent);
 [...mq("warn").querySelectorAll("button")].find(b=>/leaving extras out/.test(b.textContent)).click();
 const ip=DEV.project,b1=edReadPattern(ip,0x7C,1),b2=edReadPattern(ip,0x7C,2),pad=edReadPattern(ip,0x7D,1),s1x=edReadScene(ip,1);
-ok("MIDI tool sits in the right-column instructions box",$("#paneDevNote").contains(mfBox));
+ok("MIDI tool is a tool under the keyboard, help in the right column",$("#featList").contains(mfBox)&&(featJump("midifile"),/MIDI import/.test($("#toolHelp").textContent))&&!mfBox.hidden);
 ok("imported: bass over patterns 1 (64 steps) and 2 (48), chained in scene 1",b1.len===64&&b2.len===48&&b1.steps[0].notes[0].pitch===36&&b2.steps[0].notes[0].pitch===40&&s1x.chains[1].join()==="0,1"&&s1x.valid,{l1:b1.len,l2:b2.len,ch:s1x.chains[1]});
 ok("imported: chord trimmed to 16, lead in track 1, tempo 100",pad.steps[0].notes.length===16&&edReadPattern(ip,0x7B,1).steps[2].notes[0].shift===74&&mfGetTempo(ip)===100&&/1 note\(s\) over the limits left out/.test(mq("msg").textContent),mq("msg").textContent);
 /* several files: verse and chorus parts on the same tracks, one after another, chained in scene 2 */

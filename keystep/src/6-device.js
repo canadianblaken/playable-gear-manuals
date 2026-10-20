@@ -273,30 +273,34 @@ const FEATURES=[
  {id:"projects",title:"Projects: recall, save to file, send",verified:"2026-10-20: project 15 recalled (36 s) and matched an independent read; sent to project 16 and played the same; project 16 restored from its file.",needs:null,
   about:"What MIDI Control Center does with a project, value for value: Recall reads a saved project from the device using MCC's own list of parameters (under a minute over USB). Save it as a file, open it later, and send it to any project slot. Sending replaces everything in that slot and reads it all back to check (about three minutes). The name is kept in the file and sent with it if the project-names firmware is installed. One limit of the firmware's SysEx, so MCC has it too: a chord entered on the device with a note below its first note cannot be read or written over SysEx. Such a chord is marked in the file and not sent, and the target slot keeps its own chord on that track.",
   render(el){const opts=[...Array(16).keys()].map(i=>`<option value="${i+1}">${i+1}</option>`).join("");
-   el.innerHTML=`<div class="row">Project <select data-a="p">${opts}</select><button class="sm" data-a="rc">Recall from device</button> or open a file <input type="file" accept=".json,application/json" data-a="f"> or <button class="sm2" data-a="new">New empty project</button></div>
-   <div class="row"><progress data-a="pg" max="1" value="0"></progress><span data-a="st"></span></div>
-   <div class="row" data-a="sum">No project loaded.</div>
-   <div class="row">Name <input type="text" data-a="nm" maxlength="16" placeholder="(optional)"><button class="sm" data-a="sv">Save to file</button></div>
-   <div class="row">Send to project <select data-a="to">${opts}</select><label><input type="checkbox" data-a="vf" checked> read back to verify</label><button class="sm" data-a="go">Send to device</button></div>`;
+   el.innerHTML=`<div class="pbHead"><div class="pbWho"><div class="lbl">Working project</div><div class="pbName" data-a="title">None yet</div>
+    <div class="pg" data-a="sum">Recall one from the KeyStep, open a file, or start an empty one.</div><div class="pbChg" data-a="chg" hidden>Changed here: not sent or saved yet</div></div>
+   <div class="pbAct"><span class="grp">Recall <select data-a="p" aria-label="Project to recall">${opts}</select><button class="sm" data-a="rc">from device</button></span>
+    <label class="filebtn sm2">Open file<input type="file" accept=".json,application/json" data-a="f" hidden></label>
+    <button class="sm2" data-a="new">New empty</button>
+    <span class="grp"><input type="text" data-a="nm" maxlength="16" placeholder="Name (optional)" aria-label="Project name"><button class="sm" data-a="sv">Save file</button></span>
+    <span class="grp"><label>Send to <select data-a="to" aria-label="Project slot to send to">${opts}</select></label><label class="pg"><input type="checkbox" data-a="vf" checked> verify</label><button class="sm write" data-a="go">Send to device</button></span></div></div>
+   <div class="row" data-a="prow" hidden><progress data-a="pg" max="1" value="0"></progress><span data-a="st"></span></div>`;
    const q=a=>el.querySelector(`[data-a=${a}]`),go=q("go");let cur=null,armT=0;
-   const prog=x=>{q("pg").value=x;q("st").textContent=` ${Math.round(x*100)}%`};
-   const show=(f,src)=>{cur=DEV.project=f;q("nm").value=f.name||"";q("to").value=f.project;q("sum").textContent=`${src}: ${projectSummary(f)}`;if(DEV.editorLoad)DEV.editorLoad();if(DEV.midiLoad)DEV.midiLoad()};
+   const prog=x=>{q("prow").hidden=false;q("pg").value=x;q("st").textContent=` ${Math.round(x*100)}%`};
+   const changed=c=>{DEV.changed=c;q("chg").hidden=!c};
+   const show=(f,src)=>{cur=DEV.project=f;q("nm").value=f.name||"";q("to").value=f.project;q("title").textContent=f.name||`P${f.project}`;q("sum").textContent=`${src}: ${projectSummary(f)}`;changed(src==="Edited in the editor"||src==="MIDI import");if(DEV.editorLoad)DEV.editorLoad();if(DEV.midiLoad)DEV.midiLoad()};
    DEV.showProject=show; /* the library loads into this tool */
    q("new").onclick=newBlankProject;
    q("rc").onclick=()=>busy(async()=>{const p=+q("p").value,t0=performance.now();prog(0);const f=await readProject(DEV.link,p,prog);
     show(f,`Project ${p}, recalled`);devLog(`project ${p} recalled: ${f.data.length} blocks in ${((performance.now()-t0)/1000).toFixed(1)} s`,"ok");emit("dev:recall")});
    q("f").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{show(checkProjectFile(JSON.parse(await file.text())),file.name);devLog(`opened ${file.name}`,"ok")}catch(err){devLog("Error: "+err.message,"bad")}};
    q("sv").onclick=()=>{if(!cur){devLog("Recall a project or open a file first.","bad");return}try{const n=q("nm").value.trim();cur.name=n?displayName(n):null;
-    saveJSON(cur,`KeyStep Pro P${cur.project} ${fileSafe(cur.name||"")} ${cur.saved.slice(0,10)}.json`.replace(/\s+/g," "))}catch(err){devLog("Error: "+err.message,"bad")}};
+    changed(false);saveJSON(cur,`KeyStep Pro P${cur.project} ${fileSafe(cur.name||"")} ${cur.saved.slice(0,10)}.json`.replace(/\s+/g," "))}catch(err){devLog("Error: "+err.message,"bad")}};
    /* two clicks to overwrite a slot, no browser dialog */
-   const disarm=()=>{clearTimeout(armT);armT=0;go.textContent="Send to device"};
+   const disarm=()=>{clearTimeout(armT);armT=0;go.textContent="Send to device"};q("to").onchange=disarm;
    go.onclick=()=>{if(!cur){devLog("Recall a project or open a file first.","bad");return}const to=+q("to").value;
     if(!armT){go.textContent=`Click again to replace project ${to}`;armT=setTimeout(disarm,4000);return}disarm();
     busy(async()=>{const n=q("nm").value.trim();cur.name=n?displayName(n):null;prog(0);const t0=performance.now();
-     const pr=await storeProject(DEV.link,to,cur,{verify:q("vf").checked,prog});const s=((performance.now()-t0)/1000).toFixed(1);
+     const pr=await storeProject(DEV.link,to,cur,{verify:q("vf").checked,prog});const s=((performance.now()-t0)/1000).toFixed(1);if(!pr.length)changed(false);
      devLog(pr.length?`PROBLEM: ${pr.length} value(s) differ after sending to project ${to}: ${pr.slice(0,5).join("; ")}${pr.length>5?" …":""}`:`project ${to} written${q("vf").checked?" and verified":""} in ${s} s`,pr.length?"bad":"ok");if(!pr.length)emit("dev:store")})}}},
  {id:"library",title:"Project library (this browser)",verified:"Browser only, no device messages; tested in the simulation.",needs:null,
-  about:"Keeps project files in this browser so they are at hand without file dialogs. Add the project loaded in the Projects tool above, or import project and backup files (a backup adds each of its projects). Load puts an entry back into the Projects tool, ready to send. The library lives in this browser profile only: export important projects as files too.",
+  about:"Keeps project files in this browser so they are at hand without file dialogs. Add the working project, or import project and backup files (a backup adds each of its projects). Load puts an entry back into the Projects tool, ready to send. The library lives in this browser profile only: export important projects as files too.",
   render(el){el.innerHTML=`<div class="row"><input type="text" data-a="nm" maxlength="60" placeholder="Name for the entry"><button class="sm2" data-a="add">Add the loaded project</button><label class="sm2 filebtn">Import files<input type="file" data-a="f" accept=".json,application/json" multiple hidden></label></div>
    <div data-a="list" class="pg">Opening the library…</div>`;
    const q=a=>el.querySelector(`[data-a=${a}]`),list=q("list");
@@ -311,7 +315,7 @@ const FEATURES=[
        ["Save file",()=>saveJSON(it.file,`KeyStep Pro ${fileSafe(it.name)}.json`)],
        ["Delete",async()=>{await libDelete(it.id);devLog(`deleted “${it.name}” from the library`);draw()}]]){
       const bt=document.createElement("button");bt.className="sm2";bt.textContent=label;bt.onclick=()=>Promise.resolve(fn()).catch(e=>devLog("Error: "+e.message,"bad"));c3.append(bt," ")}}};
-   q("add").onclick=async()=>{if(!DEV.project)return devLog("Recall a project or open a file in the Projects tool first.","bad");
+   q("add").onclick=async()=>{if(!DEV.project)return devLog("No working project yet: recall one or open a file in the bar above.","bad");
     try{const n=q("nm").value.trim()||DEV.project.name||`P${DEV.project.project} (${DEV.project.saved.slice(0,10)})`;await libAdd(DEV.project,n,"Projects tool");q("nm").value="";devLog(`added “${n}” to the library`,"ok");emit("lib:add");draw()}catch(e){devLog("Error: "+e.message,"bad")}};
    q("f").onchange=async e=>{let n=0;for(const file of e.target.files){try{n+=await libImport(JSON.parse(await file.text()),file.name)}catch(err){devLog(`${file.name}: ${err.message}`,"bad")}}e.target.value="";if(n)devLog(`added ${n} project(s) to the library`,"ok");draw()};
    DEV.libDraw=draw;draw()}},
@@ -346,16 +350,19 @@ const FEATURES=[
 /* ---------- the tab ---------- */
 const DEV={link:null,gvals:{},busy:false,stop:false,ports:null};
 function devLog(s,cls=""){const box=$("#devLog");if(!box)return;const d=document.createElement("div");d.className=cls;d.textContent=s;box.appendChild(d);while(box.childNodes.length>400)box.firstChild.remove();box.scrollTop=box.scrollHeight}
-async function busy(fn){if(!DEV.link){devLog("Connect first.","bad");return}if(DEV.busy)return;DEV.busy=true;DEV.stop=false;document.querySelectorAll("#paneDev button.sm").forEach(b=>b.disabled=true);
- try{await fn()}catch(e){devLog("Error: "+e.message,"bad")}finally{DEV.busy=false;document.querySelectorAll("#paneDev button.sm").forEach(b=>b.disabled=false)}}
+async function busy(fn){if(!DEV.link){devLog("Connect first.","bad");return}if(DEV.busy)return;DEV.busy=true;DEV.stop=false;$("#devStopBtn").hidden=false;document.querySelectorAll("#paneDev button.sm").forEach(b=>b.disabled=true);
+ try{await fn()}catch(e){devLog("Error: "+e.message,"bad")}finally{DEV.busy=false;$("#devStopBtn").hidden=true;document.querySelectorAll("#paneDev button.sm").forEach(b=>b.disabled=false)}}
 /* the connection controls live in the top bar, so they work before Device tools is opened */
-function devBindBar(){$("#devScanBtn").onclick=devScan;$("#devStopBtn").onclick=()=>{if(DEV.busy){DEV.stop=true;devLog("Stopping…")}};
+function devBindBar(){$("#devScanBtn").onclick=devScan;$("#simNames").onchange=e=>{SIMDEV.namesFw=e.target.checked};
+ const pill=$("#connPill"),pop=$("#connPop"),open=o=>{pop.hidden=!o;pill.setAttribute("aria-expanded",o)};pill.onclick=()=>open(pop.hidden);
+ document.addEventListener("pointerdown",e=>{if(!pop.hidden&&!pop.contains(e.target)&&!pill.contains(e.target))open(false)});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!pop.hidden){open(false);pill.focus()}});
+ devStatus("not connected","");$("#devStopBtn").onclick=()=>{if(DEV.busy){DEV.stop=true;devLog("Stopping…")}};
  $("#devConnBtn").onclick=()=>devConnect().catch(e=>{devLog("Error: "+e.message,"bad");devStatus("Error: "+e.message,"bad")})}
-function devStatus(text,cls){const st=$("#devState");st.innerHTML="";const p=document.createElement("span");p.className="pill "+cls;p.textContent=text;st.appendChild(p)}
+function devStatus(text,cls){const st=$("#devState");st.className="dot "+(cls||"off");st.textContent="";$("#devStateText").textContent="KeyStep: "+text}
 async function devConnect(){const sel=$("#devPort").value;if(DEV.link&&DEV.link.close)DEV.link.close();DEV.link=null;DEV.gvals={};
  if(sel==="sim"){DEV.link=new SimLink();if($("#simNames"))SIMDEV.namesFw=$("#simNames").checked}
  else{const [oi,ii]=sel.split("|");const out=[...DEV.ports.outputs.values()].find(o=>o.id===oi),inp=[...DEV.ports.inputs.values()].find(i=>i.id===ii);if(!out||!inp){devLog("Port not found.","bad");return}DEV.link=new WebMidiLink(out,inp)}
- const id=await DEV.link.identity();if(id){const v=id.slice(12,16);devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");devStatus(DEV.link.sim?"simulation":`KeyStep Pro ${v[3]}.${v[2]}.${v[1]}`,DEV.link.sim?"sim":"real");
+ const id=await DEV.link.identity();if(id){const v=id.slice(12,16);devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");devStatus(DEV.link.sim?"simulated KeyStep Pro":`KeyStep Pro ${v[3]}.${v[2]}.${v[1]}`,DEV.link.sim?"sim":"real");$("#connPop").hidden=true;$("#connPill").setAttribute("aria-expanded",false);
   await busy(async()=>{devLog("Reading the global settings…");let n=0;await quietly(DEV.link,async()=>{for(const g of GLOBALS){DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}});devLog(`read ${n} global settings`,"ok")});
   if(DEV.globalsDraw)DEV.globalsDraw();emit("dev:connect")}
  else{devLog("No identity reply. Check the ports and that SysEx permission was granted.","bad");devStatus("no reply","bad");DEV.link=null}}
@@ -365,23 +372,33 @@ async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">
  const outs=[...DEV.ports.outputs.values()],ins=[...DEV.ports.inputs.values()];
  for(const o of outs){const i=ins.find(x=>x.name===o.name)||ins.find(x=>/keystep/i.test(x.name))||ins[0];if(!i)continue;const opt=new Option(o.name===i.name?o.name:`${o.name} ⇄ ${i.name}`,o.id+"|"+i.id);s.add(opt);if(/keystep/i.test(o.name))s.value=opt.value}
  devLog(`${outs.length} MIDI output(s) found`)}
-/* Device tools open under the keyboard (#devWide, the wide left column); the right column keeps a jump list */
-/* tools shown in the right-column box with the instructions instead of under the keyboard */
-const FEATURE_SIDE=new Set(["midifile"]);
-const FEATURE_ORDER=["projects","midifile","editor","library","backup","setlist","trackkey","names","globals"],FEATURE_KEY=new Set(["midifile"]);
-const FEATURE_SHORT={projects:"Projects",midifile:"MIDI file import / export",editor:"Step editor",library:"Library",backup:"Backup",setlist:"Set list",trackkey:"Chord & key",names:"Names",globals:"Global settings"};
-function featJump(id){const box=$("#feat-"+id);if(!box)return;DEV.lastFeat=id;viewFollow(FEATURE_VIEW[id]||"whole");const c=$("#devCol").contains(box)?$("#devCol"):$("#sideCol");const pw=$("#panelWrap"),over=c===$("#devCol")&&pw?pw.offsetHeight:0;if(c&&c.contains(box)&&c.scrollTo)c.scrollTo({top:Math.max(0,box.offsetTop-c.offsetTop-8-over),behavior:"smooth"});else box.scrollIntoView({behavior:"smooth"})}
+/* Device tools open under the keyboard (#devWide): the working-project bar, then one tool at a time picked from two groups.
+   The right column explains the selected tool, with the verification notes folded away, and holds the activity log. */
+const FEATURE_GROUPS=[["This project",["midifile","editor"]],["Whole device",["library","backup","setlist","trackkey","names","globals"]]],FEATURE_KEY=new Set(["midifile"]);
+const FEATURE_ORDER=["projects",...FEATURE_GROUPS.flatMap(g=>g[1])];
+const FEATURE_SHORT={projects:"Projects",midifile:"MIDI import / export",editor:"Step editor",library:"Library",backup:"Backup all 16",setlist:"Set list",trackkey:"Chord & key",names:"Names",globals:"Global settings"};
+const FEATURE_LINE={midifile:"Turn .mid files into patterns of the working project, or export its patterns as .mid files.",editor:"Edit the steps, notes, length, root, scale and scenes of the working project.",
+ library:"Keep projects in this browser and load them back as the working project.",backup:"Save all 16 projects and the settings in one file, and restore the ones you pick.",
+ setlist:"Write song names, chords and keys onto several projects in one go.",trackkey:"Set one track's chord shape, root and scale on a project.",names:"Give a project slot a name (needs the project-names firmware).",
+ globals:"Read and change every Utility setting, including the ones MCC hides.",projects:"The project the tools work on: recall it, open or save a file, send it."};
+function featHelp(id){const f=FEATURES.find(x=>x.id===id),h=$("#toolHelp");if(!f||!h)return;h.innerHTML=`<h2></h2><p></p><details><summary>Details and limits</summary><p class="pg"></p><div class="meta"><b>Verified</b> </div></details>`;
+ h.querySelector("h2").textContent=FEATURE_SHORT[id];h.querySelector("p").textContent=FEATURE_LINE[id]||"";h.querySelector("details .pg").innerHTML=f.about;
+ const m=h.querySelector(".meta");m.append(f.verified);if(f.needs){const n=document.createElement("span");n.className="need";n.textContent=" Needs "+f.needs;m.append(n)}}
+function featShow(id){DEV.tool=id;try{localStorage.setItem("ksp.tool",id)}catch(e){}
+ document.querySelectorAll("#featList > .feat").forEach(b=>b.hidden=b.id!=="feat-"+id);document.querySelectorAll(".featNav button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.id===id));featHelp(id)}
+function featJump(id){const box=$("#feat-"+id);if(!box)return;DEV.lastFeat=id;viewFollow(FEATURE_VIEW[id]||"whole");if(id!=="projects")featShow(id);else featHelp(id);
+ /* scroll once the panel has finished zooming, so its new height is known */
+ setTimeout(()=>{const c=$("#devCol"),pw=$("#panelWrap"),t=$("#paneDev");if(c.contains(t)&&c.scrollTo)c.scrollTo({top:Math.max(0,t.offsetTop-c.offsetTop-8-(pw?pw.offsetHeight:0)),behavior:"smooth"});else t.scrollIntoView({behavior:"smooth"})},320)}
 function featNav(){const nav=document.createElement("div");nav.className="featNav";nav.setAttribute("role","navigation");nav.setAttribute("aria-label","Device tools");
- for(const f of FEATURES){const b=document.createElement("button");b.type="button";b.textContent=FEATURE_SHORT[f.id]||f.title.split(":")[0];if(FEATURE_KEY.has(f.id))b.className="hi";b.onclick=()=>featJump(f.id);nav.appendChild(b)}return nav}
+ for(const [g,ids] of FEATURE_GROUPS){const grp=document.createElement("div");grp.className="fgrp";const l=document.createElement("span");l.className="lbl";l.textContent=g;grp.appendChild(l);
+  for(const id of ids){const b=document.createElement("button");b.type="button";b.dataset.id=id;b.textContent=FEATURE_SHORT[id];if(FEATURE_KEY.has(id))b.className="hi";b.onclick=()=>featJump(id);grp.appendChild(b)}nav.appendChild(grp)}return nav}
 function renderDevice(){const pane=$("#paneDev");if(pane.dataset.built)return;pane.dataset.built=1;
  FEATURES.sort((a,b)=>FEATURE_ORDER.indexOf(a.id)-FEATURE_ORDER.indexOf(b.id));$("#devWide").appendChild(pane);
- pane.innerHTML=`<div class="card"><h2>Device tools</h2>
-  <p class="pg">Talks SysEx to a KeyStep Pro on USB (Chrome/Edge, Web MIDI with SysEx permission) or to the simulated one in this page. Everything here was worked out from firmware 2.5.20 and tested on hardware; new tools are added as they are solved. Unofficial: back up your projects with MIDI Control Center before writing.</p>
-  <div class="feat"><div class="row small">Connect with the KeyStep controls in the top bar (pick a port, then Connect).</div>
-  <div class="row small"><label><input type="checkbox" id="simNames" checked> simulation runs the project-names firmware</label></div></div>
-  <div data-a="nav"></div><div id="featList"></div><h3>Log</h3><div id="devLog"></div></div>`;
+ pane.innerHTML=`<div class="card projBar" data-a="bar"></div><div class="card"><div id="toolTop"></div><div data-a="nav"></div><div id="featList"></div></div>`;
  pane.querySelector("[data-a=nav]").appendChild(featNav());
- const note=$("#paneDevNote");note.innerHTML=`<h2>Device tools</h2><p class="pg">MIDI file import and export are right here. The other tools are open under the keyboard, where there is room to edit.</p>`;
- $("#simNames").onchange=e=>{SIMDEV.namesFw=e.target.checked};
- const list=$("#featList");for(const f of FEATURES){const box=document.createElement("div");box.className="feat"+(FEATURE_KEY.has(f.id)?" key":"");box.id="feat-"+f.id;box.innerHTML=`<h3>${f.title}</h3><div class="meta"><b>Verified</b> ${f.verified}${f.needs?` <span class="need">Needs ${f.needs}</span>`:""}</div><p class="pg">${f.about}</p><div class="body"></div>`;(FEATURE_SIDE.has(f.id)?note:list).appendChild(box);f.render(box.querySelector(".body"))}
- const jp=document.createElement("p");jp.className="pg";jp.textContent="Jump to a tool under the keyboard:";note.append(jp,featNav())}
+ const note=$("#paneDevNote");note.innerHTML=`<div id="toolHelp"></div><h3>Activity</h3><div id="devLog"></div><p class="pg">Unofficial: worked out from firmware 2.5.20 and tested on hardware. Back up your projects before writing.</p>`;
+ const list=$("#featList"),bar=pane.querySelector("[data-a=bar]");
+ for(const f of FEATURES){const box=document.createElement("div");box.className="feat"+(FEATURE_KEY.has(f.id)?" key":"");box.id="feat-"+f.id;
+  if(f.id==="projects"){bar.appendChild(box);f.render(box);continue}
+  box.innerHTML=`<h3></h3><p class="pg"></p><div class="body"></div>`;box.querySelector("h3").textContent=FEATURE_SHORT[f.id];box.querySelector(".pg").textContent=FEATURE_LINE[f.id]||"";list.appendChild(box);f.render(box.querySelector(".body"))}
+ let t=null;try{t=localStorage.getItem("ksp.tool")}catch(e){}featShow(FEATURES.some(f=>f.id===t&&t!=="projects")?t:"midifile")}
