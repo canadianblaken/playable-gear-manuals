@@ -195,7 +195,8 @@ ok("the button starts a new empty project in the editor",DEV.project&&DEV.projec
 /* Device settings: grouped like MCC, a change is written and read back */
 selectTab("set");const bsel=[...document.querySelectorAll("#setWrap select")].find(x=>/Brightness/.test(x.getAttribute("aria-label")));bsel.value="1";await bsel.onchange({target:bsel});
 ok("device settings: a change is written and read back",S.globals[152]===1&&/Brightness set/.test($("#setWrap [data-a=msg]").textContent)&&document.querySelectorAll("#setWrap .ggrid > .fld").length===11,$("#setWrap [data-a=msg]").textContent);
-ok("firmware card shows the running version",/Running: 2\.5\.20/.test($("#fwCard").textContent));
+ok("firmware card shows the running version and says it is the patched build",/Running: 2\.5\.99 — this project's patched firmware/.test($("#fwCard").textContent),$("#fwCard").textContent.slice(0,120));
+$("#simNames").checked=false;await devConnect();ok("stock firmware reads 2.5.20",/Running: 2\.5\.20 — Arturia's stock/.test($("#fwCard").textContent));$("#simNames").checked=true;await devConnect();
 selectTab("proj");ok("keys on the computer keyboard do not play the panel outside Manual",(()=>{const b=S.held?S.held.size:0;dispatchEvent(new KeyboardEvent("keydown",{key:"a"}));dispatchEvent(new KeyboardEvent("keyup",{key:"a"}));return STU.mode==="proj"&&!HELD.has("k12")})());
 const into=JSON.parse(JSON.stringify(DEV.project));mfApply(into,0x7C,mfPlan(mfPlace(mparts[1],mfx),1,16),{chainScene:1});const pr6=await storeProject(L,12,into);
 ok("MIDI import into the empty project sends and reads back",pr6.length===0&&edReadPattern(await readProject(L,12),0x7C,2).len===48,pr6.slice(0,3));
@@ -206,7 +207,7 @@ navigator.requestMIDIAccess=async()=>({outputs:new Map([["o1",fout]]),inputs:new
 DEV.link=null;DEV.ports=null;$("#devPort").value="sim";devStatus("not connected","");
 ok("not connected, the pill is a Connect button",/Connect KeyStep/.test($("#connPill").textContent)&&$("#connPill").classList.contains("off"));
 $("#connPill").click();for(let i=0;i<200&&!(DEV.link&&!DEV.busy);i++)await W(25);
-ok("one click finds the KeyStep port and connects",DEV.link&&!DEV.link.sim&&/KeyStep Pro 2\.5\.20/.test($("#devStateText").textContent)&&$("#connPop").hidden,$("#devStateText").textContent);
+ok("one click finds the KeyStep port and connects",DEV.link&&!DEV.link.sim&&/KeyStep Pro 2\.5\.99 \(patched\)/.test($("#devStateText").textContent)&&$("#connPop").hidden,$("#devStateText").textContent);
 navigator.requestMIDIAccess=async()=>({outputs:new Map(),inputs:new Map()});DEV.link=null;DEV.ports=null;$("#devPort").value="sim";devStatus("not connected","");
 $("#connPill").click();for(let i=0;i<40&&$("#connPop").hidden;i++)await W(25);
 ok("no KeyStep port: the options open instead",!DEV.link&&!$("#connPop").hidden&&/Connect KeyStep/.test($("#devStateText").textContent));

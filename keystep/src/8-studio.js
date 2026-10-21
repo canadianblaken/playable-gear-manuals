@@ -347,7 +347,8 @@ function setDraw(){const grid=$("#setWrap [data-a=grid]");if(!grid)return;grid.i
    card.appendChild(r)}grid.appendChild(card)}
  if(!Object.keys(DEV.gvals).length)setMsg(DEV.link?"Use Read from the KeyStep to fill in the values.":"Connect to the KeyStep (the pill at the top) to see and change its settings.")}
 function fwDraw(){const c=$("#fwCard");if(!c)return;
- c.innerHTML=`<h2>Firmware</h2><p>Running: <b>${DEV.fw?esc(DEV.fw):"not connected"}</b>${DEV.link&&DEV.link.sim?" (simulation)":""}. The patched builds (names, step pads) report the same version as stock 2.5.20, so this page cannot tell them apart.</p>
+ const what=!DEV.fw?"":fwPatched()?` — this project's patched firmware (project names and step pads), based on 2.5.20, patch build ${DEV.fwBuild}`:DEV.fw==="2.5.20"?" — Arturia's stock firmware, or a patched build made before the version change":"";
+ c.innerHTML=`<h2>Firmware</h2><p>Running: <b>${DEV.fw?esc(DEV.fw):"not connected"}</b>${esc(what)}${DEV.link&&DEV.link.sim?" (simulation)":""}.</p><p class="pg">Patched builds report <b>2.5.99</b> so they are not mistaken for Arturia's 2.5.20; the KeyStep's Utility &gt; FW version page says the same.</p>
   <p>Flash firmware with Arturia's MIDI Control Center: it uses the KeyStep's update mode, which this page does not drive.</p>
   <ol class="steps"><li><button class="sm2" data-a="bk">Back up all 16 projects</button> first.</li><li>Close this page, or disconnect, so MCC has the KeyStep to itself.</li>
   <li>In MCC, choose the firmware update and pick the <code>.kspf</code> file. Builds in the KeyStep Pro Firmware folder carry the commit they were built from in their name; keep <code>KeyStepPro_2.5.20_STOCK.kspf</code> to go back.</li>

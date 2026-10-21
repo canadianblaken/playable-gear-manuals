@@ -278,7 +278,7 @@ ol.steps{margin:6px 0;padding-left:20px}ol.steps li{margin:3px 0}
   <span class="ksp" role="group" aria-label="KeyStep Pro connection"><button id="connPill" title="Connect to the KeyStep Pro"><span id="devState" class="dot off"></span><span id="devStateText" aria-live="polite">Connect KeyStep</span></button><button id="connMore" aria-expanded="false" aria-controls="connPop" aria-label="Connection options: port, simulation" title="Port and simulation">▾</button><button id="devStopBtn" class="stop" title="Stop the transfer that is running" hidden>Stop transfer</button>
    <div id="connPop" class="pop" hidden><div class="prow"><label>Port <select id="devPort" aria-label="KeyStep Pro MIDI port"><option value="sim">Simulated KeyStep Pro</option></select></label></div>
     <div class="prow"><button id="devScanBtn" title="Ask the browser for MIDI ports (Chrome/Edge, with SysEx permission)">Find MIDI ports</button><button id="devConnBtn" class="pri">Connect</button></div>
-    <label class="pg"><input type="checkbox" id="simNames" checked> the simulation runs the project-names firmware</label>
+    <label class="pg"><input type="checkbox" id="simNames" checked> the simulation runs the patched firmware (2.5.99: names, step pads)</label>
     <p class="pg">A real KeyStep needs Chrome or Edge on a computer, with SysEx permission. Safari, including on iPad, has no Web MIDI; the manual still works there.</p></div></span>
   <details class="about"><summary>Unofficial and playable, firmware 2.5. Not affiliated with Arturia.</summary>A playable recreation of the Arturia KeyStep Pro, built from the 2.5.1 user manual, the MIDI Control Center device definition and a reverse-engineering study of firmware 2.5.20. All sounds are synthesized stand-ins. The Projects and Device settings modes talk to a real KeyStep Pro over Web MIDI, or to this simulation.</details>
 </header>
@@ -1521,7 +1521,8 @@ const pjKey=(param,ix)=>ix[0]===1&&ix.length===1?param:param+"/"+ix.join(",");
 const SIM_SLOT_PARAMS=[0x32,0x6D,0x6E,0x6F,0x70,0x71,0x36,0x75,0x76,0x77,0x78,0x79],SIM_STEP_DEFAULTS={0x31:15,0x33:15,0x35:15},SIM_PAT_DEFAULTS={0x61:25,0x62:15,0x63:20,0x64:26,0x6D:60,0x6E:7,0x6F:100,0x70:49,0x71:100,0x72:25,0x73:15,0x74:16};
 const SIMDEV={namesFw:true,sess:null,
  handle(b){const out=[];
-  if(b[1]===0x7E&&b[3]===0x06&&b[4]===0x01)return [[0xF0,0x7E,0x7F,0x06,0x02,0x00,0x20,0x6B,0x02,0x00,0x09,0x00,0x25,0x14,0x05,0x02,0xF7]];
+  /* identity: stock 2.5.20 build 2085 (0x25 = its low 7 bits); the patched builds say 2.5.99 and count their own builds */
+  if(b[1]===0x7E&&b[3]===0x06&&b[4]===0x01)return [[0xF0,0x7E,0x7F,0x06,0x02,0x00,0x20,0x6B,0x02,0x00,0x09,0x00,...(this.namesFw?[0x01,99]:[0x25,0x14]),0x05,0x02,0xF7]];
   if(b.slice(0,6).some((x,i)=>i!==4&&x!==PREFIX[i]))return out;
   const cmd=b[6],p=b[7];
   if((cmd===0x01||cmd===0x31)&&b[8]===0x41){const id=b[9]+(cmd===0x31?128:0);out.push([...PREFIX,cmd+1,0x00,0x41,b[9],S.globals[id]&127,0xF7],[...PREFIX,0x1C,0x00,0xF7]);return out}
@@ -1842,10 +1843,12 @@ async function quickConnect(){if(DEV.connecting)return;DEV.connecting=true;devSt
 async function devConnect(){const sel=$("#devPort").value;if(DEV.link&&DEV.link.close)DEV.link.close();DEV.link=null;DEV.gvals={};
  if(sel==="sim"){DEV.link=new SimLink();if($("#simNames"))SIMDEV.namesFw=$("#simNames").checked}
  else{const [oi,ii]=sel.split("|");const out=[...DEV.ports.outputs.values()].find(o=>o.id===oi),inp=[...DEV.ports.inputs.values()].find(i=>i.id===ii);if(!out||!inp){devLog("Port not found.","bad");return}DEV.link=new WebMidiLink(out,inp)}
- const id=await DEV.link.identity();if(id){const v=id.slice(12,16);DEV.fw=`${v[3]}.${v[2]}.${v[1]}`;devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");devStatus(DEV.link.sim?"simulated KeyStep Pro":`KeyStep Pro ${v[3]}.${v[2]}.${v[1]}`,DEV.link.sim?"sim":"real");DEV.connOpen(false);
+ const id=await DEV.link.identity();if(id){const v=id.slice(12,16);DEV.fw=`${v[3]}.${v[2]}.${v[1]}`;DEV.fwBuild=v[0];devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");devStatus(DEV.link.sim?"simulated KeyStep Pro":`KeyStep Pro ${DEV.fw}${fwPatched()?" (patched)":""}`,DEV.link.sim?"sim":"real");DEV.connOpen(false);
   await busy(async()=>{devLog("Reading the global settings…");let n=0;await quietly(DEV.link,async()=>{for(const g of GLOBALS){DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}});devLog(`read ${n} global settings`,"ok")});
   if(DEV.globalsDraw)DEV.globalsDraw();fwDraw();emit("dev:connect")}
  else{devLog("No identity reply. Check the ports and that SysEx permission was granted.","bad");devStatus("not connected","");DEV.link=null}}
+/* 2.5.99 = this project's patched firmware (based on 2.5.20); stock reports 2.5.20 */
+const fwPatched=()=>DEV.fw==="2.5.99";
 async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">Simulated KeyStep Pro</option>';
  if(!navigator.requestMIDIAccess){devLog("This browser has no Web MIDI (use Chrome or Edge; Firefox needs the site permission add-on).","bad");return}
  try{DEV.ports=await navigator.requestMIDIAccess({sysex:true})}catch(e){devLog("SysEx access was refused: "+e.message,"bad");return}
@@ -2613,7 +2616,8 @@ function setDraw(){const grid=$("#setWrap [data-a=grid]");if(!grid)return;grid.i
    card.appendChild(r)}grid.appendChild(card)}
  if(!Object.keys(DEV.gvals).length)setMsg(DEV.link?"Use Read from the KeyStep to fill in the values.":"Connect to the KeyStep (the pill at the top) to see and change its settings.")}
 function fwDraw(){const c=$("#fwCard");if(!c)return;
- c.innerHTML=`<h2>Firmware</h2><p>Running: <b>${DEV.fw?esc(DEV.fw):"not connected"}</b>${DEV.link&&DEV.link.sim?" (simulation)":""}. The patched builds (names, step pads) report the same version as stock 2.5.20, so this page cannot tell them apart.</p>
+ const what=!DEV.fw?"":fwPatched()?` — this project's patched firmware (project names and step pads), based on 2.5.20, patch build ${DEV.fwBuild}`:DEV.fw==="2.5.20"?" — Arturia's stock firmware, or a patched build made before the version change":"";
+ c.innerHTML=`<h2>Firmware</h2><p>Running: <b>${DEV.fw?esc(DEV.fw):"not connected"}</b>${esc(what)}${DEV.link&&DEV.link.sim?" (simulation)":""}.</p><p class="pg">Patched builds report <b>2.5.99</b> so they are not mistaken for Arturia's 2.5.20; the KeyStep's Utility &gt; FW version page says the same.</p>
   <p>Flash firmware with Arturia's MIDI Control Center: it uses the KeyStep's update mode, which this page does not drive.</p>
   <ol class="steps"><li><button class="sm2" data-a="bk">Back up all 16 projects</button> first.</li><li>Close this page, or disconnect, so MCC has the KeyStep to itself.</li>
   <li>In MCC, choose the firmware update and pick the <code>.kspf</code> file. Builds in the KeyStep Pro Firmware folder carry the commit they were built from in their name; keep <code>KeyStepPro_2.5.20_STOCK.kspf</code> to go back.</li>
