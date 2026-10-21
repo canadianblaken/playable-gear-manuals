@@ -127,14 +127,14 @@ function trackPanel(el,t){const f=DEV.project,item=TRACK_ITEMS[t],mode=edGet(f,i
  pats.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{STU.pat[t]=+b.dataset.p;STU.page[t]=0;STU.sel=null;renderPanel()});el.appendChild(pats);
  const tb=document.createElement("div");tb.className="tbar";
  tb.innerHTML=`<button data-a="copy">Copy pattern</button><button data-a="paste" ${STU.clip&&STU.clip.kind===(drum?"drum":"seq")?"":"disabled"}>Paste</button><button data-a="clear">Clear pattern</button><span class="sep"></span>
-  ${drum?'<button data-a="s2d">Steps → drums…</button>':'<button data-a="mid">Import / export MIDI…</button>'}<span class="sep"></span><span class="pages" role="group" aria-label="Steps shown">${[0,1,2,3].map(g=>`<button data-g="${g}" aria-pressed="${g===STU.page[t]}" class="b" ${g*16>=len?'style="opacity:.5"':""}>${g*16+1}–${g*16+16}</button>`).join("")}</span>`;
+  ${drum?'<button data-a="s2d">Steps → drums…</button>':'<button data-a="mid">Import / export MIDI…</button><button data-a="bass">Make bass…</button>'}<span class="sep"></span><span class="pages" role="group" aria-label="Steps shown">${[0,1,2,3].map(g=>`<button data-g="${g}" aria-pressed="${g===STU.page[t]}" class="b" ${g*16>=len?'style="opacity:.5"':""}>${g*16+1}–${g*16+16}</button>`).join("")}</span>`;
  tb.querySelectorAll("[data-g]").forEach(b=>{b.className="";b.onclick=()=>{STU.page[t]=+b.dataset.g;renderPanel()}});
  tb.querySelector("[data-a=copy]").onclick=()=>{STU.clip=drum?{kind:"drum",v:deep(edReadDrum(f,pat))}:{kind:"seq",v:deep(edReadPattern(f,item,pat))};say(`Pattern ${pat} copied.`);renderPanel()};
  tb.querySelector("[data-a=paste]").onclick=()=>edit(f=>{if(STU.clip.v.unreadable)throw new Error("The copied pattern had unreadable notes.");drum?edWriteDrum(f,pat,deep(STU.clip.v)):edWritePattern(f,item,pat,deep(STU.clip.v))},`Pasted into pattern ${pat}.`);
  tb.querySelector("[data-a=clear]").onclick=e=>{if(ro)return say("This pattern has notes the recall could not read, so it is read-only.","bad");if(!armed(e.target,"Click again to clear"))return;
   edit(f=>{if(drum){const d=edReadDrum(f,pat);d.hits=[];edWriteDrum(f,pat,d)}else{const p=edReadPattern(f,item,pat);p.steps.forEach(s=>{s.notes=[];s.on=false});edWritePattern(f,item,pat,p)}},`Pattern ${pat} cleared.`)};
- if(drum)tb.querySelector("[data-a=s2d]").onclick=()=>s2dBox(el,pat);else tb.querySelector("[data-a=mid]").onclick=()=>openTool("midifile");
- el.appendChild(tb);
+ if(drum)tb.querySelector("[data-a=s2d]").onclick=()=>s2dBox(el,pat);else{tb.querySelector("[data-a=mid]").onclick=()=>openTool("midifile");tb.querySelector("[data-a=bass]").onclick=()=>{STU.bass={t,src:t?0:1,pat,style:null,oct:2};renderPanel()}}
+ el.appendChild(tb);if(!drum&&STU.bass&&STU.bass.t===t)bassBox(el,t,pat);
  if(t>0&&alt)el.insertAdjacentHTML("beforeend",'<p class="pnote warn">Set to Arpeggiator: this track plays the keys you hold. These steps play when it is set back to Sequencer.</p>');
  if(ro)el.insertAdjacentHTML("beforeend",`<p class="pnote warn">${(pt||dp).unreadable} note slot(s) of this pattern could not be read from the KeyStep, so it is read-only here (editing would lose them).</p>`);
  if(drum)drumGrid(el,pat,dp,ro);else rollGrid(el,t,pat,pt,ro);
@@ -219,6 +219,25 @@ function s2dBox(el,pat){if(el.querySelector(".s2d"))return;const b=document.crea
    res=stepsToDrum(src,m,q("fold").checked);if(!res.dp.hits.length)throw new Error(`No note of that pattern is on the drum map (${noteName(m[0])}–${noteName(m[23])}). Tick “move other notes by octaves” or pick another pattern.`);
    edWriteDrum(f,pat,res.dp);edSetDrumMode(f,true)});
   if(ok){const miss=[...res.missed].map(([p,n])=>`${noteName(p)}×${n}`).join(" ");say(`${res.dp.hits.length} hits on drum pattern ${pat}; track 1 is in Drum mode.${miss?` Not on the map, left out: ${miss}.`:""}${res.doubled?` ${res.doubled} note(s) landed on a lane that already had a hit there.`:""}`);emit("editor:drums")}}}
+
+/* make bass: a recorded part of another track becomes a bass line in the pattern on screen; the box stays open, so picking
+   another style (or source, or octave) writes the pattern again and Undo steps back through them */
+function bassBox(el,t,pat){const B=STU.bass,item=TRACK_ITEMS[t],b=document.createElement("div");b.className="fld bass";
+ b.innerHTML=`<p class="cap">Make bass, into pattern ${pat} of track ${t+1}</p><div class="row"><label>From track <select data-a="t">${[0,1,2,3].filter(x=>x!==t).map(x=>`<option value="${x}" ${x===B.src?"selected":""}>${x+1}</option>`).join("")}</select></label>
+  <label>pattern <select data-a="p">${[...Array(16).keys()].map(i=>`<option value="${i+1}" ${i+1===(B.srcPat??pat)?"selected":""}>${i+1}</option>`).join("")}</select></label>
+  <label>Octave <select data-a="o">${[1,2,3].map(o=>`<option value="${o}" ${o===B.oct?"selected":""}>C${o}–B${o}</option>`).join("")}</select></label><button class="b" data-a="x">Close</button></div>
+  <div class="row"><span class="seg" role="group" aria-label="Bass style">${BASS_STYLES.map(([k,n])=>`<button data-st="${k}" aria-pressed="${k===B.style}">${esc(n)}</button>`).join("")}</span></div>
+  <p class="pnote">Pick a style to write it; pick another to switch. Each chord's root comes from its notes (lowest note on close calls). The pattern's notes, length, root and scale are replaced; Undo goes back one style at a time.</p>`;
+ el.querySelector(".tbar").after(b);const q=a=>b.querySelector(`[data-a=${a}]`);if(!STU.bass.srcPat)B.srcPat=pat;
+ q("x").onclick=()=>{STU.bass=null;renderPanel()};
+ const go=()=>{if(!B.style)return renderPanel();let n=0;el.querySelector(".roll")?.remove();STU.scroll[STU.tab]=null;// show the new notes, not the old scroll position
+ 
+  const ok=edit(f=>{const sp=edReadPattern(f,TRACK_ITEMS[B.src],B.srcPat);if(sp.unreadable)throw new Error("That pattern has notes the recall could not read.");
+   const bs=makeBass(sp,B.style,B.oct),tp=edReadPattern(f,item,pat);if(tp.unreadable)throw new Error("This pattern has notes the recall could not read, so it is read-only.");
+   Object.assign(tp,{len:bs.len,root:bs.root,scale:bs.scale,steps:bs.steps});n=bs.notes;edWritePattern(f,item,pat,tp)});
+  if(ok){const alt=(edGet(DEV.project,item,P_MODE,[1])??0)&DRUM_MODE_BIT;say(`${BASS_STYLES.find(x=>x[0]===B.style)[1]}: ${n} bass notes from track ${B.src+1} pattern ${B.srcPat}.${alt?" This track is set to Arpeggiator; set it to Sequencer to hear them.":""}`);emit("editor:bass")}};
+ q("t").onchange=()=>{B.src=+q("t").value;go()};q("p").onchange=()=>{B.srcPat=+q("p").value;go()};q("o").onchange=()=>{B.oct=+q("o").value;go()};
+ b.querySelectorAll("[data-st]").forEach(x=>x.onclick=()=>{B.style=x.dataset.st;go()})}
 
 /* ---------- scenes ---------- */
 function scenesPanel(el){const f=DEV.project,t=document.createElement("table");t.className="t";

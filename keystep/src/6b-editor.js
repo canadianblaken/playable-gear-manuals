@@ -79,5 +79,25 @@ function stepsToDrum(pt,notes,fold=false){const lane=new Map();notes.forEach((n,
  pt.steps.forEach((st,i)=>{if(!st.on||i>=pt.len||!st.passes)return;for(const n of st.notes){const l=find(n.pitch);if(l==null){missed.set(n.pitch,(missed.get(n.pitch)||0)+1);continue}
   if(hits.some(h=>h.lane===l&&h.step===i)){doubled++;continue}hits.push({lane:l,step:i,gate:n.gate,vel:n.vel,shift:n.shift,rand:n.rand,pass:st.passes})}});
  return {dp:{len:pt.len,laneLen:Array(DRUM_LANES).fill(pt.len),hits},missed,doubled}}
+/* bass from a recorded part (like the Orchid's bass voice, but written as steps): each step with notes is a chord; its root
+   is the note with a fifth and a third above it (the lowest note wins close calls, so inversions keep their written bass).
+   Root, Root + 5th, Octaves and Pulse play one bass line per chord change; Follow plays the root on every step the part plays. */
+const BASS_STYLES=[["root","Root"],["fifth","Root + 5th"],["oct","Octaves"],["pulse","Pulse"],["follow","Follow rhythm"]];
+function chordRoot(pitches){const ps=[...new Set(pitches)].sort((a,b)=>a-b),pcs=new Set(ps.map(p=>p%12)),has=(r,i)=>pcs.has((r+i)%12);let best=null,bs=-1;
+ ps.forEach((p,k)=>{const r=p%12,sc=(has(r,7)?3:0)+(has(r,3)||has(r,4)?2:0)+(has(r,10)||has(r,11)?1:0)+(k?0:1.5);if(sc>bs){bs=sc;best=r}});
+ const r=best,fifth=has(r,7)?7:has(r,6)&&has(r,3)?6:has(r,8)&&has(r,4)?8:7;return {root:r,fifth}}
+function makeBass(src,style,octave=2){const ev=[];
+ src.steps.forEach((st,i)=>{if(!st.on||i>=src.len||!st.passes||!st.notes.length)return;const c=chordRoot(st.notes.map(n=>n.pitch)),n0=st.notes[0];
+  ev.push({step:i,...c,vel:Math.max(...st.notes.map(n=>n.vel)),gate:n0.gate,shift:n0.shift,rand:n0.rand,passes:st.passes})});
+ if(!ev.length)throw new Error("That pattern has no notes to make a bass line from.");
+ const chords=style==="follow"?ev:ev.filter((e,k)=>!k||e.root!==ev[k-1].root||e.fifth!==ev[k-1].fifth);
+ const steps=Array.from({length:64},()=>({on:false,passes:15,notes:[]})),base=12*(octave+1);
+ const put=(i,pitch,len,e)=>{const st=steps[i];st.on=true;st.passes=e.passes;st.notes.push({pitch:clamp(pitch,0,127),gate:Graw(len),vel:e.vel,shift:e.shift,rand:e.rand??100})};
+ chords.forEach((e,k)=>{const span=(k+1<chords.length?chords[k+1].step:src.len)-e.step,r=base+e.root;
+  if(style==="follow")return put(e.step,r,gateSteps(e.gate),e);
+  if(style==="root")return put(e.step,r,span,e);
+  if(style==="fifth"){const h=span>=2?Math.floor(span/2):span;put(e.step,r,h,e);if(h<span)put(e.step+h,r+e.fifth,span-h,e);return}
+  for(let j=0;j<span;j++)put(e.step+j,style==="oct"&&j%2?r+12:r,.5,e)});
+ return {len:src.len,root:src.root,scale:src.scale,steps,notes:steps.reduce((a,s)=>a+s.notes.length,0)}}
 const noteName=p=>p==null?"?":nm(p);
 function parseNote(s){const m=String(s).trim().match(/^([A-Ga-g])(#|b)?(-?\d)$/);if(!m)return null;const v=12*(+m[3]+1)+NN.indexOf(m[1].toUpperCase())+(m[2]==="#"?1:m[2]==="b"?-1:0);return v>=0&&v<=127?v:null}

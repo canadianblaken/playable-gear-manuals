@@ -164,6 +164,24 @@ DEV.showProject(deep(fd),"test");STU.tab=0;STU.pat[0]=4;renderWork();$("#ppanel 
 ok("drums: Steps → drums fills the grid and says what was left out",$("#ppanel").querySelectorAll(".drum .p.on").length===10&&/10 hits on drum pattern 4/.test($("#pmsg").textContent)&&/C4×1|C5×1/.test($("#pmsg").textContent)&&(edGet(DEV.project,0x7B,0x56,[1])&0x40),$("#pmsg").textContent);
 const hit=()=>$('#ppanel .drum .p[data-l="0"][data-s="4"]');hit().click();hit().click();
 ok("drums: a hit is selected, then removed",edReadDrum(DEV.project,4).hits.length===9);
+/* make bass: chords C (root position), Am7, F/A (first inversion), G held over a 16-step pattern in C major */
+const fb=deep(fe),cp=edReadPattern(fb,0x7B,6);Object.assign(cp,{len:16,root:0,scale:1});cp.steps.forEach(s=>{s.notes=[];s.on=false});
+[[0,[60,64,67]],[2,[60,64,67]],[4,[57,60,64,67]],[8,[57,60,65]],[12,[55,59,62]]].forEach(([i,ns])=>{cp.steps[i].on=true;ns.forEach(p=>cp.steps[i].notes.push({pitch:p,gate:7,vel:90,shift:49,rand:100}))});
+edWritePattern(fb,0x7B,6,cp);const bsrc=edReadPattern(fb,0x7B,6),bline=st=>{const b=makeBass(bsrc,st);return b.steps.map((s,i)=>s.notes.map(n=>`${i+1}:${nm(n.pitch)}`)).flat().join(" ")};
+ok("bass: chord roots, inversions keep their bass",chordRoot([57,60,64,67]).root===9&&chordRoot([57,60,65]).root===5&&chordRoot([64,67,72]).root===0&&chordRoot([62,65,68]).fifth===6,[chordRoot([57,60,65]),chordRoot([64,67,72])]);
+ok("bass: Root, one note per chord change, held to the next",bline("root")==="1:C2 5:A2 9:F2 13:G2"&&gateSteps(makeBass(bsrc,"root").steps[0].notes[0].gate)===4,bline("root"));
+ok("bass: Root + 5th",bline("fifth")==="1:C2 3:G2 5:A2 7:E3 9:F2 11:C3 13:G2 15:D3",bline("fifth"));
+ok("bass: Octaves and Pulse fill every step",bline("oct").split(" ").length===16&&bline("oct").startsWith("1:C2 2:C3 3:C2")&&bline("pulse").split(" ").length===16,bline("oct"));
+ok("bass: Follow rhythm plays where the part plays, octave 1",makeBass(bsrc,"follow",1).steps.map((s,i)=>s.notes.length?i+1:0).filter(Boolean).join()==="1,3,5,9,13"&&makeBass(bsrc,"follow",1).steps[0].notes[0].pitch===24);
+ok("bass: empty source refused",(()=>{try{makeBass(edReadPattern(fb,0x7E,9),"root");return false}catch(e){return /no notes/.test(e.message)}})());
+/* the box: write a style, switch to another, undo back to the first */
+DEV.showProject(fb,"test");STU.tab=2;STU.pat[2]=3;renderWork();$("#ppanel [data-a=bass]").click();const bq=a=>$(`#ppanel .bass ${a}`);
+bq("[data-a=t]").value="0";bq("[data-a=t]").onchange();bq("[data-a=p]").value="6";bq("[data-a=p]").onchange();
+const tn=()=>edReadPattern(DEV.project,0x7D,3).steps.flatMap(s=>s.notes).length;const bt0=tn();bq("[data-st=root]").click();const bt1=tn();bq("[data-st=pulse]").click();const bt2=tn();
+ok("bass box: styles write and switch, box stays open, scale copied",bt1===4&&bt2===16&&!!$("#ppanel .bass")&&$("#ppanel .bass [data-st=pulse]").getAttribute("aria-pressed")==="true"&&edReadPattern(DEV.project,0x7D,3).scale===1&&/16 bass notes from track 1 pattern 6/.test($("#pmsg").textContent),[bt0,bt1,bt2,$("#pmsg").textContent]);
+undo();ok("bass box: undo goes back one style",tn()===4);
+bq("[data-a=o]").value="3";bq("[data-a=o]").onchange();ok("bass box: octave change rewrites",edReadPattern(DEV.project,0x7D,3).steps[0].notes[0]?.pitch===48);
+bq("[data-a=x]").click();ok("bass box: closes",!$("#ppanel .bass"));
 /* MIDI files: a generated .mid with an off-grid note, a long note, a part longer than a pattern and a 17-note chord */
 const T=MF_T16,mid=mfWrite({tempo:100,tracks:[
  {name:"Lead",ch:0,notes:[{pitch:60,vel:90,on:0,off:T/2},{pitch:62,vel:80,on:2*T+T/4,off:2*T+T/4+T*1.5},{pitch:64,vel:70,on:4*T,off:8*T}]},
