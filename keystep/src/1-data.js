@@ -144,8 +144,20 @@ const NEW_CHAPTERS=[
  ["Firmware","Root chords: Seq + Mute","fwRootChords",["t1seq","t1mute","s0","s15"]],
  ["Firmware","Key lights and recording with the pads","fwLightsRec",["rec","play","s0"]],
  ["Firmware","One pad mode at a time; what stays stock","fwRules",["t0seq","t0alt","t1mute"]],
- ["Web app","Projects and Device settings: like MIDI Control Center","deviceTools",[]],
+ ["Web app","Projects: recall, edit and store, like MIDI Control Center","deviceTools",[]],
+ ["Web app","Track editors: piano roll, drum grid, copy and paste","waTracks",[]],
+ ["Web app","Steps → drums: a melody track onto the drum lanes","waDrums",[]],
+ ["Web app","Scenes, project settings and the control track","waScenes",[]],
+ ["Web app","MIDI files: import parts, export patterns","waMidi",[]],
+ ["Web app","Library, backup and restore","waBackup",[]],
+ ["Web app","Set list: names, chords and keys for many songs","waSetlist",[]],
+ ["Web app","Device settings, including the ones MCC hides","waSettings",[]],
+ ["Web app","Firmware: flashing the patched builds","waFirmware",[]],
+ ["Web app","Synth CC: your synth's parameters on the five knobs","waCC",["enc0","enc4"]],
+ ["Web app","Panel view: zoom to the part in use","waView",[]],
 ];
+/* where Open it goes for the web-app entries: [mode, project tab or tool] */
+const NEW_OPEN={deviceTools:["proj"],waTracks:["proj",1],waDrums:["proj",0],waScenes:["proj",4],waMidi:["proj","midifile"],waBackup:["proj","backup"],waSetlist:["proj","setlist"],waSettings:["set"],waFirmware:["set"],waCC:["cc"]};
 
 /* ---------- guided tours: each step waits for an emitted event (string or RegExp) ---------- */
 const TOURS=[
