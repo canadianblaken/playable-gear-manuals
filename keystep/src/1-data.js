@@ -135,7 +135,7 @@ const CHAPTERS=[
  ["6.5","Arranging: chains, scenes, wait to load, step skip","arranging"],
  ["8","Control mode","controlMode"],
  ["9.1","The Utility menu","utility"],
- ["Device","Device tools: talk to a real KeyStep Pro","deviceTools"],
+ ["Device","Projects and Device settings: talk to a real KeyStep Pro","deviceTools"],
 ];
 
 /* ---------- guided tours: each step waits for an emitted event (string or RegExp) ---------- */
@@ -217,11 +217,5 @@ const TOURS=[
   {s:"Select Track 2. Hold Shift and press the Track 2 button: Track Settings.",t:"t1trk",ev:"menu:Track Settings"},
   {s:"Turn the selection encoder to “Fixed Velocity” and push it.",t:"sel",ev:"menu:item:Fixed Velocity"},
   {s:"Turn to ON and push. New notes on Track 2 now use the Velocity encoder value.",t:"sel",ev:"global:156"},
-  {s:"Open the Device tools tab: this setting is global ID 156, which MCC does not show. Read it from the simulated device.",t:null,ev:"dev:read"}]},
- {n:"Device tools: write a song setup to the simulated KeyStep",steps:[
-  {s:"Open the Device tools tab (top of the right column). The tools open under the keyboard.",t:null,ev:"tab:dev"},
-  {s:"In the top bar, choose “Simulated KeyStep Pro” next to KeyStep and press Connect.",t:null,ev:"dev:connect"},
-  {s:"In “Project names”, name project 2 and send it (the simulation runs the project-names firmware).",t:null,ev:"dev:name"},
-  {s:"In “Chord and key per track”, write a chord and scale to project 2, track 2.",t:null,ev:"dev:trackkey"},
-  {s:"Load project 2 on the panel (hold Project, press step 2) and play a key on Track 2.",t:"project",ev:"project:1"}]},
+  {s:"This setting is global ID 156, which MCC does not show. Open Device settings (top bar), connect to the simulated KeyStep and press Read from the KeyStep; it is under Not in MCC. Then come back to Manual.",t:null,ev:"dev:read"}]},
 ];

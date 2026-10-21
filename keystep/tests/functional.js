@@ -73,9 +73,9 @@ for(const it of await libList())await libDelete(it.id);
 ok("library imports a backup as one entry per project",(await libImport(deep(bk),"bk.json"))===3&&(await libList()).length===3);
 await libImport(deep(f1),"p1.json");let items=await libList();const e1=items.find(x=>x.source==="p1.json");
 await libRename(e1.id,"Renamed");ok("library rename and get",(await libGet(e1.id)).name==="Renamed"&&(await libGet(e1.id)).file.data.length===8951);
-await DEV.libDraw();const row=[...document.querySelectorAll("#featList table.t tr")].find(r=>r.textContent.includes("Renamed"));DEV.project=null;
-[...row.querySelectorAll("button")].find(b=>b.textContent==="Load").click();
-ok("library Load puts the project into the Projects tool",DEV.project&&DEV.project.data.length===8951&&/Library “Renamed”/.test($("#feat-projects").textContent));
+await drawLib();[...document.querySelectorAll("#libList li")].find(r=>r.textContent.includes("Renamed")).click();for(let i=0;i<20&&$("#libAct").hidden;i++)await W(20);DEV.project=null;
+$("#libAct [data-l=load]").click();for(let i=0;i<50&&!DEV.project;i++)await W(20);
+ok("library Load opens the project in the editor",DEV.project&&DEV.project.data.length===8951&&/Library “Renamed”/.test($("#workSrc").textContent)&&!$("#pjWork").hidden);
 ok("library refuses a damaged project",await libAdd({format:"x"},"bad","").then(()=>false,()=>true));
 for(const it of await libList())await libDelete(it.id);ok("library delete",(await libList()).length===0);
 /* gate table measured on hardware: stored value -> steps */
@@ -95,12 +95,31 @@ const sc=edReadScene(fe,2);Object.assign(sc,{valid:true,pats:[1,2,0,0,0],mute:5,
 ok("editor: scene patterns, mutes, chain read back",sc2.valid&&sc2.pats.join()==="1,2,0,0,0"&&sc2.mute===5&&sc2.chains[0].join()==="0,1,2"&&sc2.chainOn&&sc2.track===1,sc2);
 const pr5=await storeProject(L,11,fe);const f11=await readProject(L,11);const pe3=edReadPattern(f11,0x7C,3);
 ok("editor: edited project sent and read back",pr5.length===0&&pe3.steps[0].notes.map(n=>n.pitch).join()==="60,64,67"&&pe3.len===8&&edReadScene(f11,2).chains[0].join()==="0,1,2",pr5.slice(0,3));
-/* the editor UI: pick a step, add a note, keep */
-const edBox=$("#feat-editor");const eq=a=>edBox.querySelector(`[data-a=${a}]`);
-eq("t").value="3";eq("t").onchange();eq("grid").children[2].click();const addIn=eq("step").querySelector("input[type=text]");addIn.value="D4 F#4";[...eq("step").querySelectorAll("button")].find(b=>b.textContent==="Add").click();
-ok("editor UI: added notes show on the step",/D4 F#4/.test(eq("grid").children[2].textContent),eq("grid").children[2].textContent);
-eq("apply").click();const kept=edReadPattern(DEV.project,0x7D,1);
-ok("editor UI: Keep puts the edit into the Projects tool",kept.steps[2].notes.map(n=>noteName(n.pitch)).join(" ")==="D4 F#4"&&/Edited in the editor/.test($("#feat-projects").textContent)&&!$("#feat-projects [data-a=chg]").hidden);
+/* the editor: the roll on track 3, add two notes to step 3, select, change velocity, remove, undo */
+const cell=(s,n)=>$(`#ppanel .roll .c[data-s="${s}"][data-n="${n}"]`);
+STU.tab=2;STU.pat[2]=1;renderWork();cell(2,62).click();cell(2,66).click();
+const kept=edReadPattern(DEV.project,0x7D,1);
+ok("editor: clicking the roll adds notes to the step",kept.steps[2].notes.map(n=>noteName(n.pitch)).join(" ")==="D4 F#4"&&kept.steps[2].on&&STU.changed&&!$("#workChg").hidden,kept.steps[2].notes);
+const vel=$("#ppanel [data-k=vel]");vel.value="64";vel.onchange();
+ok("editor: the selected note's velocity is edited",edReadPattern(DEV.project,0x7D,1).steps[2].notes.find(n=>n.pitch===66).vel===64);
+cell(2,66).click();ok("editor: clicking a selected note removes it",edReadPattern(DEV.project,0x7D,1).steps[2].notes.map(n=>n.pitch).join()==="62");
+undo();ok("editor: undo brings it back",edReadPattern(DEV.project,0x7D,1).steps[2].notes.map(n=>n.pitch).join()==="62,66");
+redo();undo();
+STU.tab=1;renderWork();$("#ppanel [data-a=copy]").click();STU.pat[1]=7;renderPanel();$("#ppanel [data-a=paste]").click();
+ok("editor: copy and paste a pattern",JSON.stringify(edReadPattern(DEV.project,0x7C,7).steps.map(s=>s.notes))===JSON.stringify(edReadPattern(DEV.project,0x7C,1).steps.map(s=>s.notes)));
+const lenIn=$("#ppanel [data-k=len]");lenIn.value="12";lenIn.onchange();ok("editor: pattern length",edReadPattern(DEV.project,0x7C,7).len===12);
+$("#ppanel [data-m='1']").click();ok("editor: track 2 set to Arpeggiator",(edGet(DEV.project,0x7C,0x56,[1])&0x40)&&/Arpeggiator/.test($("#ppanel").textContent));
+STU.tab=4;renderWork();const used=$("#ppanel input[aria-label='Scene 3 in use']");used.checked=true;used.onchange();const chIn=$("#ppanel input[aria-label='Scene 3 chains']");chIn.value="1:1 2 2:3";chIn.onchange();
+const sc3=edReadScene(DEV.project,3);ok("scenes tab: scene used and chains",sc3.valid&&sc3.chains[0].join()==="0,1"&&sc3.chains[1].join()==="2"&&sc3.chainOn,sc3);
+STU.tab=5;renderWork();const tIn=$("#ppanel [data-a=tempo]");tIn.value="97.5";tIn.onchange();const chd=$("#ppanel input[aria-label='Track 2 chord']");chd.value="E3 G#3 B3";chd.onchange();
+$("#ppanel input[aria-label='Track 2 chord mode']").click();$("#ppanel [aria-label='User 2 notes'] [data-i='3']").click();
+ok("project tab: tempo, chord, chord mode, user scale",mfGetTempo(DEV.project)===97.5&&chordOf(DEV.project,0x7C).notes.join()==="52,56,59"&&(edGet(DEV.project,0x7C,0x56,[1])&0x10)&&!!(userMask(DEV.project,[0x68,0x69,0x6A])&8)!==!!(userMask(fe,[0x68,0x69,0x6A])&8),[mfGetTempo(DEV.project),chordOf(DEV.project,0x7C)]);
+STU.tab=6;renderWork();const cc1=$("#ppanel [data-cc='0']");cc1.value="74";cc1.onchange();$("#ppanel [data-on='2']").click();
+ok("control tab: knob CC and step on",edGet(DEV.project,0x7A,0x5A,[1])===74&&edGet(DEV.project,0x7A,0x5F,[1,3])===1&&edGet(DEV.project,0x7A,0x28,[1])===3);
+/* Store through the interface: two clicks, then verify on the device */
+STU.slot=13;drawSlots();drawWorkHead();$("#workName").value="UI Store";$("#storeBtn2").click();ok("store asks for a second click",/Click again/.test($("#storeBtn2").textContent)&&S.flash[12].name!=="UI Store");
+$("#storeBtn2").click();for(let i=0;i<600&&DEV.busy===false;i++)await W(5);for(let i=0;i<2000&&DEV.busy;i++)await W(20);
+const f13=await readProject(L,13);ok("store writes the edited project to slot 13 and clears Changed",!STU.changed&&$("#workChg").hidden&&edReadPattern(f13,0x7D,1).steps[2].notes.length===2&&mfGetTempo(f13)===97.5&&S.flash[12].name==="UI Store"&&/UI Store/.test($("#slotList").textContent),{ch:STU.changed});
 /* steps to drum hits: the beat entered on a KeyStep Pro on 2026-10-20 (lane 1 on 1 5 9 13, lane 3 on 5 13, lane 7 on 3 7 11 15) must come out as it stored it */
 const fd=deep(fe);const sq=edReadPattern(fd,0x7C,5);sq.len=16;[[36,[0,4,8,12]],[38,[4,12]],[42,[2,6,10,14]]].forEach(([p,st])=>st.forEach(i=>{sq.steps[i].on=true;sq.steps[i].notes.push({pitch:p,gate:7,vel:100,shift:49,rand:100})}));
 sq.steps[3].on=true;sq.steps[3].notes.push({pitch:72,gate:7,vel:90,shift:49,rand:100});edWritePattern(fd,0x7C,5,sq);
@@ -117,10 +136,11 @@ const blk=await blankProject(9);[2,3].forEach(p=>edSet(blk,0x7B,0x28,[p],2));edS
 ok("drums: Store writes empty drum slots as 127 in patterns marked as holding data (lane 60 fills them on the device), leaves default patterns",blFix===192*5&&edGet(blk,0x7B,0x75,[2,1,1])===127&&edGet(blk,0x7B,0x75,[3,1,1])===60,[blFix,edGet(blk,0x7B,0x75,[2,1,1]),edGet(blk,0x7B,0x75,[3,1,1])]);
 const pr7=await storeProject(L,10,fd);const f10=await readProject(L,10);
 ok("drums: converted project sent and read back",pr7.length===0&&edReadDrum(f10,1).hits.length===10&&edGet(f10,0x7B,0x75,[3,1,1])===127&&(edGet(f10,0x7B,0x56,[1])&0x40),[pr7.slice(0,3),edReadDrum(f10,1).hits.length,edGet(f10,0x7B,0x75,[3,1,1]),edGet(f10,0x7B,0x56,[1])]);
-/* the drum UI: convert the pattern on screen */
-DEV.showProject(deep(fd),"test");eq("t").value="2";eq("pat").value="5";eq("t").onchange();eq("dto").value="4";eq("dconv").click();
-ok("drums UI: Turn into drums fills the grid and says what was left out",eq("dgrid").querySelectorAll("td.hit").length===10&&/10 hits on drum pattern 4/.test(eq("msg").textContent)&&/C4×1|C5×1/.test(eq("msg").textContent),eq("msg").textContent);
-eq("apply").click();ok("drums UI: Keep puts the drum pattern in the working project",edReadDrum(DEV.project,4).hits.length===10&&(edGet(DEV.project,0x7B,0x56,[1])&0x40));
+/* the drum screen: Steps -> drums into the pattern on screen, then click a hit off */
+DEV.showProject(deep(fd),"test");STU.tab=0;STU.pat[0]=4;renderWork();$("#ppanel [data-a=s2d]").click();const s2=a=>$(`#ppanel .s2d [data-a=${a}]`);s2("t").value="2";s2("p").value="5";s2("go").click();
+ok("drums: Steps → drums fills the grid and says what was left out",$("#ppanel").querySelectorAll(".drum .p.on").length===10&&/10 hits on drum pattern 4/.test($("#pmsg").textContent)&&/C4×1|C5×1/.test($("#pmsg").textContent)&&(edGet(DEV.project,0x7B,0x56,[1])&0x40),$("#pmsg").textContent);
+const hit=()=>$('#ppanel .drum .p[data-l="0"][data-s="4"]');hit().click();hit().click();
+ok("drums: a hit is selected, then removed",edReadDrum(DEV.project,4).hits.length===9);
 /* MIDI files: a generated .mid with an off-grid note, a long note, a part longer than a pattern and a 17-note chord */
 const T=MF_T16,mid=mfWrite({tempo:100,tracks:[
  {name:"Lead",ch:0,notes:[{pitch:60,vel:90,on:0,off:T/2},{pitch:62,vel:80,on:2*T+T/4,off:2*T+T/4+T*1.5},{pitch:64,vel:70,on:4*T,off:8*T}]},
@@ -135,6 +155,7 @@ ok("plan without spilling keeps 64 steps and reports the rest",(()=>{const pl=mf
 ok("over-dense step is reported",mfPlan(mfPlace(mparts[2],mfx),1,1).over.some(o=>/17 notes/.test(o)));
 /* through the interface: warning for the long part, choose to add to other patterns, confirm leaving extras out */
 reset();saveProject();DEV.showProject(await readProject(L,1),"test");
+STU.tab=1;renderWork();$("#ppanel [data-a=mid]").click();
 const mfBox=$("#feat-midifile"),mq=a=>mfBox.querySelector(`[data-a=${a}]`);
 await mq("f").onchange({target:{files:[new File([mid],"test.mid")]}});
 const sels=mq("parts").querySelectorAll("tbody select");ok("parts listed with track choices",sels.length===6&&sels[0].value==="1"&&sels[2].value==="2"&&sels[4].value==="3");
@@ -143,7 +164,7 @@ mq("imp").click();ok("too-long part asks: only 64 steps fit, add the rest to oth
 ok("then the 17-note chord asks before leaving notes out",/Too many notes/.test(mq("warn").textContent),mq("warn").textContent);
 [...mq("warn").querySelectorAll("button")].find(b=>/leaving extras out/.test(b.textContent)).click();
 const ip=DEV.project,b1=edReadPattern(ip,0x7C,1),b2=edReadPattern(ip,0x7C,2),pad=edReadPattern(ip,0x7D,1),s1x=edReadScene(ip,1);
-ok("MIDI tool is a tool under the keyboard, help in the right column",$("#featList").contains(mfBox)&&(featJump("midifile"),/MIDI import/.test($("#toolHelp").textContent))&&!mfBox.hidden);
+ok("MIDI tool opens in a dialog from the track toolbar",!$("#toolDlg").hidden&&!mfBox.hidden&&/MIDI import/.test($("#toolDlgT").textContent)&&$("#toolHost").contains(mfBox));
 ok("imported: bass over patterns 1 (64 steps) and 2 (48), chained in scene 1",b1.len===64&&b2.len===48&&b1.steps[0].notes[0].pitch===36&&b2.steps[0].notes[0].pitch===40&&s1x.chains[1].join()==="0,1"&&s1x.valid,{l1:b1.len,l2:b2.len,ch:s1x.chains[1]});
 ok("imported: chord trimmed to 16, lead in track 1, tempo 100",pad.steps[0].notes.length===16&&edReadPattern(ip,0x7B,1).steps[2].notes[0].shift===74&&mfGetTempo(ip)===100&&/1 note\(s\) over the limits left out/.test(mq("msg").textContent),mq("msg").textContent);
 /* several files: verse and chorus parts on the same tracks, one after another, chained in scene 2 */
@@ -170,8 +191,13 @@ const bp=await blankProject(3);const bpat=edReadPattern(bp,0x7B,1),bsc=edReadSce
 ok("empty project: valid file, fresh patterns and scenes, no chords, 120 BPM",bp.project===3&&bp.data.length===8951&&!bpat.valid&&bpat.len===16&&bpat.steps.every(s=>s.passes===15&&!s.notes.length)&&!bsc.valid&&mfGetTempo(bp)===120&&TRACK_ITEMS.every(it=>edGet(bp,it,0x57,[1])===0x7F&&!(edGet(bp,it,0x56,[1])&0x10)),{len:bpat.len,valid:bpat.valid,tempo:mfGetTempo(bp)});
 DEV.project=null;DEV.midiLoad();ok("MIDI tool offers an empty project when none is loaded",!$("#feat-midifile").querySelector("[data-a=none]").hidden&&!!$("#feat-midifile").querySelector("[data-a=blank]"));
 $("#feat-midifile").querySelector("[data-a=blank]").click();for(let i=0;i<50&&!DEV.project;i++)await W(20);
-ok("the button starts a new empty project in the Projects tool",DEV.project&&DEV.project.data.length===8951&&/New empty project/.test($("#feat-projects").textContent));
+ok("the button starts a new empty project in the editor",DEV.project&&DEV.project.data.length===8951&&/New empty project/.test($("#workSrc").textContent));closeTool();
+/* Device settings: grouped like MCC, a change is written and read back */
+selectTab("set");const bsel=[...document.querySelectorAll("#setWrap select")].find(x=>/Brightness/.test(x.getAttribute("aria-label")));bsel.value="1";await bsel.onchange({target:bsel});
+ok("device settings: a change is written and read back",S.globals[152]===1&&/Brightness set/.test($("#setWrap [data-a=msg]").textContent)&&document.querySelectorAll("#setWrap .ggrid > .fld").length===11,$("#setWrap [data-a=msg]").textContent);
+ok("firmware card shows the running version",/Running: 2\.5\.20/.test($("#fwCard").textContent));
+selectTab("proj");ok("keys on the computer keyboard do not play the panel outside Manual",(()=>{const b=S.held?S.held.size:0;dispatchEvent(new KeyboardEvent("keydown",{key:"a"}));dispatchEvent(new KeyboardEvent("keyup",{key:"a"}));return STU.mode==="proj"&&!HELD.has("k12")})());
 const into=JSON.parse(JSON.stringify(DEV.project));mfApply(into,0x7C,mfPlan(mfPlace(mparts[1],mfx),1,16),{chainScene:1});const pr6=await storeProject(L,12,into);
 ok("MIDI import into the empty project sends and reads back",pr6.length===0&&edReadPattern(await readProject(L,12),0x7C,2).len===48,pr6.slice(0,3));
 ok("file check rejects a damaged file",(()=>{const b=deep(f1);b.data[5][3]=[200];try{checkProjectFile(b);return false}catch(e){return true}})());
-selectTab("man");return R;
+selectTab("man");try{localStorage.setItem("ksp.mode","proj")}catch(e){}return R;

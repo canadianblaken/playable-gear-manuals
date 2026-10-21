@@ -350,12 +350,12 @@ const FEATURES=[
      devLog(`restore finished in ${((performance.now()-t0)/60000).toFixed(1)} min${bad?`, ${bad} with problems`:""}`,bad?"bad":"ok");if(!bad)emit("dev:restore")})}}},
 ];
 
-/* ---------- the tab ---------- */
+/* ---------- connection and activity log ---------- */
 const DEV={link:null,gvals:{},busy:false,stop:false,ports:null};
 function devLog(s,cls=""){const box=$("#devLog");if(!box)return;const d=document.createElement("div");d.className=cls;d.textContent=s;box.appendChild(d);while(box.childNodes.length>400)box.firstChild.remove();box.scrollTop=box.scrollHeight}
-async function busy(fn){if(!DEV.link){devLog("Connect first.","bad");return}if(DEV.busy)return;DEV.busy=true;DEV.stop=false;$("#devStopBtn").hidden=false;document.querySelectorAll("#paneDev button.sm").forEach(b=>b.disabled=true);
- try{await fn()}catch(e){devLog("Error: "+e.message,"bad")}finally{DEV.busy=false;$("#devStopBtn").hidden=true;document.querySelectorAll("#paneDev button.sm").forEach(b=>b.disabled=false)}}
-/* the connection controls live in the top bar, so they work before Device tools is opened */
+async function busy(fn){if(!DEV.link){devLog("Connect first.","bad");return}if(DEV.busy)return;DEV.busy=true;DEV.stop=false;$("#devStopBtn").hidden=false;document.querySelectorAll(".devArea button.sm,.devArea [data-dev]").forEach(b=>b.disabled=true);
+ try{await fn()}catch(e){devLog("Error: "+e.message,"bad")}finally{DEV.busy=false;$("#devStopBtn").hidden=true;document.querySelectorAll(".devArea button.sm,.devArea [data-dev]").forEach(b=>b.disabled=false)}}
+/* the connection controls live in the top bar, so they work in every mode */
 function devBindBar(){$("#devScanBtn").onclick=devScan;$("#simNames").onchange=e=>{SIMDEV.namesFw=e.target.checked};
  const pill=$("#connPill"),pop=$("#connPop"),open=o=>{pop.hidden=!o;pill.setAttribute("aria-expanded",o)};pill.onclick=()=>open(pop.hidden);
  document.addEventListener("pointerdown",e=>{if(!pop.hidden&&!pop.contains(e.target)&&!pill.contains(e.target))open(false)});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!pop.hidden){open(false);pill.focus()}});
@@ -365,9 +365,9 @@ function devStatus(text,cls){const st=$("#devState");st.className="dot "+(cls||"
 async function devConnect(){const sel=$("#devPort").value;if(DEV.link&&DEV.link.close)DEV.link.close();DEV.link=null;DEV.gvals={};
  if(sel==="sim"){DEV.link=new SimLink();if($("#simNames"))SIMDEV.namesFw=$("#simNames").checked}
  else{const [oi,ii]=sel.split("|");const out=[...DEV.ports.outputs.values()].find(o=>o.id===oi),inp=[...DEV.ports.inputs.values()].find(i=>i.id===ii);if(!out||!inp){devLog("Port not found.","bad");return}DEV.link=new WebMidiLink(out,inp)}
- const id=await DEV.link.identity();if(id){const v=id.slice(12,16);devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");devStatus(DEV.link.sim?"simulated KeyStep Pro":`KeyStep Pro ${v[3]}.${v[2]}.${v[1]}`,DEV.link.sim?"sim":"real");$("#connPop").hidden=true;$("#connPill").setAttribute("aria-expanded",false);
+ const id=await DEV.link.identity();if(id){const v=id.slice(12,16);DEV.fw=`${v[3]}.${v[2]}.${v[1]}`;devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");devStatus(DEV.link.sim?"simulated KeyStep Pro":`KeyStep Pro ${v[3]}.${v[2]}.${v[1]}`,DEV.link.sim?"sim":"real");$("#connPop").hidden=true;$("#connPill").setAttribute("aria-expanded",false);
   await busy(async()=>{devLog("Reading the global settings…");let n=0;await quietly(DEV.link,async()=>{for(const g of GLOBALS){DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}});devLog(`read ${n} global settings`,"ok")});
-  if(DEV.globalsDraw)DEV.globalsDraw();emit("dev:connect")}
+  if(DEV.globalsDraw)DEV.globalsDraw();fwDraw();emit("dev:connect")}
  else{devLog("No identity reply. Check the ports and that SysEx permission was granted.","bad");devStatus("no reply","bad");DEV.link=null}}
 async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">Simulated KeyStep Pro</option>';
  if(!navigator.requestMIDIAccess){devLog("This browser has no Web MIDI (use Chrome or Edge; Firefox needs the site permission add-on).","bad");return}
@@ -375,33 +375,9 @@ async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">
  const outs=[...DEV.ports.outputs.values()],ins=[...DEV.ports.inputs.values()];
  for(const o of outs){const i=ins.find(x=>x.name===o.name)||ins.find(x=>/keystep/i.test(x.name))||ins[0];if(!i)continue;const opt=new Option(o.name===i.name?o.name:`${o.name} ⇄ ${i.name}`,o.id+"|"+i.id);s.add(opt);if(/keystep/i.test(o.name))s.value=opt.value}
  devLog(`${outs.length} MIDI output(s) found`)}
-/* Device tools open under the keyboard (#devWide): the working-project bar, then one tool at a time picked from two groups.
-   The right column explains the selected tool, with the verification notes folded away, and holds the activity log. */
-const FEATURE_GROUPS=[["This project",["midifile","editor"]],["Whole device",["library","backup","setlist","trackkey","names","globals"]]],FEATURE_KEY=new Set(["midifile"]);
-const FEATURE_ORDER=["projects",...FEATURE_GROUPS.flatMap(g=>g[1])];
-const FEATURE_SHORT={projects:"Projects",midifile:"MIDI import / export",editor:"Step editor",library:"Library",backup:"Backup all 16",setlist:"Set list",trackkey:"Chord & key",names:"Names",globals:"Global settings"};
-const FEATURE_LINE={midifile:"Turn .mid files into patterns of the working project, or export its patterns as .mid files.",editor:"Edit the steps, notes, length, root, scale and scenes of the working project.",
- library:"Keep projects in this browser and load them back as the working project.",backup:"Save all 16 projects and the settings in one file, and restore the ones you pick.",
- setlist:"Write song names, chords and keys onto several projects in one go.",trackkey:"Set one track's chord shape, root and scale on a project.",names:"Give a project slot a name (needs the project-names firmware).",
- globals:"Read and change every Utility setting, including the ones MCC hides.",projects:"The project the tools work on: recall it, open or save a file, send it."};
-function featHelp(id){const f=FEATURES.find(x=>x.id===id),h=$("#toolHelp");if(!f||!h)return;h.innerHTML=`<h2></h2><p></p><details><summary>Details and limits</summary><p class="pg"></p><div class="meta"><b>Verified</b> </div></details>`;
- h.querySelector("h2").textContent=FEATURE_SHORT[id];h.querySelector("p").textContent=FEATURE_LINE[id]||"";h.querySelector("details .pg").innerHTML=f.about;
- const m=h.querySelector(".meta");m.append(f.verified);if(f.needs){const n=document.createElement("span");n.className="need";n.textContent=" Needs "+f.needs;m.append(n)}}
-function featShow(id){DEV.tool=id;try{localStorage.setItem("ksp.tool",id)}catch(e){}
- document.querySelectorAll("#featList > .feat").forEach(b=>b.hidden=b.id!=="feat-"+id);document.querySelectorAll(".featNav button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.id===id));featHelp(id)}
-function featJump(id){const box=$("#feat-"+id);if(!box)return;DEV.lastFeat=id;viewFollow(FEATURE_VIEW[id]||"whole");if(id!=="projects")featShow(id);else featHelp(id);
- /* scroll once the panel has finished zooming, so its new height is known */
- setTimeout(()=>{const c=$("#devCol"),pw=$("#panelWrap"),t=$("#paneDev");if(c.contains(t)&&c.scrollTo)c.scrollTo({top:Math.max(0,t.offsetTop-c.offsetTop-8-(pw?pw.offsetHeight:0)),behavior:"smooth"});else t.scrollIntoView({behavior:"smooth"})},320)}
-function featNav(){const nav=document.createElement("div");nav.className="featNav";nav.setAttribute("role","navigation");nav.setAttribute("aria-label","Device tools");
- for(const [g,ids] of FEATURE_GROUPS){const grp=document.createElement("div");grp.className="fgrp";const l=document.createElement("span");l.className="lbl";l.textContent=g;grp.appendChild(l);
-  for(const id of ids){const b=document.createElement("button");b.type="button";b.dataset.id=id;b.textContent=FEATURE_SHORT[id];if(FEATURE_KEY.has(id))b.className="hi";b.onclick=()=>featJump(id);grp.appendChild(b)}nav.appendChild(grp)}return nav}
-function renderDevice(){const pane=$("#paneDev");if(pane.dataset.built)return;pane.dataset.built=1;
- FEATURES.sort((a,b)=>FEATURE_ORDER.indexOf(a.id)-FEATURE_ORDER.indexOf(b.id));$("#devWide").appendChild(pane);
- pane.innerHTML=`<div class="card projBar" data-a="bar"></div><div class="card"><div id="toolTop"></div><div data-a="nav"></div><div id="featList"></div></div>`;
- pane.querySelector("[data-a=nav]").appendChild(featNav());
- const note=$("#paneDevNote");note.innerHTML=`<div id="toolHelp"></div><h3>Activity</h3><div id="devLog"></div><p class="pg">Unofficial: worked out from firmware 2.5.20 and tested on hardware. Back up your projects before writing.</p>`;
- const list=$("#featList"),bar=pane.querySelector("[data-a=bar]");
- for(const f of FEATURES){const box=document.createElement("div");box.className="feat"+(FEATURE_KEY.has(f.id)?" key":"");box.id="feat-"+f.id;
-  if(f.id==="projects"){bar.appendChild(box);f.render(box);continue}
-  box.innerHTML=`<h3></h3><p class="pg"></p><div class="body"></div>`;box.querySelector("h3").textContent=FEATURE_SHORT[f.id];box.querySelector(".pg").textContent=FEATURE_LINE[f.id]||"";list.appendChild(box);f.render(box.querySelector(".body"))}
- let t=null;try{t=localStorage.getItem("ksp.tool")}catch(e){}featShow(FEATURES.some(f=>f.id===t&&t!=="projects")?t:"midifile")}
+/* tool names and one-line descriptions, shown in the tool dialog (8-studio.js) */
+const FEATURE_SHORT={projects:"Projects",midifile:"MIDI import / export",library:"Library",backup:"Back up or restore",setlist:"Set list",trackkey:"Chord & key",names:"Names",globals:"Global settings"};
+const FEATURE_LINE={midifile:"Turn .mid files into patterns of the open project, or export its patterns as .mid files.",
+ library:"Keep projects in this browser and load them back.",backup:"Save all 16 projects and the settings in one file, and restore the ones you pick.",
+ setlist:"Write song names, chords and keys onto several slots in one go.",trackkey:"Set one track's chord shape, root and scale on a slot.",names:"Give a slot a name (needs the project-names firmware).",
+ globals:"Read and change every Utility setting, including the ones MCC hides.",projects:"Recall a slot, open or save a file, store it."};

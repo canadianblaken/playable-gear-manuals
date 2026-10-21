@@ -348,7 +348,7 @@ function bindInput(){
  /* computer keyboard */
  const KMAP="awsedftgyhujk";
  const kmDown=new Set();
- addEventListener("keydown",e=>{if(e.target.closest("input,select,textarea"))return;const k=e.key.toLowerCase();
+ addEventListener("keydown",e=>{if(STU.mode!=="man"||e.target.closest("input,select,textarea"))return;const k=e.key.toLowerCase();
   if(e.key==="Shift"){if(!held("shift"))down("shift");return}
   if(e.repeat)return;
   if(k===" "){e.preventDefault();down("play");up("play");return}if(k==="."){down("stop");up("stop");return}if(k==="r"){down("rec");up("rec");return}
@@ -414,7 +414,7 @@ const SHOW={
  arranging(){return "<p><b>Chain</b>: hold Chain and press steps in order (up to 16). <b>Scene</b>: Save + Scene + step stores the pattern, chain and mute of all tracks; Scene + step loads it. <b>Step skip</b>: hold a step and press page buttons to skip it on those pages/bars.</p>"},
  controlMode(){S.cur=3;return "<p>Press <b>Control</b>: the selected track becomes the Live Track and its button blinks. The encoders send their CC (Utility &gt; Controller &gt; Knob 1–5). In Step Edit, select a step and turn an encoder to store a value; record while playing to capture moves. Erase + turn clears an encoder's automation.</p>"},
  utility(){openMenu(MENU());return "<p>Shift + Project opens the Utility menu: turn the selection encoder to move, push to enter or edit, Exit to go back. Settings are global and saved when you leave.</p><div class='fw'><b>Firmware:</b> every Utility setting is one of 158 global IDs, readable and writable over SysEx. Misc also has Brightness (ID 152) and Transpose Latch (ID 153, stored inverted).</div>"},
- deviceTools(){selectTab("dev");return "<p>The Device tools tab sends SysEx to a real KeyStep Pro through Web MIDI, or to this simulation. It only contains features already tested on hardware.</p>"},
+ deviceTools(){return "<p>The <b>Projects</b> and <b>Device settings</b> modes (top bar) talk to a real KeyStep Pro through Web MIDI, or to this simulation, like MIDI Control Center: recall a project, edit its tracks, scenes and control track, store it back, back up all 16, and change the global settings. Connect with the KeyStep pill at the top.</p>"},
 };
 function renderChapters(){const ul=$("#chapList");ul.innerHTML="";CHAPTERS.forEach(([sec,t,fn])=>{const li=document.createElement("li");li.innerHTML=`<i>${sec}</i><span>${t}</span><button>Show</button>`;
  li.querySelector("button").onclick=()=>{const html=SHOW[fn]();DEV.lastChap=fn;if(fn!=="deviceTools")viewFollow(CHAP_VIEW[fn]||"whole");$("#info").innerHTML=`<div class="crumb">Manual <b>${sec}</b></div><h2>${t}</h2>${html}`;dirty();$("#info").scrollIntoView({block:"nearest"})};ul.appendChild(li)})}
@@ -437,8 +437,8 @@ function loadDemo(name){const pr=DEMOS[name]();stop();S.ram[S.proj]=pr;S.flash[S
  S.cur=1;msg(name);dirty()}
 
 /* ---------- tabs, buttons, boot ---------- */
-function selectTab(w){$("#tabMan").setAttribute("aria-selected",w==="man");$("#tabDev").setAttribute("aria-selected",w==="dev");$("#tabCC").setAttribute("aria-selected",w==="cc");$("#paneMan").hidden=w!=="man";$("#paneDev").hidden=w!=="dev";$("#paneCC").hidden=w!=="cc";if(w==="dev"){renderDevice();emit("tab:dev")}$("#devWide").hidden=w!=="dev";$("#paneDevNote").hidden=w!=="dev";$("#paneDev").hidden=w!=="dev";
- if(w==="dev"){const c=$("#devCol"),t=$("#devWide");if(c.scrollTo)c.scrollTo({top:Math.max(0,t.offsetTop-c.offsetTop-8-$("#panelWrap").offsetHeight),behavior:"smooth"})}if(w==="cc"){renderCCMap();emit("tab:cc")}viewFollow(w==="cc"?"knobs":w==="dev"?(DEV.lastFeat&&FEATURE_VIEW[DEV.lastFeat])||"tracks":tour&&TOURS[tour.i].steps[tour.k]?viewForControl(TOURS[tour.i].steps[tour.k].t):(DEV.lastChap&&CHAP_VIEW[DEV.lastChap])||"whole");try{localStorage.setItem("ksp.tab",w)}catch(e){}}
+/* the old tab names still work: dev = Projects */
+function selectTab(w){selectMode(w==="dev"?"proj":w);if(w==="man")viewFollow(tour&&TOURS[tour.i].steps[tour.k]?viewForControl(TOURS[tour.i].steps[tour.k].t):(DEV.lastChap&&CHAP_VIEW[DEV.lastChap])||"whole")}
 /* ---------- panel view: zoom the drawing to the part of the KeyStep in use ----------
    Each view is the box around a group of controls, widened to a short strip so the tools below get the room.
    Auto follows the tab, the Device tool in use and the tour step; picking a view by hand pins it. */
@@ -482,10 +482,10 @@ function boot(){baseState();drawPanel();bindInput();renderChapters();initPanelVi
  const ts=$("#tourSel");TOURS.forEach((t,i)=>ts.add(new Option(t.n,i)));ts.onchange=()=>{if(ts.value!==""){startTour(+ts.value);selectTab("man")}ts.value=""};
  $("#soundBtn").onclick=e=>{SOUND=!SOUND;e.target.setAttribute("aria-pressed",SOUND);if(!SOUND)allOff()};
  $("#midiBtn").onclick=toggleMidi;$("#resetBtn").onclick=()=>{stop();const keep=SIMDEV&&SIMDEV.namesFw;baseState();if(SIMDEV)SIMDEV.namesFw=keep;LATCH.forEach(id=>ctlEls[id]&&ctlEls[id].classList.remove("latched"));dirty();msg("Reset")};
- $("#tabMan").onclick=()=>selectTab("man");$("#tabDev").onclick=()=>selectTab("dev");$("#tabCC").onclick=()=>selectTab("cc");
+ document.querySelectorAll(".modes button").forEach(b=>b.onclick=()=>selectTab(b.dataset.mode));
  $("#info").innerHTML=`<h2>Start here</h2><p>Hover any control for a short description; click it for the details on this card. Load the <b>Quick tour</b> demo and press Play (or <kbd>Space</kbd>), or pick a guided tour.</p><p>Right-click (long-press on touch) <b>latches</b> a button as if you were holding it, so two-handed combos like Shift + key or Save + Project work with a mouse.</p>`;
  loadDemo("Quick tour");
- try{const t=localStorage.getItem("ksp.tab");if(t==="dev"||t==="cc")selectTab(t)}catch(e){}
+ let m0="proj";try{m0=localStorage.getItem("ksp.mode")||"proj"}catch(e){}selectTab(m0);
  const w=new Worker(URL.createObjectURL(new Blob(["setInterval(()=>postMessage(0),10)"],{type:"text/javascript"})));w.onmessage=advance;
  const loop=()=>{advance();if(S.msg&&performance.now()>S.msgT){S.msg=null;dirtyFlag=true}if(dirtyFlag||S.playing||NOTEFLASH.length||S.msg||ARP.some(a=>a.running)||S.trans.some(x=>x.on)||trk().chordOn||S.stepEdit||S.rec||S.patMode||S.control||P.some(p=>p.pend!=null)||S.undo||HELD.size){render();dirtyFlag=false}requestAnimationFrame(loop)};requestAnimationFrame(loop);
 }

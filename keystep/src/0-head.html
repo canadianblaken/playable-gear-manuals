@@ -8,6 +8,7 @@
 :root{
   --bg:#f4f3ef; --fg:#1d1d1f; --muted:#5b5b60; --card:#ffffff; --line:#d9d7d0; --accent:#2f6fd6; --accent-fg:#fff;
   --ok:#15803d; --warn:#b45309; --bad:#b91c1c; --blue:#2563eb;
+  --t1:#16a37a; --t2:#ea6a1f; --t3:#d9a600; --t4:#d6246e; --t5:#7c7c86;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -21,8 +22,17 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-header{padding:14px 16px 8px;max-width:1700px;margin:0 auto;width:100%}
-h1{font-size:20px;margin:0}
+h1{font-size:16px;margin:0;white-space:nowrap}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:8px 16px;border-bottom:1px solid var(--line);background:var(--card)}
+.top .ksp{margin-left:auto}
+.top details.about{flex-basis:100%;font-size:12px;color:var(--muted)}.top details.about summary{font-size:12px}
+@media (min-width:901px){.top details.about{flex-basis:auto;max-width:22em}.top details.about[open]{flex-basis:100%;max-width:none}}
+.modes{display:flex;gap:2px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:2px;flex-wrap:wrap}
+.modes button{font:inherit;font-size:13px;border:0;background:none;color:var(--fg);padding:5px 13px;border-radius:7px;cursor:pointer}
+.modes button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg)}
+.mode[hidden]{display:none!important}
+.top #connPill,.top #devStopBtn{font:inherit;font-size:13px;padding:5px 12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.top #devStopBtn{border-radius:8px;border-color:var(--warn);color:var(--warn)}.top .pop button,.top .pop select{font:inherit;font-size:13px;padding:5px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
 .sub{color:var(--muted);font-size:13px;margin:2px 0 0}
 .bar{width:100%;display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:1700px;margin:0 auto;padding:6px 16px}
 .bar button,.bar select{font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
@@ -44,6 +54,7 @@ main{max-width:1700px;margin:0 auto;padding:4px 16px 40px;display:grid;grid-temp
   main{padding-bottom:40vh}}
 /* wide screens: the device stays put, only the right column scrolls */
 @media (min-width:901px){html,body{height:100%;overflow:hidden}body{display:flex;flex-direction:column}
+  .mode{flex:1;min-height:0}#vManual{display:flex;flex-direction:column}
   main{flex:1;min-height:0;width:100%;grid-template-rows:100%;padding-bottom:12px}
   #devCol{overflow:auto;height:100%}#sideCol{overflow-y:auto;height:100%;padding-right:4px}}
 #panelWrap{position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:6px}
@@ -149,27 +160,133 @@ table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
 .tourTarget .face{stroke:#06b6d4!important;stroke-width:3!important;animation:pulse 1s infinite}
 @keyframes pulse{50%{stroke-opacity:.25}}
 @media (prefers-reduced-motion:reduce){.tourTarget .face{animation:none}}
+/* ---------- Projects mode: KeyStep slots and library | editor | help and activity (MCC's layout) ---------- */
+#vProj{display:grid;grid-template-columns:250px minmax(0,1fr) 290px}
+@media (min-width:901px){#vProj>*{overflow:auto;min-height:0}}
+@media (max-width:1180px){#vProj{grid-template-columns:230px minmax(0,1fr)}.pjHelp{grid-column:2;border-left:0;border-top:1px solid var(--line)}#vProj{grid-template-rows:minmax(0,1fr) auto}.pjSide{grid-row:1/3}.pjHelp{max-height:34vh}}
+@media (max-width:900px){#vProj{grid-template-columns:minmax(0,1fr);grid-template-rows:none}.pjSide,.pjHelp{grid-row:auto;grid-column:auto}.pjHelp{max-height:none}}
+.pjSide{background:var(--card);border-right:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:12px}
+.pjSide h2,.pjHelp h2,.setWrap h2.sec{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;display:flex;align-items:center;gap:6px}
+.pjSide h2 .sp{flex:1}.pjSide h2 .mini{text-transform:none;letter-spacing:0;font-weight:400}
+#vProj [hidden],#vSet [hidden],.dlg [hidden]{display:none!important}
+.mini,.pjSide .foot button,.xfer button,.btn,.acts button,.tbar button,.ppanel button.b,.dlg .dlgHead button{font:inherit;font-size:12.5px;padding:5px 10px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer;display:inline-block}
+.mini{font-size:11.5px;padding:2px 8px}
+button:disabled{opacity:.5;cursor:default}
+.store{border-color:var(--warn)!important;color:var(--warn)!important;font-weight:600}
+.pjList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.pjList li{display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:7px;cursor:pointer;font-size:13px}
+.pjList li:hover{background:var(--bg)}
+.pjList li[aria-selected="true"]{background:color-mix(in srgb,var(--accent) 20%,transparent);outline:1px solid var(--accent)}
+.pjList li .n{width:1.7em;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;flex:none}
+.pjList li .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pjList li .tag{font-size:10.5px;color:var(--ok);flex:none}
+.pjList li .sm{display:block;font-size:11px;color:var(--muted)}
+.xfer{display:grid;grid-template-columns:1fr 1fr;gap:6px}.xfer button{padding:7px 6px}
+.xprog{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}.xprog progress{flex:1}
+.search{width:100%;font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--fg);margin-bottom:6px}
+.libAct{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.pjSide .foot{margin-top:auto;display:flex;flex-direction:column;gap:6px}.pjSide .foot button{text-align:left}
+.pjMain{padding:12px 18px 30px;display:flex;flex-direction:column;gap:12px}
+.pjEmpty{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;max-width:640px}.pjEmpty h2{margin:0 0 6px;font-size:17px}
+.pjEmpty .row button,.pjEmpty .row .btn{font:inherit;font-size:13px;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.work{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.work .who{flex:1;min-width:200px}
+.work .lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.work .name{font:inherit;font-size:20px;font-weight:650;border:1px solid transparent;border-radius:6px;background:none;color:var(--fg);padding:0 4px;margin-left:-5px;width:100%;max-width:16em}
+.work .name:hover,.work .name:focus{border-color:var(--line);background:var(--card)}
+.work .chg{font-size:12px;color:var(--warn);font-weight:600}
+.work .acts{display:flex;gap:6px;flex-wrap:wrap}
+.ptabs{display:flex;gap:2px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ptabs button{font:inherit;font-size:13px;color:var(--fg);border:1px solid transparent;border-bottom:0;background:none;padding:7px 13px;border-radius:8px 8px 0 0;display:flex;align-items:center;gap:7px;margin-bottom:-1px;cursor:pointer}
+.ptabs button .sw{width:10px;height:10px;border-radius:3px}
+.ptabs button[aria-selected="true"]{background:var(--card);border-color:var(--line);font-weight:600}
+.ppanel{background:var(--card);border:1px solid var(--line);border-top:0;border-radius:0 0 10px 10px;padding:12px 14px;display:flex;flex-direction:column;gap:12px}
+.ppanel label{color:var(--muted);font-size:13px;display:inline-flex;gap:5px;align-items:center}
+.ppanel select,.ppanel input[type=number],.ppanel input[type=text],.setWrap select{font:inherit;font-size:13px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+.ppanel input[type=number]{width:4.6em}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{font:inherit;font-size:12.5px;color:var(--fg);border:0;background:var(--bg);padding:4px 11px;border-right:1px solid var(--line);cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.cap{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 4px}
+.pats{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px}
+@media (max-width:700px){.pats{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.pats button{font:inherit;font-size:11.5px;color:var(--fg);padding:4px 0;border:1px solid var(--line);border-radius:5px;background:var(--bg);cursor:pointer}
+.pats button.has{border-color:var(--tc);box-shadow:inset 0 -3px 0 var(--tc)}
+.pats button[aria-pressed="true"]{background:var(--tc);color:#111;border-color:var(--tc);font-weight:700}
+.tbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.tbar .sep{width:1px;align-self:stretch;background:var(--line);margin:0 3px}
+.pages{display:inline-flex;gap:3px}
+.pnote{font-size:12.5px;color:var(--muted);margin:0}.pnote.warn{color:var(--warn)}
+.roll{border:1px solid var(--line);border-radius:8px;overflow:auto;max-height:440px;user-select:none;-webkit-user-select:none}
+.roll .rg{display:grid;grid-template-columns:42px repeat(16,minmax(28px,1fr))}
+.roll .k{position:sticky;left:0;z-index:1;font-size:10px;color:var(--muted);padding:0 4px;display:flex;align-items:center;border-right:1px solid var(--line);height:18px;background:var(--card)}
+.roll .k.blk{background:color-mix(in srgb,var(--fg) 9%,var(--card))}
+.roll .c{display:block;appearance:none;-webkit-appearance:none;background:transparent;border:0;border-radius:0;height:18px;border-right:1px solid color-mix(in srgb,var(--line) 55%,transparent);border-bottom:1px solid color-mix(in srgb,var(--line) 35%,transparent);cursor:pointer;position:relative;padding:0}
+.roll .c.beat{border-right-color:var(--line)}.roll .c.blk{background:color-mix(in srgb,var(--fg) 4%,transparent)}.roll .c.out{opacity:.35}
+.roll .c.on::after{content:"";position:absolute;inset:2px 1px;border-radius:3px;background:var(--tc);opacity:var(--o,1)}
+.roll .c.sel{outline:2px solid var(--accent);outline-offset:-2px}
+.roll .hd{position:sticky;top:0;z-index:2;font-size:10px;text-align:center;color:var(--muted);padding:2px 0;border-bottom:1px solid var(--line);background:var(--card)}
+.roll .hd.k{z-index:3}.roll .hd.off{opacity:.55}
+.drum{display:grid;grid-template-columns:96px repeat(16,minmax(22px,1fr));gap:2px;user-select:none;-webkit-user-select:none}
+.drum .ln{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden}.drum .ln i{font-style:normal;font-size:10px;opacity:.75}
+.drum .hd{font-size:10px;text-align:center;color:var(--muted)}
+.drum .p{display:block;appearance:none;-webkit-appearance:none;height:22px;border-radius:4px;background:var(--bg);border:1px solid var(--line);cursor:pointer;padding:0}
+.drum .p.q{background:color-mix(in srgb,var(--fg) 7%,var(--bg))}.drum .p.out{opacity:.35}
+.drum .p.on{background:var(--tc);border-color:var(--tc);opacity:var(--o,1)}.drum .p.sel{outline:2px solid var(--accent);outline-offset:1px}
+.insp{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.fld{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--bg);font-size:13px}
+.fld>.l{font-size:11px;color:var(--muted);display:block}.fld>.v{font-size:15px;font-weight:600}
+.fld input[type=range]{width:100%}.fld select,.fld input{max-width:100%}
+.ppanel table.t td,.ppanel table.t th{vertical-align:middle}
+.chips{display:flex;gap:3px;flex-wrap:wrap}.chips span{min-width:20px;height:20px;padding:0 4px;border-radius:4px;display:grid;place-items:center;font-size:10.5px;color:#111;font-weight:700}
+.us{display:inline-flex;gap:2px}.us button{font:inherit;font-size:11px;width:2.6em;padding:4px 0;border:1px solid var(--line);border-radius:5px;background:var(--bg);color:var(--fg);cursor:pointer}.us button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.cgrid{display:grid;grid-template-columns:150px repeat(16,minmax(22px,1fr));gap:2px;align-items:end}
+.cgrid .ln{font-size:12px;color:var(--muted);align-self:center;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.cgrid .cb{height:46px;border:1px solid var(--line);border-radius:4px;background:var(--bg);position:relative;cursor:ns-resize;padding:0}
+.cgrid .cb i{position:absolute;left:1px;right:1px;bottom:1px;background:var(--t5);border-radius:2px}
+.cgrid .cb.off{opacity:.35}
+.cgrid .st{height:18px;font-size:10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--muted);cursor:pointer;padding:0}.cgrid .st.on{background:var(--t5);color:#fff}
+.ppanel a,.pjHelp a{color:var(--accent)}
+.pjHelp{background:var(--card);border-left:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:14px;font-size:13px}
+.pjHelp p{margin:0 0 6px}.pjHelp #devLog{max-height:none}
+/* device settings, synth CC */
+.setWrap,.ccWrap{max-width:1100px;margin:0 auto;padding:14px 16px 40px}
+@media (min-width:901px){#vSet,#vCC{overflow:auto}}
+.setWrap .card h2{display:flex;align-items:center;gap:8px}
+.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;align-items:start}
+.ggrid .fld{display:flex;flex-direction:column;gap:5px}.ggrid .fld .r{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:12.5px}.ggrid .fld .r span{color:var(--muted)}
+.ggrid .fld .r select{max-width:9.5em}.ggrid .fld .r.hid span::after{content:" *";color:var(--accent)}
+ol.steps{margin:6px 0;padding-left:20px}ol.steps li{margin:3px 0}
+/* tool dialog */
+.dlgBack{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow:auto}
+.dlgBack[hidden]{display:none}
+.dlg{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;width:min(920px,100%);box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.dlgHead{display:flex;align-items:center;gap:10px}.dlgHead h2{flex:1;margin:0;font-size:17px}
+.dlg .feat{border:0;padding:0;margin:6px 0}
 #tip{position:fixed;z-index:20;max-width:320px;padding:8px 10px;border-radius:8px;background:var(--card);color:var(--fg);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.18);font-size:12.5px;line-height:1.4;pointer-events:none}
 #tip b{display:block;font-size:13px;margin-bottom:2px}
 #tip .s{color:var(--muted);margin-top:4px}
 </style>
 </head>
 <body>
-<header>
-  <h1>KeyStep Pro interactive manual</h1>
-  <details class="sub"><summary>Unofficial and playable, firmware 2.5. Not affiliated with Arturia.</summary>A playable recreation of the Arturia KeyStep Pro, built from the 2.5.1 user manual, the MIDI Control Center device definition and a reverse-engineering study of firmware 2.5.20. All sounds are synthesized stand-ins. The Device tools tab talks to a real KeyStep Pro over Web MIDI, or to this simulation.</details>
+<header class="top">
+  <h1>KeyStep Pro</h1>
+  <div class="modes" role="tablist" aria-label="Mode"><button role="tab" id="modeProj" data-mode="proj" aria-selected="true">Projects</button><button role="tab" id="modeMan" data-mode="man" aria-selected="false">Manual</button><button role="tab" id="modeSet" data-mode="set" aria-selected="false">Device settings</button><button role="tab" id="modeCC" data-mode="cc" aria-selected="false">Synth CC</button></div>
+  <span class="ksp" role="group" aria-label="KeyStep Pro connection"><button id="connPill" aria-expanded="false" aria-controls="connPop"><span id="devState" class="dot off"></span><span id="devStateText" aria-live="polite">KeyStep: not connected</span></button><button id="devStopBtn" class="stop" title="Stop the transfer that is running" hidden>Stop transfer</button>
+   <div id="connPop" class="pop" hidden><div class="prow"><label>Port <select id="devPort" aria-label="KeyStep Pro MIDI port"><option value="sim">Simulated KeyStep Pro</option></select></label></div>
+    <div class="prow"><button id="devScanBtn" title="Ask the browser for MIDI ports (Chrome/Edge, with SysEx permission)">Find MIDI ports</button><button id="devConnBtn" class="pri">Connect</button></div>
+    <label class="pg"><input type="checkbox" id="simNames" checked> the simulation runs the project-names firmware</label>
+    <p class="pg">A real KeyStep needs Chrome or Edge on a computer, with SysEx permission. Safari, including on iPad, has no Web MIDI; the manual still works there.</p></div></span>
+  <details class="about"><summary>Unofficial and playable, firmware 2.5. Not affiliated with Arturia.</summary>A playable recreation of the Arturia KeyStep Pro, built from the 2.5.1 user manual, the MIDI Control Center device definition and a reverse-engineering study of firmware 2.5.20. All sounds are synthesized stand-ins. The Projects and Device settings modes talk to a real KeyStep Pro over Web MIDI, or to this simulation.</details>
 </header>
+<div id="vManual" class="mode" hidden>
 <div class="bar">
   <select id="exSel" aria-label="Load a demo project"><option value="">Load demo…</option></select>
   <select id="tourSel" aria-label="Guided tours"><option value="">Guided tours…</option></select>
   <button id="soundBtn" aria-pressed="true">Sound</button>
   <button id="midiBtn" aria-pressed="false" title="Mirror notes to MIDI gear and accept a MIDI keyboard (Web MIDI)">MIDI</button>
   <button id="resetBtn">Reset</button>
-  <span class="ksp" role="group" aria-label="KeyStep Pro connection"><button id="connPill" aria-expanded="false" aria-controls="connPop"><span id="devState" class="dot off"></span><span id="devStateText" aria-live="polite">KeyStep: not connected</span></button><button id="devStopBtn" class="stop" title="Stop the transfer that is running" hidden>Stop transfer</button>
-   <div id="connPop" class="pop" hidden><div class="prow"><label>Port <select id="devPort" aria-label="KeyStep Pro MIDI port"><option value="sim">Simulated KeyStep Pro</option></select></label></div>
-    <div class="prow"><button id="devScanBtn" title="Ask the browser for MIDI ports (Chrome/Edge, with SysEx permission)">Find MIDI ports</button><button id="devConnBtn" class="pri">Connect</button></div>
-    <label class="pg"><input type="checkbox" id="simNames" checked> the simulation runs the project-names firmware</label>
-    <p class="pg">A real KeyStep needs Chrome or Edge on a computer, with SysEx permission. Safari, including on iPad, has no Web MIDI; the manual still works there.</p></div></span>
   <span class="hint"><span class="touch">Tap = press · long-press = hold (latches) · drag an encoder up/down = turn · tap anything for help</span><span class="desk">Hover for help · right-click = hold a button (latch) · drag/wheel an encoder, click = touch · <kbd>Shift</kbd> = Shift · <kbd>Space</kbd> play · <kbd>.</kbd> stop · <kbd>R</kbd> rec · <kbd>A W S E D F T G Y H U J K</kbd> keys · <kbd>Z</kbd>/<kbd>X</kbd> octave</span></span>
 </div>
 <main>
@@ -179,10 +296,8 @@ table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
     <div id="panelViewport"><svg id="device" viewBox="30 140 1250 460" preserveAspectRatio="xMidYMid meet" role="application" aria-label="KeyStep Pro front panel"></svg></div>
     </div>
     <div class="screenRow"><canvas id="oledBig" width="512" height="128" aria-label="OLED display, enlarged"></canvas><div class="ledinfo" id="ledInfo"></div></div>
-    <div id="devWide" hidden></div>
   </div>
   <div id="sideCol">
-    <div class="tabs" role="tablist"><button role="tab" id="tabMan" aria-selected="true">Manual</button><button role="tab" id="tabDev" aria-selected="false">Device tools</button><button role="tab" id="tabCC" aria-selected="false">Synth CC</button></div>
     <div id="paneMan">
       <div class="card" id="tourBox" hidden></div>
       <section class="card" id="info" aria-live="polite"></section>
@@ -208,11 +323,53 @@ table.t th{color:var(--muted);font-weight:600;white-space:nowrap}
         <p class="pg">Sources: KeyStep Pro user manual 2.5.1 (14 March 2024), MIDI Control Center device file, firmware 2.5.20 reverse-engineering notes. Section numbers refer to the manual.</p>
       </div>
     </div>
-    <div id="paneDev" hidden></div>
-    <div id="paneDevNote" class="card" hidden></div>
-    <div id="paneCC" hidden></div>
   </div>
 </main>
+</div>
+<div id="vProj" class="mode devArea">
+  <aside class="pjSide" aria-label="Projects on the KeyStep and in this browser">
+    <section>
+      <h2>On the KeyStep</h2>
+      <ul class="pjList" id="slotList" role="listbox" aria-label="Project slots on the KeyStep"></ul>
+    </section>
+    <div class="xfer"><button id="recallBtn" data-dev title="Read the selected slot from the KeyStep into the editor">Recall &darr;</button><button id="storeBtn" class="store" data-dev title="Write the project you are editing into the selected slot">Store &uarr;</button></div>
+    <div class="xprog" id="xprog" hidden><progress id="xpg" max="1" value="0"></progress><span id="xst"></span></div>
+    <section>
+      <h2>My library <span class="sp"></span><label class="mini filebtn" title="Add project or backup files to the library">Import<input type="file" id="libImp" accept=".json,application/json" multiple hidden></label></h2>
+      <input class="search" id="libSearch" placeholder="Search" aria-label="Search the library">
+      <ul class="pjList" id="libList" aria-label="Projects in this browser"></ul>
+      <div class="libAct" id="libAct" hidden><button class="mini" data-l="load">Load</button><button class="mini" data-l="ren">Rename</button><button class="mini" data-l="file">Save file</button><button class="mini" data-l="del">Delete</button></div>
+    </section>
+    <div class="foot">
+      <button data-tool="backup">Back up or restore all 16&hellip;</button>
+      <button data-tool="setlist">Set list (names, chords, keys)&hellip;</button>
+    </div>
+  </aside>
+  <section class="pjMain" aria-label="Project editor">
+    <div id="pjEmpty" class="pjEmpty">
+      <h2>No project open</h2>
+      <p>Pick a slot on the left and Recall it from the KeyStep, open a project file, or start an empty project.</p>
+      <div class="row"><button id="emRecall">Recall the selected slot</button><label class="btn filebtn">Open a file<input type="file" id="emOpen" accept=".json,application/json" hidden></label><button id="emNew">New empty project</button></div>
+    </div>
+    <div id="pjWork" hidden>
+      <div class="work">
+        <div class="who"><div class="lbl" id="workSrc"></div>
+          <input class="name" id="workName" maxlength="16" placeholder="Project name" aria-label="Project name (16 characters, sent with Store)" spellcheck="false">
+          <div class="chg" id="workChg" hidden>Changed here, not stored on the KeyStep yet</div></div>
+        <div class="acts"><button id="undoBtn" title="Undo (Ctrl+Z)">Undo</button><button id="redoBtn" title="Redo (Ctrl+Shift+Z)">Redo</button><button id="libSaveBtn">Save to library</button><label class="btn filebtn">Open file<input type="file" id="openFile" accept=".json,application/json" hidden></label><button id="saveFileBtn">Save file</button><button id="newBtn">New</button><button id="storeBtn2" class="store" data-dev>Store</button></div>
+      </div>
+      <div class="ptabs" role="tablist" id="ptabs" aria-label="Part of the project"></div>
+      <div class="ppanel" id="ppanel" role="tabpanel"></div>
+    </div>
+  </section>
+  <aside class="pjHelp" aria-label="Help and activity">
+    <section><h2>Help</h2><div id="pjHelpText"></div></section>
+    <section><h2>Activity</h2><div id="devLog"></div><p class="pg">Unofficial: worked out from firmware 2.5.20 and tested on hardware. Back up your projects before writing.</p></section>
+  </aside>
+</div>
+<div id="vSet" class="mode devArea" hidden><div class="setWrap" id="setWrap"></div></div>
+<div id="vCC" class="mode" hidden><div class="ccWrap"><div id="paneCC"></div></div></div>
+<div id="toolDlg" class="dlgBack" hidden><div class="dlg devArea" role="dialog" aria-modal="true" aria-labelledby="toolDlgT"><div class="dlgHead"><h2 id="toolDlgT"></h2><button id="toolDlgX" aria-label="Close">Close</button></div><p class="pg" id="toolDlgLine"></p><div id="toolHost"></div><details class="pg"><summary>Details and limits</summary><div id="toolDlgAbout"></div></details></div></div>
 <div id="tip" hidden></div>
 <script>
 "use strict";
