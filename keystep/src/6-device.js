@@ -268,8 +268,8 @@ const FEATURES=[
    el.querySelector("[data-a=rd]").onclick=()=>busy(async()=>{const p=+el.querySelector("[data-a=p]").value,t=+el.querySelector("[data-a=t]").value,item=TRACK_ITEMS[t-1];await DEV.link.open(p);
     const c=[];for(let i=1;i<=16;i++)c.push(await DEV.link.get(p,P_CHORD,item,i));const md=await DEV.link.get(p,P_MODE,item,1);
     const notes=c[0]===0x7F||c[0]==null?"none":[c[0],...c.slice(1).filter(x=>x!==0x7F).map(o=>c[0]+(o>63?o-128:o))].map(nm).join(" ");devLog(`saved chord P${p} T${t}: ${notes}; chord mode ${md!=null&&md&CHORD_MODE_BIT?"ON":"OFF"} (bytes ${c.map(x=>x==null?"--":x.toString(16)).join(" ")})`,"ok")})}},
- {id:"setlist",title:"Set list writer",verified:"2026-10-19: 14 Band Keys songs written to projects 1–14 (names, chords, keys) and verified by readback.",needs:"names need the project-names firmware; chords and keys work on stock 2.5.20.",
-  about:"Paste or load a plan exported by tools/bandkeys_plans.js (a list of {project, title, shape, tracks:[{n, root, scale}]}) and write every project in it.",
+ {id:"setlist",title:"Set list writer",verified:"2026-10-19: a 14-song set list written to projects 1–14 (names, chords, keys) and verified by readback.",needs:"names need the project-names firmware; chords and keys work on stock 2.5.20.",
+  about:"Paste or load a plan (a JSON list of {project, title, shape, tracks:[{n, root, scale}]}) and write every project in it.",
   render(el){el.innerHTML=`<div class="row"><input type="file" accept=".json,application/json" data-a="f"><button class="sm" data-a="go">Write all</button></div><textarea data-a="j" placeholder='[{"project":15,"title":"Test","shape":[64,68,71],"tracks":[{"n":1,"root":4,"scale":"major"}]}]'></textarea>`;
    el.querySelector("[data-a=f]").onchange=async e=>{const f=e.target.files[0];if(f)el.querySelector("[data-a=j]").value=await f.text()};
    el.querySelector("[data-a=go]").onclick=()=>busy(async()=>{const songs=JSON.parse(el.querySelector("[data-a=j]").value||"[]");let bad=0;
