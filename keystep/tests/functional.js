@@ -22,6 +22,29 @@ reset();tap("t2trk");trk(2).pats[0]=newPat();down("rec");tap("play");up("rec");a
 ok("real-time record stored a note",curPat(2).st.some(s=>s.n.some(n=>n.p===60)));
 /* drum lanes in poly mode keep their own length */
 reset();loadDemo("Polymeter drums");tap("play");await W(1200);tap("stop");ok("polymeter demo plays",true);
+/* ---- step pads (patched firmware) in the simulation ---- */
+reset();tap("t1trk");Object.assign(curPat(1),{scale:1,root:0});trk(1).oct=0;
+let hits=[];const drum0=drum;drum=(l,v,t)=>{hits.push(l);return drum0(l,v,t)};
+down("t0alt");tap("t0seq");up("t0alt");ok("Drum + Seq turns drum pads on",PADS.mode===1,PADS.mode);
+tap("t1trk");down("s2");ok("a step plays its drum lane while held, whichever track is selected",hits.join()==="2"&&PADS.down.has(2)&&S.cur===1&&!heldStep(),hits);up("s2");ok("released",!PADS.down.size);drum=drum0;
+down("t0alt");tap("t0seq");up("t0alt");ok("the same combo turns it off",PADS.mode===0);
+tap("t1trk");down("t1seq");tap("t1alt");up("t1seq");ok("Seq + Arp on track 2: chord pads for track 2, track mode untouched",PADS.mode===2&&trk(1).mode==="seq",[PADS.mode,trk(1).mode]);
+down("s0");ok("empty pad 1 plays the scale's first triad on the lowest octave shown",PADS.down.get(0).notes.join()==="48,52,55",PADS.down.get(0).notes);up("s0");
+down("s8");ok("pad 9 plays the first seventh chord",PADS.down.get(8).notes.join()==="48,52,55,59",PADS.down.get(8).notes);up("s8");
+down("k12");down("k16");down("k19");tap("s3");up("k12");up("k16");up("k19");
+ok("keys held + step keeps the chord, silently",padChords(1)[3]&&padChords(1)[3].join()==="60,64,67"&&!PADS.down.size,padChords(1)[3]);
+down("s3");ok("the pad then plays the kept chord",PADS.down.get(3).notes.join()==="60,64,67"&&PADS.down.get(3).v.length===3);
+const lit=Array(37).fill(null);padLights(lit,1,48,false,"x");ok("its notes light the keys of the selected track",lit[12]===TCOL[1]&&lit[16]===TCOL[1]&&lit[19]===TCOL[1]);up("s3");
+down("erase");tap("s3");up("erase");ok("Erase + step forgets it",padChords(1)[3]===null);
+down("shift");tap("exit");up("shift");ok("Shift + Exit undoes that",padChords(1)[3]&&padChords(1)[3].join()==="60,64,67");
+down("t1seq");tap("t1mute");up("t1seq");ok("Seq + Mute: root chords for track 2, mute untouched",PADS.mode===6&&!S.mute[1],[PADS.mode,S.mute[1]]);
+down("k14");ok("a key picks the root and makes no sound",PADS.root===62&&!S.keysDown.get(14).v,PADS.root);up("k14");
+down("s2");ok("step 3 plays a triad on that root",PADS.down.get(2).notes.join()==="62,65,69",PADS.down.get(2).notes);up("s2");
+down("s15");ok("step 16 plays the triad an octave down, kept on the keys shown",PADS.down.get(15).notes.join()==="50,53,57",PADS.down.get(15).notes);up("s15");
+down("k31");up("k31");down("s12");ok("near the top key a 13th moves down to fit",Math.max(...PADS.down.get(12).notes)<=84,PADS.down.get(12).notes);up("s12");
+down("t1seq");tap("t1alt");up("t1seq");trk(1).pats[0]=newPat();down("rec");tap("play");up("rec");await W(300);down("s0");await W(150);up("s0");await W(80);tap("stop");
+ok("chord pads record on the selected track while recording",curPat(1).st.some(s=>s.n.length===3),curPat(1).st.filter(s=>s.n.length).map(s=>s.n.map(n=>n.p)));
+down("t1seq");tap("t1alt");up("t1seq");ok("modes switch off",PADS.mode===0);
 /* ---- SysEx tools against the simulated device ---- */
 reset();selectTab("dev");$("#devPort").value="sim";await devConnect();const L=DEV.link;
 ok("identity reply",!!(await L.identity()));

@@ -28,7 +28,7 @@ function baseState(){
   sceneCur:-1,keysDown:new Map(),recPending:new Map()};
  S.flash=S.ram.map(deep);
  P=[0,1,2,3,4].map(()=>({idx:0,cnt:0,next:0,pend:null,chainPos:0,lanes:Array(24).fill(0).map(()=>({idx:0,cnt:0}))}));
- HELD=new Map();LATCH=new Set();
+ HELD=new Map();LATCH=new Set();if(typeof PADS!=="undefined")resetPads();
 }
 const proj=()=>S.ram[S.proj];
 const trk=(t=S.cur)=>proj().tracks[t];

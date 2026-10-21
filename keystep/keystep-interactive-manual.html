@@ -709,7 +709,7 @@ function baseState(){
   sceneCur:-1,keysDown:new Map(),recPending:new Map()};
  S.flash=S.ram.map(deep);
  P=[0,1,2,3,4].map(()=>({idx:0,cnt:0,next:0,pend:null,chainPos:0,lanes:Array(24).fill(0).map(()=>({idx:0,cnt:0}))}));
- HELD=new Map();LATCH=new Set();
+ HELD=new Map();LATCH=new Set();if(typeof PADS!=="undefined")resetPads();
 }
 const proj=()=>S.ram[S.proj];
 const trk=(t=S.cur)=>proj().tracks[t];
@@ -1027,6 +1027,7 @@ function render(){
  else if((S.stepEdit&&S.sel!=null)||heldStep()!=null){const st=pat.st[S.stepEdit&&S.sel!=null?S.sel:v*16+heldStep()];st.n.forEach(nt=>{const k=nt.p-base;if(k>=0&&k<37)kled[k]=col})}
  for(const f of NOTEFLASH){if(f.t0>n||f.t1<n)continue;if(f.drum!=null){if(dr&&f.drum<37)kled[f.drum]="#ffffff";continue}if(f.t!==t)continue;const k=f.midi-base;if(k>=0&&k<37)kled[k]=TCOL[f.t]}
  for(const [k] of S.keysDown){if(!kled[k])kled[k]=col}
+ padLights(kled,t,base,dr,col);
  for(let k=0;k<37;k++)setA($("#kled"+k),"fill",kled[k]||"#d6d6d2");
  /* buttons */
  lamp("play",S.playing?(S.paused?(blink()?"#22c55e":null):"#22c55e"):null);lamp("rec",S.rec?(S.rec==="step"&&blink()?null:"#ef4444"):null);lamp("stop",null);
@@ -1100,6 +1101,7 @@ function edit(o,i,d,t){if(i===0)o.p=t!=null?scaleStep(t,o.p,d):clamp(o.p+d,0,127
 /* ---------- keyboard ---------- */
 const keyMidi=k=>48+k+12*trk().oct;
 function keyDown(k,vel=100){for(const h of HELD.values())h.used=true;const t=S.cur,tr=trk();
+ if(padKey(k))return;
  if(held("shift")&&!S.chordEntry){keyShift(k);return}
  if(held("tap")&&k>=17&&k<=21){const cur=S.globals[116];S.globals[116]=k===21?(cur%2?cur-1:cur+1):(k-17)*2;msg(`Metronome\n${["1/4","1/4 T","1/8","1/8 T","1/16","1/16 T","1/32","1/32 T"][S.globals[116]]}`);dirty();return}
  if(S.rootSel){if(k<12){curPat().root=k;curPat().valid=true;msg(`Root\n${NN[k]}`);emit("root:"+k);S.rootChosen=true;if(!held("k29"))S.rootSel=false}dirty();return}
@@ -1160,6 +1162,7 @@ function chordEntryCheck(){if(!S.chordEntry||held("shift")||held("tie")||S.keysD
 
 /* ---------- button dispatch ---------- */
 function down(id){const t=S.cur;for(const h of HELD.values())h.used=true;HELD.set(id,{t0:performance.now(),used:false});ensureAC();
+ if(padDown(id))return;
  let m;
  if((m=id.match(/^k(\d+)$/))){keyDown(+m[1],S.padVel||100);S.padVel=null;return}
  if((m=id.match(/^s(\d+)$/))){stepDown(+m[1]);return}
@@ -1197,7 +1200,7 @@ function down(id){const t=S.cur;for(const h of HELD.values())h.used=true;HELD.se
   case "pbend":case "modw":case "looper":break;
  }
  dirty()}
-function up(id){const h=HELD.get(id);HELD.delete(id);if(!h)return;let m;
+function up(id){if(padUp(id))return;const h=HELD.get(id);HELD.delete(id);if(!h)return;let m;
  if((m=id.match(/^k(\d+)$/))){keyUp(+m[1]);if(+m[1]===29&&S.rootSel&&S.rootChosen)S.rootSel=false;dirty();return}
  if((m=id.match(/^s(\d+)$/))){stepUp(+m[1],h);return}
  if((m=id.match(/^t(\d)(mute|trk)$/))){if(m[2]==="mute"&&!h.used&&!h.sh){const t=+m[1];S.mute[t]=S.mute[t]?0:1;if(S.solo===t){S.solo=-1}emit("mute:"+t)}dirty();return}
@@ -1367,10 +1370,10 @@ const SHOW={
  controlMode(){S.cur=3;return "<p>Press <b>Control</b>: the selected track becomes the Live Track and its button blinks. The encoders send their CC (Utility &gt; Controller &gt; Knob 1–5). In Step Edit, select a step and turn an encoder to store a value; record while playing to capture moves. Erase + turn clears an encoder's automation.</p>"},
  utility(){openMenu(MENU());return "<p>Shift + Project opens the Utility menu: turn the selection encoder to move, push to enter or edit, Exit to go back. Settings are global and saved when you leave.</p><div class='fw'><b>Firmware:</b> every Utility setting is one of 158 global IDs, readable and writable over SysEx. Misc also has Brightness (ID 152) and Transpose Latch (ID 153, stored inverted).</div>"},
  fwNames(){return "<p>With the patched firmware a project slot has a name of up to 16 characters, shown on the display where the KeyStep would show the project number.</p><p>Give a slot its name in <b>Projects</b> mode: type it above the tracks and <b>Store</b>, or use <b>Send the name only</b> on the Project tab. The Set list writes names for several slots at once.</p><p class='pg'>The name belongs to the slot: saving another project into it keeps the name, Erase Project clears it. The KeyStep cannot send names back, so the slot list shows the last name sent from this browser.</p>"},
- fwDrumPads(){return "<p>Hold <b>Drum</b> (track 1 row) and press <b>Seq</b> (track 1 row): the 16 step buttons become drum pads. Step 1 plays drum lane 1, step 2 lane 2 … step 16 lane 16, using the notes of the Drum Map on the drum output channel.</p><p>They work whichever track is selected, so you can play a synth on track 2 with the keys and drums on the steps at the same time. The same combo turns the pads off.</p><p class='pg'>Tested on a KeyStep Pro. The simulation here does not play the pads.</p>"},
- fwChordPads(){return "<p>Hold <b>Seq</b> and press <b>Arp</b> on track 2, 3 or 4: the steps become chord pads for that track, played on its MIDI channel.</p><ul class='tight'><li><b>Keep a chord:</b> select the track, hold a chord on the keys and tap a step.</li><li><b>Play it:</b> press the step; the chord sounds while you hold it.</li><li><b>Empty steps</b> play the chords of the track's scale: steps 1–8 triads on degrees 1–8, steps 9–16 sevenths, in the keyboard's lowest octave.</li><li><b>Erase + step</b> forgets a step's chord. <b>Shift + Exit</b> undoes the last keep or erase; again to redo.</li><li><b>Save Project</b> (Project menu) saves the chords with the project. Save + Track does not.</li></ul><p class='pg'>Up to 5 notes per pad, 16 pads per track. The same combo turns the pads off.</p>"},
- fwRootChords(){const T=["root + octave","sus2","triad","sus4","power (5th)","6th","7th","triad, octave up","9th","add9","11th","1st inversion","13th","2nd inversion","7sus4","triad, octave down"];
-  return "<p>Hold <b>Seq</b> and press <b>Mute</b> on any track: root chords for that track. The keys on that track are silent and only pick the root; the steps play chords on that root, built from the track's scale and named by their number.</p><table class='t'><tr>"+T.map((n,i)=>`<td><b>${i+1}</b> ${n}</td>`+(i%4===3&&i<15?"</tr><tr>":"")).join("")+"</tr></table><p>Hold a key and press steps to play variations of it; the root stays after you let go. Before any key, the root is the scale's root in the keyboard's lowest octave. A chord that would run past the keys shown moves by whole octaves to fit.</p><p class='pg'>Root keys are not recorded. Chromatic counts as major. The same combo turns it off.</p>"},
+ fwDrumPads(){S.cur=1;if(PADS.mode!==1)padsSet(1);return "<div class='fw'><b>Try it:</b> drum pads are on in the simulation now with track 2 selected. Click the steps (they sound while held), and play keys for track 2 at the same time. Drum + Seq on track 1 turns them off.</div>"+"<p>Hold <b>Drum</b> (track 1 row) and press <b>Seq</b> (track 1 row): the 16 step buttons become drum pads. Step 1 plays drum lane 1, step 2 lane 2 … step 16 lane 16, using the notes of the Drum Map on the drum output channel.</p><p>They work whichever track is selected, so you can play a synth on track 2 with the keys and drums on the steps at the same time. The same combo turns the pads off.</p><p class='pg'>Tested on a KeyStep Pro. The simulation shows a message when the mode changes; the KeyStep does not.</p>"},
+ fwChordPads(){S.cur=1;if(PADS.mode!==2)padsSet(2);return "<div class='fw'><b>Try it:</b> chord pads for track 2 are on in the simulation. Click a step for a scale chord; hold keys (right-click latches them) and click a step to keep that chord there.</div>"+"<p>Hold <b>Seq</b> and press <b>Arp</b> on track 2, 3 or 4: the steps become chord pads for that track, played on its MIDI channel.</p><ul class='tight'><li><b>Keep a chord:</b> select the track, hold a chord on the keys and tap a step.</li><li><b>Play it:</b> press the step; the chord sounds while you hold it.</li><li><b>Empty steps</b> play the chords of the track's scale: steps 1–8 triads on degrees 1–8, steps 9–16 sevenths, in the keyboard's lowest octave.</li><li><b>Erase + step</b> forgets a step's chord. <b>Shift + Exit</b> undoes the last keep or erase; again to redo.</li><li><b>Save Project</b> (Project menu) saves the chords with the project. Save + Track does not.</li></ul><p class='pg'>Up to 5 notes per pad, 16 pads per track. The same combo turns the pads off.</p>"},
+ fwRootChords(){S.cur=1;if(PADS.mode!==6)padsSet(6);const T=["root + octave","sus2","triad","sus4","power (5th)","6th","7th","triad, octave up","9th","add9","11th","1st inversion","13th","2nd inversion","7sus4","triad, octave down"];
+  return "<div class='fw'><b>Try it:</b> root chords for track 2 are on in the simulation. Click a key to pick the root (it stays silent), then click steps.</div><p>Hold <b>Seq</b> and press <b>Mute</b> on any track: root chords for that track. The keys on that track are silent and only pick the root; the steps play chords on that root, built from the track's scale and named by their number.</p><table class='t'><tr>"+T.map((n,i)=>`<td><b>${i+1}</b> ${n}</td>`+(i%4===3&&i<15?"</tr><tr>":"")).join("")+"</tr></table><p>Hold a key and press steps to play variations of it; the root stays after you let go. Before any key, the root is the scale's root in the keyboard's lowest octave. A chord that would run past the keys shown moves by whole octaves to fit.</p><p class='pg'>Root keys are not recorded. Chromatic counts as major. The same combo turns it off.</p>"},
  fwLightsRec(){return "<p><b>Key lights:</b> while the pad's track is selected, the keys light in the track colour for the notes a step plays, the way the KeyStep lights notes it plays itself. Drum hits light while track 1 shows drums. Notes outside the keys shown light the octave arrow.</p><p><b>Recording:</b> with the sequencer recording (Rec on and playing), what the steps play is recorded on the selected track like keys. How long you hold the step sets the note length. Chord pads and root chords record every note; drum hits record into the drum lanes while track 1 shows drums.</p><p class='pg'>If a pattern is full, the KeyStep shows its usual limit message and skips that note.</p>"},
  fwRules(){return "<ul class='tight'><li>One pad mode at a time: turning drum pads, chord pads or root chords on turns the others off.</li><li>The pattern and the selected track are not changed.</li><li>The first button of each combo still does its stock job (Drum switches track 1 to drum mode, Seq to sequencer mode); only the second press, which would switch it back, is taken.</li><li>Seq alone, Arp alone, Mute alone, <b>Shift + Control</b> (Control mode) and <b>Shift + Drum</b> (unmute all drums) stay stock.</li><li>Shift + Exit is the stock undo except in chord pad mode.</li></ul>"},
  deviceTools(){return "<p><b>Projects</b> mode (top bar) does what MIDI Control Center does with projects: the 16 slots on the KeyStep on the left, <b>Recall</b> one into the editor, change it, <b>Store</b> it into any slot (two clicks, then everything is read back). Open and save project files, or start an empty project.</p><p>It talks to a real KeyStep Pro through Web MIDI (Chrome or Edge, SysEx allowed), or to this simulation: connect with the KeyStep pill at the top.</p>"},
@@ -1466,6 +1469,75 @@ function boot(){baseState();drawPanel();bindInput();renderChapters();initPanelVi
  const w=new Worker(URL.createObjectURL(new Blob(["setInterval(()=>postMessage(0),10)"],{type:"text/javascript"})));w.onmessage=advance;
  const loop=()=>{advance();if(S.msg&&performance.now()>S.msgT){S.msg=null;dirtyFlag=true}if(dirtyFlag||S.playing||NOTEFLASH.length||S.msg||ARP.some(a=>a.running)||S.trans.some(x=>x.on)||trk().chordOn||S.stepEdit||S.rec||S.patMode||S.control||P.some(p=>p.pend!=null)||S.undo||HELD.size){render();dirtyFlag=false}requestAnimationFrame(loop)};requestAnimationFrame(loop);
 }
+/* ================= Step pads, as in this project's patched firmware (keysteppro tools/pad_hooks.S) =================
+   Drum + Seq (track 1 row): drum pads. Seq + Arp on track 2-4: chord pads for that track. Seq + Mute on any track: root chords.
+   One mode at a time; the same combo turns it off. While a mode is on, the steps are pads: they sound while held, light the keys
+   of the selected track, and record like keys when the sequencer records. Chord pads keep the chord held on the keys when a step is
+   tapped (Erase + step forgets it, Shift + Exit undoes the last change); empty pads play the scale's chords. Root-chord keys only
+   pick the root, silently. The device shows no message for these; the simulation does, so the mode is visible. */
+const PADS={mode:0,root:null,down:new Map(),undo:null};
+const PAD_CHORD_NOTES=5,PAD_U=0x40,PAD_D=0x20;
+/* root chords, by step: scale degrees above the root (0 = root), +U one octave up, +D one octave down */
+const ROOT_CHORDS=[[0,PAD_U],[0,1,4],[0,2,4],[0,3,4],[0,4,PAD_U],[0,2,4,5],[0,2,4,6],[PAD_U,2|PAD_U,4|PAD_U],[0,2,4,6,8],[0,2,4,8],[0,2,6,8,10],[2,4,PAD_U],[0,2,6,8,12],[4,PAD_U,2|PAD_U],[0,3,4,6],[PAD_D,2|PAD_D,4|PAD_D]];
+const ROOT_CHORD_NAMES=["root + octave","sus2","triad","sus4","power","6th","7th","triad +8va","9th","add9","11th","1st inversion","13th","2nd inversion","7sus4","triad -8va"];
+function resetPads(){padsReleaseAll();PADS.mode=0;PADS.root=null;PADS.undo=null}
+const padTrack=()=>PADS.mode>=5?PADS.mode-5:PADS.mode>=2?PADS.mode-1:0;
+const padLow=t=>48+12*trk(t).oct;                      // lowest key shown for track t
+/* the track's scale as a mask from its root; Chromatic (and drum mode) count as major */
+function padScale(t){let m=isDrum(t)?0:scaleMask(t);if(!m||m===0xFFF)m=SCALES[1][1];return {mask:m,root:isDrum(t)?0:curPat(t).root}}
+const inScale=(sc,p)=>sc.mask>>(((p-sc.root)%12+12)%12)&1;
+function padsSet(mode){padsReleaseAll();PADS.mode=PADS.mode===mode?0:mode;if(PADS.mode>=5)PADS.root=null;
+ const t=padTrack();msg(!PADS.mode?"Step pads\nOFF":PADS.mode===1?"Drum pads\nON":PADS.mode<5?`Chord pads\nTrack ${t+1}`:`Root chords\nTrack ${t+1}`,1400);emit("pads:mode:"+PADS.mode);dirty()}
+function padsReleaseAll(){for(const i of [...PADS.down.keys()])padRelease(i)}
+/* chords kept by chord pads live with the project, like the device keeps them with Save Project */
+function padChords(t){const pj=proj();pj.padChords=pj.padChords||{};return pj.padChords[t]=pj.padChords[t]||Array(16).fill(null)}
+function scaleChord(t,pad){const sc=padScale(t),low=padLow(t),deg=[];let p=low+((sc.root-low)%12+12)%12;
+ for(;deg.length<14&&p<128;p++)if(inScale(sc,p))deg.push(p);
+ const k=pad<8?pad:pad-8,n=pad<8?3:4;return [...Array(n).keys()].map(i=>deg[k+2*i]).filter(x=>x!=null)}
+function rootChord(t,pad){const sc=padScale(t),low=padLow(t);let r=PADS.root!=null?PADS.root:low+((sc.root-low)%12+12)%12;
+ const deg=[r];for(let p=r+1;deg.length<13&&p<128;p++)if(inScale(sc,p))deg.push(p);
+ const out=[];for(const c of ROOT_CHORDS[pad]){const d=c&0x1f;if(d>=deg.length)continue;const p=deg[d]+(c&PAD_U?12:0)-(c&PAD_D?12:0);if(p>=0&&p<=127)out.push(p)}
+ /* move by whole octaves onto the 37 keys shown, as far as the chord fits */
+ if(out.length){let lo=Math.min(...out),hi=Math.max(...out),s=0;const top=Math.min(low+36,127);
+  while(hi>top&&lo-12>=low){lo-=12;hi-=12;s-=12}while(lo<low&&hi+12<=top){lo+=12;hi+=12;s+=12}return out.map(p=>p+s)}
+ return out}
+/* a step pressed while a mode is on */
+function padPress(i){if(PADS.down.has(i))return;const m=PADS.mode,rec=S.rec==="rt"&&S.playing;
+ if(m===1){const ch=S.globals[79];const e={drum:i,lit:[i],rec:null};PADS.down.set(i,e);if(ch>15){dirty();return}
+  drum(i,100,now());midiDrum(i,100,now(),now()+.1);if(rec&&isDrum())e.rec=padRecordDrum(i,100);emit("pads:press");dirty();return}
+ const t=padTrack();let notes;
+ if(m<5){const slots=padChords(t);
+  if(held("erase")){PADS.undo={t,pad:i,prev:slots[i]};slots[i]=null;msg(`Pad ${i+1}\nforgotten`,900);PADS.down.set(i,{lit:[]});emit("pads:erase");dirty();return}
+  if(S.cur===t&&S.keysDown.size){const keys=[...new Set([...S.keysDown.values()].map(kd=>kd.notes&&kd.notes[0]).filter(x=>x!=null))].sort((a,b)=>a-b).slice(0,PAD_CHORD_NOTES);
+   if(keys.length){PADS.undo={t,pad:i,prev:slots[i]};slots[i]=keys;msg(`Pad ${i+1}\n${keys.map(nm).join(" ")}`,1200);PADS.down.set(i,{lit:[]});emit("pads:capture");dirty();return}}
+  notes=slots[i]||scaleChord(t,i)}
+ else notes=rootChord(t,i);
+ const vs=notes.map(p=>liveOn(t,p,100));notes.forEach(p=>midiOn(t,p,100));
+ const recs=rec&&S.cur===t&&!isDrum(t)?notes.map(p=>recordNote(t,p,100,now())):null;
+ PADS.down.set(i,{t,notes,v:vs,lit:notes,rec:recs});if(m>=5)msg(`${i+1} ${ROOT_CHORD_NAMES[i]}\n${notes.map(nm).join(" ")}`,900);emit("pads:press");dirty()}
+function padRelease(i){const e=PADS.down.get(i);PADS.down.delete(i);if(!e)return;
+ (e.v||[]).forEach(liveOff);if(e.notes)e.notes.forEach(p=>midiOff(e.t,p));
+ if(e.rec&&e.rec.forEach){const pat=curPat(e.t),dur=stepDur(pat);e.rec.forEach(r=>{if(r)r.n.g=clamp((now()-r.time)/dur,.06,64)})}
+ else if(e.rec&&e.rec.st){e.rec.st.g=clamp((now()-e.rec.time)/stepDur(curPat()),.06,64)}
+ dirty()}
+/* a drum hit recorded like a key in drum mode */
+function padRecordDrum(k,vel){const pat=curPat(),last=S.playIdx&&S.playIdx[0];if(!last)return null;const dur=stepDur(pat),rel=(now()-last.time)/dur,kk=Math.round(rel),idx=((last.idx+kk)%pat.len+pat.len)%pat.len,st=pat.lanes[k].st[idx];
+ Object.assign(st,{on:true,v:S.globals[fvId(0)]?S.drumDefs.v:vel,g:S.drumDefs.g,t:S.quant?0:clamp(Math.round((rel-kk)*100),-49,50),r:S.drumDefs.r});pat.valid=true;emit("recnote");return {st,time:now()}}
+/* button hooks: true = taken */
+function padDown(id){let m;
+ if(id==="t0seq"&&held("t0alt")){HELD.get("t0alt").used=true;padsSet(1);return true}
+ if((m=id.match(/^t([1-3])alt$/))&&held(`t${m[1]}seq`)){padsSet(+m[1]+1);return true}
+ if((m=id.match(/^t([0-3])mute$/))&&held(`t${m[1]}seq`)){HELD.get(id).used=true;padsSet(5+(+m[1]));return true}
+ if(id==="exit"&&held("shift")&&PADS.mode>=2&&PADS.mode<5&&PADS.undo){const u=PADS.undo,slots=padChords(u.t),cur=slots[u.pad];slots[u.pad]=u.prev;u.prev=cur;
+  msg(`Pad ${u.pad+1}\n${slots[u.pad]?slots[u.pad].map(nm).join(" "):"scale chord"}`,1000);emit("pads:undo");dirty();return true}
+ if(PADS.mode&&(m=id.match(/^s(\d+)$/))){HELD.delete(id);padPress(+m[1]);return true}
+ return false}
+function padUp(id){const m=id.match(/^s(\d+)$/);if(!m||!PADS.down.has(+m[1]))return false;padRelease(+m[1]);return true}
+/* root chords: a key on that track picks the root and makes no sound */
+function padKey(k){if(PADS.mode<5||S.cur!==PADS.mode-5||held("shift"))return false;PADS.root=q(S.cur,keyMidi(k));S.keysDown.set(k,{});msg(`Root\n${nm(PADS.root)}`,700);emit("pads:root");dirty();return true}
+/* key lights for what the pads play, on the selected track (drum hits while track 1 shows drums) */
+function padLights(kled,t,base,dr,col){for(const e of PADS.down.values()){if(e.drum!=null){if(dr&&e.drum<37)kled[e.drum]=col;continue}
+  if(e.t!==t||dr)continue;for(const p of e.lit){const k=p-base;if(k>=0&&k<37)kled[k]=TCOL[t]}}}
 /* ================= Device tools: SysEx to a real KeyStep Pro (Web MIDI) or to this simulation =================
    Protocol notes are from the firmware 2.5.20 study (~/keysteppro/findings.md) and were checked on hardware.
    Frame: F0 00 20 6B <dev 7F> 42 <cmd> <project 0=current|1..16> <param> ...
