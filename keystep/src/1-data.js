@@ -135,7 +135,16 @@ const CHAPTERS=[
  ["6.5","Arranging: chains, scenes, wait to load, step skip","arranging"],
  ["8","Control mode","controlMode"],
  ["9.1","The Utility menu","utility"],
- ["Device","Projects and Device settings: talk to a real KeyStep Pro","deviceTools"],
+ ];
+/* not in Arturia's manual: the patched firmware from this project, and this web app; [section, title, SHOW key, controls to highlight] */
+const NEW_CHAPTERS=[
+ ["Firmware","Project names on the display","fwNames",["project"]],
+ ["Firmware","Drum pads: Drum + Seq","fwDrumPads",["t0alt","t0seq","s0","s15"]],
+ ["Firmware","Chord pads: Seq + Arp","fwChordPads",["t1seq","t1alt","erase","exit"]],
+ ["Firmware","Root chords: Seq + Mute","fwRootChords",["t1seq","t1mute","s0","s15"]],
+ ["Firmware","Key lights and recording with the pads","fwLightsRec",["rec","play","s0"]],
+ ["Firmware","One pad mode at a time; what stays stock","fwRules",["t0seq","t0alt","t1mute"]],
+ ["Web app","Projects and Device settings: like MIDI Control Center","deviceTools",[]],
 ];
 
 /* ---------- guided tours: each step waits for an emitted event (string or RegExp) ---------- */
