@@ -31,7 +31,7 @@ h1{font-size:16px;margin:0;white-space:nowrap}
 .modes button{font:inherit;font-size:13px;border:0;background:none;color:var(--fg);padding:5px 13px;border-radius:7px;cursor:pointer}
 .modes button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg)}
 .mode[hidden]{display:none!important}
-.top #connPill,.top #devStopBtn{font:inherit;font-size:13px;padding:5px 12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.top #connPill,.top #connMore,.top #devStopBtn{font:inherit;font-size:13px;padding:5px 12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
 .top #devStopBtn{border-radius:8px;border-color:var(--warn);color:var(--warn)}.top .pop button,.top .pop select{font:inherit;font-size:13px;padding:5px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
 .sub{color:var(--muted);font-size:13px;margin:2px 0 0}
 .bar{width:100%;display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:1700px;margin:0 auto;padding:6px 16px}
@@ -39,7 +39,9 @@ h1{font-size:16px;margin:0;white-space:nowrap}
 .bar button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .bar .hint{color:var(--muted);font-size:12px;margin-left:auto}
 .bar .ksp{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;position:relative}
-#connPill{display:inline-flex;align-items:center;gap:7px;border-radius:999px}
+#connPill{display:inline-flex;align-items:center;gap:7px;border-radius:999px 0 0 999px}
+.top #connMore{border-radius:0 999px 999px 0;border-left:0;padding:5px 10px 5px 8px;margin-left:-6px}
+#connPill.off{border-color:var(--accent);color:var(--accent);font-weight:600}
 .dot{width:9px;height:9px;border-radius:50%;display:inline-block;background:var(--muted)}.dot.sim{background:var(--accent)}.dot.real{background:var(--ok)}.dot.bad{background:var(--bad)}
 .bar .stop{border-color:var(--warn);color:var(--warn)}
 .pop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;width:min(360px,calc(100vw - 32px));background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 8px 28px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:8px;font-size:13px}
@@ -273,7 +275,7 @@ ol.steps{margin:6px 0;padding-left:20px}ol.steps li{margin:3px 0}
 <header class="top">
   <h1>KeyStep Pro</h1>
   <div class="modes" role="tablist" aria-label="Mode"><button role="tab" id="modeProj" data-mode="proj" aria-selected="true">Projects</button><button role="tab" id="modeMan" data-mode="man" aria-selected="false">Manual</button><button role="tab" id="modeSet" data-mode="set" aria-selected="false">Device settings</button><button role="tab" id="modeCC" data-mode="cc" aria-selected="false">Synth CC</button></div>
-  <span class="ksp" role="group" aria-label="KeyStep Pro connection"><button id="connPill" aria-expanded="false" aria-controls="connPop"><span id="devState" class="dot off"></span><span id="devStateText" aria-live="polite">KeyStep: not connected</span></button><button id="devStopBtn" class="stop" title="Stop the transfer that is running" hidden>Stop transfer</button>
+  <span class="ksp" role="group" aria-label="KeyStep Pro connection"><button id="connPill" title="Connect to the KeyStep Pro"><span id="devState" class="dot off"></span><span id="devStateText" aria-live="polite">Connect KeyStep</span></button><button id="connMore" aria-expanded="false" aria-controls="connPop" aria-label="Connection options: port, simulation" title="Port and simulation">▾</button><button id="devStopBtn" class="stop" title="Stop the transfer that is running" hidden>Stop transfer</button>
    <div id="connPop" class="pop" hidden><div class="prow"><label>Port <select id="devPort" aria-label="KeyStep Pro MIDI port"><option value="sim">Simulated KeyStep Pro</option></select></label></div>
     <div class="prow"><button id="devScanBtn" title="Ask the browser for MIDI ports (Chrome/Edge, with SysEx permission)">Find MIDI ports</button><button id="devConnBtn" class="pri">Connect</button></div>
     <label class="pg"><input type="checkbox" id="simNames" checked> the simulation runs the project-names firmware</label>

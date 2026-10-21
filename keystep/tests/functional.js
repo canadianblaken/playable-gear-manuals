@@ -200,4 +200,15 @@ selectTab("proj");ok("keys on the computer keyboard do not play the panel outsid
 const into=JSON.parse(JSON.stringify(DEV.project));mfApply(into,0x7C,mfPlan(mfPlace(mparts[1],mfx),1,16),{chainScene:1});const pr6=await storeProject(L,12,into);
 ok("MIDI import into the empty project sends and reads back",pr6.length===0&&edReadPattern(await readProject(L,12),0x7C,2).len===48,pr6.slice(0,3));
 ok("file check rejects a damaged file",(()=>{const b=deep(f1);b.data[5][3]=[200];try{checkProjectFile(b);return false}catch(e){return true}})());
+/* one-click connect: the pill finds a port named KeyStep and connects; with no such port it opens the options */
+const rma=navigator.requestMIDIAccess,fin={id:"i1",name:"KeyStep Pro",onmidimessage:null},fout={id:"o1",name:"KeyStep Pro",send(b){for(const r of SIMDEV.handle([...b]))setTimeout(()=>fin.onmidimessage&&fin.onmidimessage({data:new Uint8Array(r)}),1)}};
+navigator.requestMIDIAccess=async()=>({outputs:new Map([["o1",fout]]),inputs:new Map([["i1",fin]])});
+DEV.link=null;DEV.ports=null;$("#devPort").value="sim";devStatus("not connected","");
+ok("not connected, the pill is a Connect button",/Connect KeyStep/.test($("#connPill").textContent)&&$("#connPill").classList.contains("off"));
+$("#connPill").click();for(let i=0;i<200&&!(DEV.link&&!DEV.busy);i++)await W(25);
+ok("one click finds the KeyStep port and connects",DEV.link&&!DEV.link.sim&&/KeyStep Pro 2\.5\.20/.test($("#devStateText").textContent)&&$("#connPop").hidden,$("#devStateText").textContent);
+navigator.requestMIDIAccess=async()=>({outputs:new Map(),inputs:new Map()});DEV.link=null;DEV.ports=null;$("#devPort").value="sim";devStatus("not connected","");
+$("#connPill").click();for(let i=0;i<40&&$("#connPop").hidden;i++)await W(25);
+ok("no KeyStep port: the options open instead",!DEV.link&&!$("#connPop").hidden&&/Connect KeyStep/.test($("#devStateText").textContent));
+navigator.requestMIDIAccess=rma;DEV.connOpen(false);$("#devPort").value="sim";await devConnect();
 selectTab("man");try{localStorage.setItem("ksp.mode","proj")}catch(e){}return R;

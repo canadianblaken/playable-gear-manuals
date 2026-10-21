@@ -31,7 +31,7 @@ h1{font-size:16px;margin:0;white-space:nowrap}
 .modes button{font:inherit;font-size:13px;border:0;background:none;color:var(--fg);padding:5px 13px;border-radius:7px;cursor:pointer}
 .modes button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg)}
 .mode[hidden]{display:none!important}
-.top #connPill,.top #devStopBtn{font:inherit;font-size:13px;padding:5px 12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.top #connPill,.top #connMore,.top #devStopBtn{font:inherit;font-size:13px;padding:5px 12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
 .top #devStopBtn{border-radius:8px;border-color:var(--warn);color:var(--warn)}.top .pop button,.top .pop select{font:inherit;font-size:13px;padding:5px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
 .sub{color:var(--muted);font-size:13px;margin:2px 0 0}
 .bar{width:100%;display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:1700px;margin:0 auto;padding:6px 16px}
@@ -39,7 +39,9 @@ h1{font-size:16px;margin:0;white-space:nowrap}
 .bar button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .bar .hint{color:var(--muted);font-size:12px;margin-left:auto}
 .bar .ksp{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;position:relative}
-#connPill{display:inline-flex;align-items:center;gap:7px;border-radius:999px}
+#connPill{display:inline-flex;align-items:center;gap:7px;border-radius:999px 0 0 999px}
+.top #connMore{border-radius:0 999px 999px 0;border-left:0;padding:5px 10px 5px 8px;margin-left:-6px}
+#connPill.off{border-color:var(--accent);color:var(--accent);font-weight:600}
 .dot{width:9px;height:9px;border-radius:50%;display:inline-block;background:var(--muted)}.dot.sim{background:var(--accent)}.dot.real{background:var(--ok)}.dot.bad{background:var(--bad)}
 .bar .stop{border-color:var(--warn);color:var(--warn)}
 .pop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;width:min(360px,calc(100vw - 32px));background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 8px 28px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:8px;font-size:13px}
@@ -273,7 +275,7 @@ ol.steps{margin:6px 0;padding-left:20px}ol.steps li{margin:3px 0}
 <header class="top">
   <h1>KeyStep Pro</h1>
   <div class="modes" role="tablist" aria-label="Mode"><button role="tab" id="modeProj" data-mode="proj" aria-selected="true">Projects</button><button role="tab" id="modeMan" data-mode="man" aria-selected="false">Manual</button><button role="tab" id="modeSet" data-mode="set" aria-selected="false">Device settings</button><button role="tab" id="modeCC" data-mode="cc" aria-selected="false">Synth CC</button></div>
-  <span class="ksp" role="group" aria-label="KeyStep Pro connection"><button id="connPill" aria-expanded="false" aria-controls="connPop"><span id="devState" class="dot off"></span><span id="devStateText" aria-live="polite">KeyStep: not connected</span></button><button id="devStopBtn" class="stop" title="Stop the transfer that is running" hidden>Stop transfer</button>
+  <span class="ksp" role="group" aria-label="KeyStep Pro connection"><button id="connPill" title="Connect to the KeyStep Pro"><span id="devState" class="dot off"></span><span id="devStateText" aria-live="polite">Connect KeyStep</span></button><button id="connMore" aria-expanded="false" aria-controls="connPop" aria-label="Connection options: port, simulation" title="Port and simulation">▾</button><button id="devStopBtn" class="stop" title="Stop the transfer that is running" hidden>Stop transfer</button>
    <div id="connPop" class="pop" hidden><div class="prow"><label>Port <select id="devPort" aria-label="KeyStep Pro MIDI port"><option value="sim">Simulated KeyStep Pro</option></select></label></div>
     <div class="prow"><button id="devScanBtn" title="Ask the browser for MIDI ports (Chrome/Edge, with SysEx permission)">Find MIDI ports</button><button id="devConnBtn" class="pri">Connect</button></div>
     <label class="pg"><input type="checkbox" id="simNames" checked> the simulation runs the project-names firmware</label>
@@ -1823,18 +1825,27 @@ async function busy(fn){if(!DEV.link){devLog("Connect first.","bad");return}if(D
  try{await fn()}catch(e){devLog("Error: "+e.message,"bad")}finally{DEV.busy=false;$("#devStopBtn").hidden=true;document.querySelectorAll(".devArea button.sm,.devArea [data-dev]").forEach(b=>b.disabled=false)}}
 /* the connection controls live in the top bar, so they work in every mode */
 function devBindBar(){$("#devScanBtn").onclick=devScan;$("#simNames").onchange=e=>{SIMDEV.namesFw=e.target.checked};
- const pill=$("#connPill"),pop=$("#connPop"),open=o=>{pop.hidden=!o;pill.setAttribute("aria-expanded",o)};pill.onclick=()=>open(pop.hidden);
- document.addEventListener("pointerdown",e=>{if(!pop.hidden&&!pop.contains(e.target)&&!pill.contains(e.target))open(false)});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!pop.hidden){open(false);pill.focus()}});
+ const pill=$("#connPill"),more=$("#connMore"),pop=$("#connPop"),open=o=>{pop.hidden=!o;more.setAttribute("aria-expanded",o)};DEV.connOpen=open;
+ /* the pill connects in one click: find the KeyStep's port and connect; connected, it shows the options */
+ pill.onclick=()=>DEV.link?open(pop.hidden):quickConnect();more.onclick=()=>open(pop.hidden);
+ document.addEventListener("pointerdown",e=>{if(!pop.hidden&&!pop.contains(e.target)&&!pill.contains(e.target)&&!more.contains(e.target))open(false)});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!pop.hidden){open(false);more.focus()}});
  devStatus("not connected","");$("#devStopBtn").onclick=()=>{if(DEV.busy){DEV.stop=true;devLog("Stopping…")}};
  $("#devConnBtn").onclick=()=>devConnect().catch(e=>{devLog("Error: "+e.message,"bad");devStatus("Error: "+e.message,"bad")})}
-function devStatus(text,cls){const st=$("#devState");st.className="dot "+(cls||"off");st.textContent="";$("#devStateText").textContent="KeyStep: "+text}
+function devStatus(text,cls){const st=$("#devState");st.className="dot "+(cls||"off");st.textContent="";const off=text==="not connected";
+ $("#devStateText").textContent=off?"Connect KeyStep":"KeyStep: "+text;$("#connPill").classList.toggle("off",off);$("#connPill").title=off?"Connect to the KeyStep Pro":"Connection options"}
+/* one click: ask for MIDI access, pick the KeyStep's port, connect; anything missing opens the options instead */
+async function quickConnect(){if(DEV.connecting)return;DEV.connecting=true;devStatus("looking for it…","");
+ try{if(DEV.ports==null||$("#devPort").value==="sim")await devScan();
+  if($("#devPort").value==="sim"){devStatus("not connected","");DEV.connOpen(true);devLog("No KeyStep Pro MIDI port found: plug it in over USB and try again, or pick a port or the simulation here.","bad");return}
+  await devConnect();if(!DEV.link)DEV.connOpen(true)}
+ catch(e){devLog("Error: "+e.message,"bad");devStatus("not connected","");DEV.connOpen(true)}finally{DEV.connecting=false}}
 async function devConnect(){const sel=$("#devPort").value;if(DEV.link&&DEV.link.close)DEV.link.close();DEV.link=null;DEV.gvals={};
  if(sel==="sim"){DEV.link=new SimLink();if($("#simNames"))SIMDEV.namesFw=$("#simNames").checked}
  else{const [oi,ii]=sel.split("|");const out=[...DEV.ports.outputs.values()].find(o=>o.id===oi),inp=[...DEV.ports.inputs.values()].find(i=>i.id===ii);if(!out||!inp){devLog("Port not found.","bad");return}DEV.link=new WebMidiLink(out,inp)}
- const id=await DEV.link.identity();if(id){const v=id.slice(12,16);DEV.fw=`${v[3]}.${v[2]}.${v[1]}`;devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");devStatus(DEV.link.sim?"simulated KeyStep Pro":`KeyStep Pro ${v[3]}.${v[2]}.${v[1]}`,DEV.link.sim?"sim":"real");$("#connPop").hidden=true;$("#connPill").setAttribute("aria-expanded",false);
+ const id=await DEV.link.identity();if(id){const v=id.slice(12,16);DEV.fw=`${v[3]}.${v[2]}.${v[1]}`;devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");devStatus(DEV.link.sim?"simulated KeyStep Pro":`KeyStep Pro ${v[3]}.${v[2]}.${v[1]}`,DEV.link.sim?"sim":"real");DEV.connOpen(false);
   await busy(async()=>{devLog("Reading the global settings…");let n=0;await quietly(DEV.link,async()=>{for(const g of GLOBALS){DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}});devLog(`read ${n} global settings`,"ok")});
   if(DEV.globalsDraw)DEV.globalsDraw();fwDraw();emit("dev:connect")}
- else{devLog("No identity reply. Check the ports and that SysEx permission was granted.","bad");devStatus("no reply","bad");DEV.link=null}}
+ else{devLog("No identity reply. Check the ports and that SysEx permission was granted.","bad");devStatus("not connected","");DEV.link=null}}
 async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">Simulated KeyStep Pro</option>';
  if(!navigator.requestMIDIAccess){devLog("This browser has no Web MIDI (use Chrome or Edge; Firefox needs the site permission add-on).","bad");return}
  try{DEV.ports=await navigator.requestMIDIAccess({sysex:true})}catch(e){devLog("SysEx access was refused: "+e.message,"bad");return}
@@ -2283,7 +2294,7 @@ const ARM=new Map();
 function armed(btn,text){const a=ARM.get(btn);if(a){clearTimeout(a.t);btn.textContent=a.orig;ARM.delete(btn);return true}
  const orig=btn.textContent;btn.textContent=text;ARM.set(btn,{orig,t:setTimeout(()=>{btn.textContent=orig;ARM.delete(btn)},4000)});return false}
 function disarm(){for(const [b,a] of ARM){clearTimeout(a.t);b.textContent=a.orig}ARM.clear()}
-function openConn(){const pop=$("#connPop");pop.hidden=false;$("#connPill").setAttribute("aria-expanded",true)}
+function openConn(){quickConnect()}
 function xprog(x){$("#xprog").hidden=x==null;if(x!=null){$("#xpg").value=x;$("#xst").textContent=`${Math.round(x*100)}%`}}
 
 /* ---------- the open project ---------- */

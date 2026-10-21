@@ -357,18 +357,27 @@ async function busy(fn){if(!DEV.link){devLog("Connect first.","bad");return}if(D
  try{await fn()}catch(e){devLog("Error: "+e.message,"bad")}finally{DEV.busy=false;$("#devStopBtn").hidden=true;document.querySelectorAll(".devArea button.sm,.devArea [data-dev]").forEach(b=>b.disabled=false)}}
 /* the connection controls live in the top bar, so they work in every mode */
 function devBindBar(){$("#devScanBtn").onclick=devScan;$("#simNames").onchange=e=>{SIMDEV.namesFw=e.target.checked};
- const pill=$("#connPill"),pop=$("#connPop"),open=o=>{pop.hidden=!o;pill.setAttribute("aria-expanded",o)};pill.onclick=()=>open(pop.hidden);
- document.addEventListener("pointerdown",e=>{if(!pop.hidden&&!pop.contains(e.target)&&!pill.contains(e.target))open(false)});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!pop.hidden){open(false);pill.focus()}});
+ const pill=$("#connPill"),more=$("#connMore"),pop=$("#connPop"),open=o=>{pop.hidden=!o;more.setAttribute("aria-expanded",o)};DEV.connOpen=open;
+ /* the pill connects in one click: find the KeyStep's port and connect; connected, it shows the options */
+ pill.onclick=()=>DEV.link?open(pop.hidden):quickConnect();more.onclick=()=>open(pop.hidden);
+ document.addEventListener("pointerdown",e=>{if(!pop.hidden&&!pop.contains(e.target)&&!pill.contains(e.target)&&!more.contains(e.target))open(false)});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!pop.hidden){open(false);more.focus()}});
  devStatus("not connected","");$("#devStopBtn").onclick=()=>{if(DEV.busy){DEV.stop=true;devLog("Stopping…")}};
  $("#devConnBtn").onclick=()=>devConnect().catch(e=>{devLog("Error: "+e.message,"bad");devStatus("Error: "+e.message,"bad")})}
-function devStatus(text,cls){const st=$("#devState");st.className="dot "+(cls||"off");st.textContent="";$("#devStateText").textContent="KeyStep: "+text}
+function devStatus(text,cls){const st=$("#devState");st.className="dot "+(cls||"off");st.textContent="";const off=text==="not connected";
+ $("#devStateText").textContent=off?"Connect KeyStep":"KeyStep: "+text;$("#connPill").classList.toggle("off",off);$("#connPill").title=off?"Connect to the KeyStep Pro":"Connection options"}
+/* one click: ask for MIDI access, pick the KeyStep's port, connect; anything missing opens the options instead */
+async function quickConnect(){if(DEV.connecting)return;DEV.connecting=true;devStatus("looking for it…","");
+ try{if(DEV.ports==null||$("#devPort").value==="sim")await devScan();
+  if($("#devPort").value==="sim"){devStatus("not connected","");DEV.connOpen(true);devLog("No KeyStep Pro MIDI port found: plug it in over USB and try again, or pick a port or the simulation here.","bad");return}
+  await devConnect();if(!DEV.link)DEV.connOpen(true)}
+ catch(e){devLog("Error: "+e.message,"bad");devStatus("not connected","");DEV.connOpen(true)}finally{DEV.connecting=false}}
 async function devConnect(){const sel=$("#devPort").value;if(DEV.link&&DEV.link.close)DEV.link.close();DEV.link=null;DEV.gvals={};
  if(sel==="sim"){DEV.link=new SimLink();if($("#simNames"))SIMDEV.namesFw=$("#simNames").checked}
  else{const [oi,ii]=sel.split("|");const out=[...DEV.ports.outputs.values()].find(o=>o.id===oi),inp=[...DEV.ports.inputs.values()].find(i=>i.id===ii);if(!out||!inp){devLog("Port not found.","bad");return}DEV.link=new WebMidiLink(out,inp)}
- const id=await DEV.link.identity();if(id){const v=id.slice(12,16);DEV.fw=`${v[3]}.${v[2]}.${v[1]}`;devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");devStatus(DEV.link.sim?"simulated KeyStep Pro":`KeyStep Pro ${v[3]}.${v[2]}.${v[1]}`,DEV.link.sim?"sim":"real");$("#connPop").hidden=true;$("#connPill").setAttribute("aria-expanded",false);
+ const id=await DEV.link.identity();if(id){const v=id.slice(12,16);DEV.fw=`${v[3]}.${v[2]}.${v[1]}`;devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");devStatus(DEV.link.sim?"simulated KeyStep Pro":`KeyStep Pro ${v[3]}.${v[2]}.${v[1]}`,DEV.link.sim?"sim":"real");DEV.connOpen(false);
   await busy(async()=>{devLog("Reading the global settings…");let n=0;await quietly(DEV.link,async()=>{for(const g of GLOBALS){DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}});devLog(`read ${n} global settings`,"ok")});
   if(DEV.globalsDraw)DEV.globalsDraw();fwDraw();emit("dev:connect")}
- else{devLog("No identity reply. Check the ports and that SysEx permission was granted.","bad");devStatus("no reply","bad");DEV.link=null}}
+ else{devLog("No identity reply. Check the ports and that SysEx permission was granted.","bad");devStatus("not connected","");DEV.link=null}}
 async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">Simulated KeyStep Pro</option>';
  if(!navigator.requestMIDIAccess){devLog("This browser has no Web MIDI (use Chrome or Edge; Firefox needs the site permission add-on).","bad");return}
  try{DEV.ports=await navigator.requestMIDIAccess({sysex:true})}catch(e){devLog("SysEx access was refused: "+e.message,"bad");return}

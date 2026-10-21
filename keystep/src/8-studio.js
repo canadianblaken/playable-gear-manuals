@@ -28,7 +28,7 @@ const ARM=new Map();
 function armed(btn,text){const a=ARM.get(btn);if(a){clearTimeout(a.t);btn.textContent=a.orig;ARM.delete(btn);return true}
  const orig=btn.textContent;btn.textContent=text;ARM.set(btn,{orig,t:setTimeout(()=>{btn.textContent=orig;ARM.delete(btn)},4000)});return false}
 function disarm(){for(const [b,a] of ARM){clearTimeout(a.t);b.textContent=a.orig}ARM.clear()}
-function openConn(){const pop=$("#connPop");pop.hidden=false;$("#connPill").setAttribute("aria-expanded",true)}
+function openConn(){quickConnect()}
 function xprog(x){$("#xprog").hidden=x==null;if(x!=null){$("#xpg").value=x;$("#xst").textContent=`${Math.round(x*100)}%`}}
 
 /* ---------- the open project ---------- */
