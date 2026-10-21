@@ -136,7 +136,7 @@ const CHAPTERS=[
  ["8","Control mode","controlMode"],
  ["9.1","The Utility menu","utility"],
  ];
-/* not in Arturia's manual: the patched firmware from this project, and this web app; [section, title, SHOW key, controls to highlight] */
+/* not in Arturia's manual: KSCON firmware and this web app (KeyStep Con); [section, title, SHOW key, controls to highlight] */
 const NEW_CHAPTERS=[
  ["Firmware","Project names on the display","fwNames",["project"]],
  ["Firmware","Drum pads: Drum + Seq","fwDrumPads",["t0alt","t0seq","s0","s15"]],
@@ -151,8 +151,8 @@ const NEW_CHAPTERS=[
  ["Web app","MIDI files: import parts, export patterns","waMidi",[]],
  ["Web app","Library, backup and restore","waBackup",[]],
  ["Web app","Set list: names, chords and keys for many songs","waSetlist",[]],
- ["Web app","Device settings, including the ones MCC hides","waSettings",[]],
- ["Web app","Firmware: flashing the patched builds","waFirmware",[]],
+ ["Web app","Device settings, including the ones MCC hides, and a MIDI monitor","waSettings",[]],
+ ["Web app","Firmware: flashing KSCON builds","waFirmware",[]],
  ["Web app","Synth CC: your synth's parameters on the five knobs","waCC",["enc0","enc4"]],
  ["Web app","Panel view: zoom to the part in use","waView",[]],
 ];

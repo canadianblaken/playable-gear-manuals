@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KeyStep Pro Interactive Manual</title>
+<title>KeyStep Con</title>
 <style>
 :root{
   --bg:#f4f3ef; --fg:#1d1d1f; --muted:#5b5b60; --card:#ffffff; --line:#d9d7d0; --accent:#2f6fd6; --accent-fg:#fff;
@@ -250,6 +250,7 @@ button:disabled{opacity:.5;cursor:default}
 .cgrid .cb.off{opacity:.35}
 .cgrid .st{height:18px;font-size:10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--muted);cursor:pointer;padding:0}.cgrid .st.on{background:var(--t5);color:#fff}
 .ppanel a,.pjHelp a{color:var(--accent)}
+.mon{font:11.5px/1.45 ui-monospace,monospace;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;height:220px;overflow:auto;white-space:pre}
 .pjHelp{background:var(--card);border-left:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:14px;font-size:13px}
 .pjHelp p{margin:0 0 6px}.pjHelp #devLog{max-height:none}
 /* device settings, synth CC */
@@ -273,14 +274,14 @@ ol.steps{margin:6px 0;padding-left:20px}ol.steps li{margin:3px 0}
 </head>
 <body>
 <header class="top">
-  <h1>KeyStep Pro</h1>
+  <h1>KeyStep Con</h1>
   <div class="modes" role="tablist" aria-label="Mode"><button role="tab" id="modeProj" data-mode="proj" aria-selected="true">Projects</button><button role="tab" id="modeMan" data-mode="man" aria-selected="false">Manual</button><button role="tab" id="modeSet" data-mode="set" aria-selected="false">Device settings</button><button role="tab" id="modeCC" data-mode="cc" aria-selected="false">Synth CC</button></div>
   <span class="ksp" role="group" aria-label="KeyStep Pro connection"><button id="connPill" title="Connect to the KeyStep Pro"><span id="devState" class="dot off"></span><span id="devStateText" aria-live="polite">Connect KeyStep</span></button><button id="connMore" aria-expanded="false" aria-controls="connPop" aria-label="Connection options: port, simulation" title="Port and simulation">▾</button><button id="devStopBtn" class="stop" title="Stop the transfer that is running" hidden>Stop transfer</button>
    <div id="connPop" class="pop" hidden><div class="prow"><label>Port <select id="devPort" aria-label="KeyStep Pro MIDI port"><option value="sim">Simulated KeyStep Pro</option></select></label></div>
     <div class="prow"><button id="devScanBtn" title="Ask the browser for MIDI ports (Chrome/Edge, with SysEx permission)">Find MIDI ports</button><button id="devConnBtn" class="pri">Connect</button></div>
-    <label class="pg"><input type="checkbox" id="simNames" checked> the simulation runs the patched firmware (2.5.99: names, step pads)</label>
+    <label class="pg"><input type="checkbox" id="simNames" checked> the simulation runs KSCON firmware (2.5.99: names, step pads)</label>
     <p class="pg">A real KeyStep needs Chrome or Edge on a computer, with SysEx permission. Safari, including on iPad, has no Web MIDI; the manual still works there.</p></div></span>
-  <details class="about"><summary>Unofficial and playable, firmware 2.5. Not affiliated with Arturia.</summary>A playable recreation of the Arturia KeyStep Pro, built from the 2.5.1 user manual, the MIDI Control Center device definition and a reverse-engineering study of firmware 2.5.20. All sounds are synthesized stand-ins. The Projects and Device settings modes talk to a real KeyStep Pro over Web MIDI, or to this simulation.</details>
+  <details class="about"><summary>KeyStep Con: unofficial firmware, editor and playable manual for the Arturia KeyStep Pro. Not affiliated with Arturia.</summary>A playable recreation of the Arturia KeyStep Pro, built from the 2.5.1 user manual, the MIDI Control Center device definition and a reverse-engineering study of firmware 2.5.20. All sounds are synthesized stand-ins. The Projects and Device settings modes talk to a real KeyStep Pro over Web MIDI, or to this simulation.</details>
 </header>
 <div id="vManual" class="mode" hidden>
 <div class="bar">
@@ -309,8 +310,8 @@ ol.steps{margin:6px 0;padding-left:20px}ol.steps li{margin:3px 0}
         <ul class="chap" id="chapList"></ul>
       </div>
       <div class="card">
-        <h2>What's new from this project</h2>
-        <p class="pg">Everything built here that is not in Arturia's manual. The firmware entries need the patched build (<code>KeyStepPro_2.5.20_names_pads_&lt;commit&gt;.kspf</code>, flashed with MCC); stock 2.5.20 ignores them. Show explains each one and lights the buttons it uses; for the web app, Open it takes you there.</p>
+        <h2>What's new in KeyStep Con</h2>
+        <p class="pg">Everything KeyStep Con adds that is not in Arturia's manual. The firmware entries need KSCON firmware (<code>KSCON_2.5.99_…_build&lt;N&gt;_&lt;commit&gt;.kspf</code>, flashed with MCC); stock 2.5.20 ignores them. Show explains each one and lights the buttons it uses; for the web app, Open it takes you there.</p>
         <ul class="chap" id="newChapList"></ul>
       </div>
       <div class="card">
@@ -518,7 +519,7 @@ const CHAPTERS=[
  ["8","Control mode","controlMode"],
  ["9.1","The Utility menu","utility"],
  ];
-/* not in Arturia's manual: the patched firmware from this project, and this web app; [section, title, SHOW key, controls to highlight] */
+/* not in Arturia's manual: KSCON firmware and this web app (KeyStep Con); [section, title, SHOW key, controls to highlight] */
 const NEW_CHAPTERS=[
  ["Firmware","Project names on the display","fwNames",["project"]],
  ["Firmware","Drum pads: Drum + Seq","fwDrumPads",["t0alt","t0seq","s0","s15"]],
@@ -533,8 +534,8 @@ const NEW_CHAPTERS=[
  ["Web app","MIDI files: import parts, export patterns","waMidi",[]],
  ["Web app","Library, backup and restore","waBackup",[]],
  ["Web app","Set list: names, chords and keys for many songs","waSetlist",[]],
- ["Web app","Device settings, including the ones MCC hides","waSettings",[]],
- ["Web app","Firmware: flashing the patched builds","waFirmware",[]],
+ ["Web app","Device settings, including the ones MCC hides, and a MIDI monitor","waSettings",[]],
+ ["Web app","Firmware: flashing KSCON builds","waFirmware",[]],
  ["Web app","Synth CC: your synth's parameters on the five knobs","waCC",["enc0","enc4"]],
  ["Web app","Panel view: zoom to the part in use","waView",[]],
 ];
@@ -1369,7 +1370,7 @@ const SHOW={
  arranging(){return "<p><b>Chain</b>: hold Chain and press steps in order (up to 16). <b>Scene</b>: Save + Scene + step stores the pattern, chain and mute of all tracks; Scene + step loads it. <b>Step skip</b>: hold a step and press page buttons to skip it on those pages/bars.</p>"},
  controlMode(){S.cur=3;return "<p>Press <b>Control</b>: the selected track becomes the Live Track and its button blinks. The encoders send their CC (Utility &gt; Controller &gt; Knob 1–5). In Step Edit, select a step and turn an encoder to store a value; record while playing to capture moves. Erase + turn clears an encoder's automation.</p>"},
  utility(){openMenu(MENU());return "<p>Shift + Project opens the Utility menu: turn the selection encoder to move, push to enter or edit, Exit to go back. Settings are global and saved when you leave.</p><div class='fw'><b>Firmware:</b> every Utility setting is one of 158 global IDs, readable and writable over SysEx. Misc also has Brightness (ID 152) and Transpose Latch (ID 153, stored inverted).</div>"},
- fwNames(){return "<p>With the patched firmware a project slot has a name of up to 16 characters, shown on the display where the KeyStep would show the project number.</p><p>Give a slot its name in <b>Projects</b> mode: type it above the tracks and <b>Store</b>, or use <b>Send the name only</b> on the Project tab. The Set list writes names for several slots at once.</p><p class='pg'>The name belongs to the slot: saving another project into it keeps the name, Erase Project clears it. The KeyStep cannot send names back, so the slot list shows the last name sent from this browser.</p>"},
+ fwNames(){return "<p>With KSCON firmware a project slot has a name of up to 16 characters, shown on the display where the KeyStep would show the project number.</p><p>Give a slot its name in <b>Projects</b> mode: type it above the tracks and <b>Store</b>, or use <b>Send the name only</b> on the Project tab. The Set list writes names for several slots at once.</p><p class='pg'>The name belongs to the slot: saving another project into it keeps the name, Erase Project clears it. The KeyStep cannot send names back, so the slot list shows the last name sent from this browser.</p>"},
  fwDrumPads(){S.cur=1;if(PADS.mode!==1)padsSet(1);return "<div class='fw'><b>Try it:</b> drum pads are on in the simulation now with track 2 selected. Click the steps (they sound while held), and play keys for track 2 at the same time. Drum + Seq on track 1 turns them off.</div>"+"<p>Hold <b>Drum</b> (track 1 row) and press <b>Seq</b> (track 1 row): the 16 step buttons become drum pads. Step 1 plays drum lane 1, step 2 lane 2 … step 16 lane 16, using the notes of the Drum Map on the drum output channel.</p><p>They work whichever track is selected, so you can play a synth on track 2 with the keys and drums on the steps at the same time. The same combo turns the pads off.</p><p class='pg'>Tested on a KeyStep Pro. The simulation shows a message when the mode changes; the KeyStep does not.</p>"},
  fwChordPads(){S.cur=1;if(PADS.mode!==2)padsSet(2);return "<div class='fw'><b>Try it:</b> chord pads for track 2 are on in the simulation. Click a step for a scale chord; hold keys (right-click latches them) and click a step to keep that chord there.</div>"+"<p>Hold <b>Seq</b> and press <b>Arp</b> on track 2, 3 or 4: the steps become chord pads for that track, played on its MIDI channel.</p><ul class='tight'><li><b>Keep a chord:</b> select the track, hold a chord on the keys and tap a step.</li><li><b>Play it:</b> press the step; the chord sounds while you hold it.</li><li><b>Empty steps</b> play the chords of the track's scale: steps 1–8 triads on degrees 1–8, steps 9–16 sevenths, in the keyboard's lowest octave.</li><li><b>Erase + step</b> forgets a step's chord. <b>Shift + Exit</b> undoes the last keep or erase; again to redo.</li><li><b>Save Project</b> (Project menu) saves the chords with the project. Save + Track does not.</li></ul><p class='pg'>Up to 5 notes per pad, 16 pads per track. The same combo turns the pads off.</p>"},
  fwRootChords(){S.cur=1;if(PADS.mode!==6)padsSet(6);const T=["root + octave","sus2","triad","sus4","power (5th)","6th","7th","triad, octave up","9th","add9","11th","1st inversion","13th","2nd inversion","7sus4","triad, octave down"];
@@ -1383,8 +1384,8 @@ const SHOW={
  waMidi(){return "<p><b>Import</b> one or more .mid files (for example song parts from Logic): each part goes to a track from the pattern you choose, several parts can follow each other on one track, and they can be chained in a scene. Notes snap to 16th steps, keeping timing as time shift and lengths as gate. A part longer than 64 steps asks before continuing on the next patterns.</p><p><b>Export</b> a chain of patterns per track as a .mid file.</p>"},
  waBackup(){return "<p><b>My library</b> keeps projects in this browser: save the open project there, import files, rename, load. <b>Back up</b> reads all 16 projects and the global settings into one file (about ten minutes); <b>Restore</b> puts back the ones you tick and checks each.</p><p class='pg'>Project names and step-pad chords are not in backups: SysEx cannot read them.</p>"},
  waSetlist(){return "<p>Paste or load a set list (song, slot, chord, root and scale per track) and write them all: each slot gets its name, its chord with Chord mode on, and the root and scale on every pattern of the chosen tracks, then everything is read back. Used for the Band Keys songs on slots 1–14.</p>"},
- waSettings(){return "<p>All the KeyStep's global settings in MCC's groups, each written straight away and read back. It also shows the ones MCC leaves out: Program Change Send and Fixed Velocity per track, Brightness and Transpose Latch.</p>"},
- waFirmware(){return "<p>The firmware card shows the running version and the steps to flash a patched build with MCC: back up, close this page, flash the .kspf, reconnect and check. Build files carry their commit in the name; keep the stock file to go back.</p><p class='pg'>The patched builds add project names and the step pads (see the firmware entries above).</p>"},
+ waSettings(){return "<p>All the KeyStep's global settings in MCC's groups, each written straight away and read back. It also shows the ones MCC leaves out: Program Change Send and Fixed Velocity per track, Brightness and Transpose Latch.</p><p>The <b>MIDI monitor</b> lists the notes, CCs and program changes the KeyStep sends over USB, for checking what the sequencer, the pads or the control track really output.</p>"},
+ waFirmware(){return "<p>The firmware card shows the running version and the steps to flash a KSCON build with MCC: back up, close this page, flash the .kspf, reconnect and check. Build files carry their commit in the name; keep the stock file to go back.</p><p class='pg'>KSCON adds project names, the step pads and the KEYSTEP CON startup screen (see the firmware entries above).</p>"},
  waCC(){return "<p>Pick your synth from the MIDI Guide catalogue (447 instruments) and map its parameters to the five encoders in Control mode. Suggestions come from each synth's own controls; mappings can be saved, imported and exported.</p><p class='pg'>Single 7-bit CCs only. It sets up the simulation; writing a mapping to the KeyStep is not done yet.</p>"},
  waView(){return "<p>The drawing of the KeyStep zooms to the part in use: Auto follows the chapter, tour step or tool, or pick Whole, Transport, Tracks, Steps &amp; encoders, Knobs or Keys above it.</p>"},
 };
@@ -1469,7 +1470,7 @@ function boot(){baseState();drawPanel();bindInput();renderChapters();initPanelVi
  const w=new Worker(URL.createObjectURL(new Blob(["setInterval(()=>postMessage(0),10)"],{type:"text/javascript"})));w.onmessage=advance;
  const loop=()=>{advance();if(S.msg&&performance.now()>S.msgT){S.msg=null;dirtyFlag=true}if(dirtyFlag||S.playing||NOTEFLASH.length||S.msg||ARP.some(a=>a.running)||S.trans.some(x=>x.on)||trk().chordOn||S.stepEdit||S.rec||S.patMode||S.control||P.some(p=>p.pend!=null)||S.undo||HELD.size){render();dirtyFlag=false}requestAnimationFrame(loop)};requestAnimationFrame(loop);
 }
-/* ================= Step pads, as in this project's patched firmware (keysteppro tools/pad_hooks.S) =================
+/* ================= Step pads, as in KSCON firmware (~/kscon tools/pad_hooks.S) =================
    Drum + Seq (track 1 row): drum pads. Seq + Arp on track 2-4: chord pads for that track. Seq + Mute on any track: root chords.
    One mode at a time; the same combo turns it off. While a mode is on, the steps are pads: they sound while held, light the keys
    of the selected track, and record like keys when the sequencer records. Chord pads keep the chord held on the keys when a step is
@@ -1569,7 +1570,8 @@ class Link{
 }
 class WebMidiLink extends Link{
  constructor(out,inp){super();this.out=out;this.inp=inp;this.inbox=[];this.part=[];this.sim=false;
-  inp.onmidimessage=e=>{const d=e.data;for(const b of d){if(b===0xF0)this.part=[b];else if(this.part.length){this.part.push(b);if(b===0xF7){this.inbox.push(this.part);this.part=[];if(this.wake)this.wake()}}}}}
+  /* notes, CCs and the like go to the MIDI monitor; clock and active sensing are left out */
+  inp.onmidimessage=e=>{const d=e.data;if(d[0]>=0x80&&d[0]<0xF0){if(DEV.mon)DEV.mon(d);return}if(d[0]>=0xF8)return;for(const b of d){if(b===0xF0)this.part=[b];else if(this.part.length){this.part.push(b);if(b===0xF7){this.inbox.push(this.part);this.part=[];if(this.wake)this.wake()}}}}}
  /* quiet: skip the per-frame log during whole-project transfers (thousands of frames) */
  async send(bytes,o={}){this.inbox=[];if(!this.quiet)devLog("→ "+hex(bytes),"tx");this.out.send(bytes);
   if(o.commit){await sleep(3000);return this.inbox}
@@ -1593,7 +1595,7 @@ const pjKey=(param,ix)=>ix[0]===1&&ix.length===1?param:param+"/"+ix.join(",");
 const SIM_SLOT_PARAMS=[0x32,0x6D,0x6E,0x6F,0x70,0x71,0x36,0x75,0x76,0x77,0x78,0x79],SIM_STEP_DEFAULTS={0x31:15,0x33:15,0x35:15},SIM_PAT_DEFAULTS={0x61:25,0x62:15,0x63:20,0x64:26,0x6D:60,0x6E:7,0x6F:100,0x70:49,0x71:100,0x72:25,0x73:15,0x74:16};
 const SIMDEV={namesFw:true,sess:null,
  handle(b){const out=[];
-  /* identity: stock 2.5.20 build 2085 (0x25 = its low 7 bits); the patched builds say 2.5.99 and count their own builds */
+  /* identity: stock 2.5.20 build 2085 (0x25 = its low 7 bits); KSCON builds say 2.5.99 and count their own builds */
   if(b[1]===0x7E&&b[3]===0x06&&b[4]===0x01)return [[0xF0,0x7E,0x7F,0x06,0x02,0x00,0x20,0x6B,0x02,0x00,0x09,0x00,...(this.namesFw?[0x01,99]:[0x25,0x14]),0x05,0x02,0xF7]];
   if(b.slice(0,6).some((x,i)=>i!==4&&x!==PREFIX[i]))return out;
   const cmd=b[6],p=b[7];
@@ -1915,11 +1917,11 @@ async function quickConnect(){if(DEV.connecting)return;DEV.connecting=true;devSt
 async function devConnect(){const sel=$("#devPort").value;if(DEV.link&&DEV.link.close)DEV.link.close();DEV.link=null;DEV.gvals={};
  if(sel==="sim"){DEV.link=new SimLink();if($("#simNames"))SIMDEV.namesFw=$("#simNames").checked}
  else{const [oi,ii]=sel.split("|");const out=[...DEV.ports.outputs.values()].find(o=>o.id===oi),inp=[...DEV.ports.inputs.values()].find(i=>i.id===ii);if(!out||!inp){devLog("Port not found.","bad");return}DEV.link=new WebMidiLink(out,inp)}
- const id=await DEV.link.identity();if(id){const v=id.slice(12,16);DEV.fw=`${v[3]}.${v[2]}.${v[1]}`;DEV.fwBuild=v[0];devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");devStatus(DEV.link.sim?"simulated KeyStep Pro":`KeyStep Pro ${DEV.fw}${fwPatched()?" (patched)":""}`,DEV.link.sim?"sim":"real");DEV.connOpen(false);
+ const id=await DEV.link.identity();if(id){const v=id.slice(12,16);DEV.fw=`${v[3]}.${v[2]}.${v[1]}`;DEV.fwBuild=v[0];devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");devStatus(DEV.link.sim?"simulated KeyStep Pro":fwPatched()?`KeyStep Pro · KSCON ${DEV.fw} b${DEV.fwBuild}`:`KeyStep Pro ${DEV.fw}`,DEV.link.sim?"sim":"real");DEV.connOpen(false);
   await busy(async()=>{devLog("Reading the global settings…");let n=0;await quietly(DEV.link,async()=>{for(const g of GLOBALS){DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}});devLog(`read ${n} global settings`,"ok")});
   if(DEV.globalsDraw)DEV.globalsDraw();fwDraw();emit("dev:connect")}
  else{devLog("No identity reply. Check the ports and that SysEx permission was granted.","bad");devStatus("not connected","");DEV.link=null}}
-/* 2.5.99 = this project's patched firmware (based on 2.5.20); stock reports 2.5.20 */
+/* 2.5.99 = KSCON firmware (based on 2.5.20); stock reports 2.5.20 */
 const fwPatched=()=>DEV.fw==="2.5.99";
 async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">Simulated KeyStep Pro</option>';
  if(!navigator.requestMIDIAccess){devLog("This browser has no Web MIDI (use Chrome or Edge; Firefox needs the site permission add-on).","bad");return}
@@ -2673,10 +2675,20 @@ function setBuild(){const w=$("#setWrap");if(!SET.built){SET.built=true;
   w.innerHTML=`<div class="card"><h2>KeyStep settings <span style="flex:1"></span><button class="sm" data-a="read">Read from the KeyStep</button></h2>
    <p class="pg">Each change is written to the KeyStep straight away and read back. Settings marked <b style="color:var(--accent)">*</b> are ones MCC does not show.</p>
    <label class="pg"><input type="checkbox" data-a="hid" checked> show the settings MCC hides</label><p class="pg" data-a="msg" aria-live="polite"></p><div class="ggrid" data-a="grid"></div></div>
-   <div class="card" id="fwCard"></div>`;
+   <div class="card" id="fwCard"></div>
+   <div class="card"><h2>MIDI monitor <span style="flex:1"></span><button class="sm2" data-a="mon">Start</button> <button class="sm2" data-a="monclr">Clear</button></h2>
+    <p class="pg">What the KeyStep sends over USB while you play or the sequencer runs: notes, CCs, pitch bend, program changes (clock is left out). Needs a real KeyStep connection.</p><div class="mon" data-a="monlog" aria-live="off"></div></div>`;
+  const ml=w.querySelector("[data-a=monlog]"),mb=w.querySelector("[data-a=mon]");
+  w.querySelector("[data-a=monclr]").onclick=()=>{ml.textContent=""};
+  mb.onclick=()=>{if(DEV.mon){DEV.mon=null;mb.textContent="Start";return}DEV.mon=d=>monLine(ml,d);mb.textContent="Stop";if(!DEV.link||DEV.link.sim)monLine(ml,null)};
   w.querySelector("[data-a=read]").onclick=()=>busy(async()=>{let n=0;await quietly(DEV.link,async()=>{for(const g of GLOBALS){DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}});setMsg(`Read ${n} settings.`);emit("dev:read");setDraw()});
   w.querySelector("[data-a=hid]").onchange=e=>{SET.hidden=e.target.checked;setDraw()};DEV.globalsDraw=setDraw}
  setDraw();fwDraw()}
+/* one line per message: time, channel, what */
+function monLine(ml,d){const t=new Date().toISOString().slice(11,23);let s;
+ if(!d)s="(not connected to a real KeyStep: connect first; the simulation sends nothing here)";
+ else{const st=d[0]&0xF0,ch=(d[0]&15)+1;s=st===0x90&&d[2]?`ch ${ch}  note on   ${nm(d[1])} (${d[1]}) vel ${d[2]}`:st===0x80||st===0x90?`ch ${ch}  note off  ${nm(d[1])} (${d[1]})`:st===0xB0?`ch ${ch}  CC ${d[1]} = ${d[2]}`:st===0xC0?`ch ${ch}  program ${d[1]+1}`:st===0xE0?`ch ${ch}  pitch bend ${(d[1]|d[2]<<7)-8192}`:st===0xD0?`ch ${ch}  pressure ${d[1]}`:st===0xA0?`ch ${ch}  poly pressure ${nm(d[1])} ${d[2]}`:hex(d)}
+ const atEnd=ml.scrollTop+ml.clientHeight>=ml.scrollHeight-4;ml.textContent+=`${t}  ${s}\n`;const lines=ml.textContent.split("\n");if(lines.length>400)ml.textContent=lines.slice(-400).join("\n");if(atEnd)ml.scrollTop=ml.scrollHeight}
 function setMsg(s,bad){const m=$("#setWrap [data-a=msg]");if(m){m.textContent=s;m.style.color=bad?"var(--warn)":""}}
 function setDraw(){const grid=$("#setWrap [data-a=grid]");if(!grid)return;grid.innerHTML="";const groups=[];
  for(const g of GLOBALS){if(g.hidden&&!SET.hidden)continue;let gr=groups.find(x=>x.n===g.g);if(!gr)groups.push(gr={n:g.g,items:[]});gr.items.push(g)}
@@ -2688,11 +2700,11 @@ function setDraw(){const grid=$("#setWrap [data-a=grid]");if(!grid)return;grid.i
    card.appendChild(r)}grid.appendChild(card)}
  if(!Object.keys(DEV.gvals).length)setMsg(DEV.link?"Use Read from the KeyStep to fill in the values.":"Connect to the KeyStep (the pill at the top) to see and change its settings.")}
 function fwDraw(){const c=$("#fwCard");if(!c)return;
- const what=!DEV.fw?"":fwPatched()?` — this project's patched firmware (project names and step pads), based on 2.5.20, patch build ${DEV.fwBuild}`:DEV.fw==="2.5.20"?" — Arturia's stock firmware, or a patched build made before the version change":"";
- c.innerHTML=`<h2>Firmware</h2><p>Running: <b>${DEV.fw?esc(DEV.fw):"not connected"}</b>${esc(what)}${DEV.link&&DEV.link.sim?" (simulation)":""}.</p><p class="pg">Patched builds report <b>2.5.99</b> so they are not mistaken for Arturia's 2.5.20; the KeyStep's Utility &gt; FW version page says the same.</p>
+ const what=!DEV.fw?"":fwPatched()?` — KSCON build ${DEV.fwBuild} (KeyStep Con: project names, step pads, startup screen), based on 2.5.20`:DEV.fw==="2.5.20"?" — Arturia's stock firmware, or a patched build made before the version change":"";
+ c.innerHTML=`<h2>Firmware</h2><p>Running: <b>${DEV.fw?esc(DEV.fw):"not connected"}</b>${esc(what)}${DEV.link&&DEV.link.sim?" (simulation)":""}.</p><p class="pg">KSCON builds report <b>2.5.99</b> so they are not mistaken for Arturia's 2.5.20; the KeyStep's Utility &gt; FW version page says "KSCON 2.5.99 b&lt;build&gt;".</p>
   <p>Flash firmware with Arturia's MIDI Control Center: it uses the KeyStep's update mode, which this page does not drive.</p>
   <ol class="steps"><li><button class="sm2" data-a="bk">Back up all 16 projects</button> first.</li><li>Close this page, or disconnect, so MCC has the KeyStep to itself.</li>
-  <li>In MCC, choose the firmware update and pick the <code>.kspf</code> file. Builds in the KeyStep Pro Firmware folder carry the commit they were built from in their name; keep <code>KeyStepPro_2.5.20_STOCK.kspf</code> to go back.</li>
+  <li>In MCC, choose the firmware update and pick the <code>KSCON_….kspf</code> file. Their names carry the build number and commit; keep <code>KeyStepPro_2.5.20_STOCK.kspf</code> to go back.</li>
   <li>Reconnect here, Recall a project to check it, and restore from the backup if anything is missing.</li></ol>`;
  c.querySelector("[data-a=bk]").onclick=()=>{selectMode("proj");openTool("backup")}}
 boot();

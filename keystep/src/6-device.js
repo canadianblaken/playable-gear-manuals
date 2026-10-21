@@ -29,7 +29,8 @@ class Link{
 }
 class WebMidiLink extends Link{
  constructor(out,inp){super();this.out=out;this.inp=inp;this.inbox=[];this.part=[];this.sim=false;
-  inp.onmidimessage=e=>{const d=e.data;for(const b of d){if(b===0xF0)this.part=[b];else if(this.part.length){this.part.push(b);if(b===0xF7){this.inbox.push(this.part);this.part=[];if(this.wake)this.wake()}}}}}
+  /* notes, CCs and the like go to the MIDI monitor; clock and active sensing are left out */
+  inp.onmidimessage=e=>{const d=e.data;if(d[0]>=0x80&&d[0]<0xF0){if(DEV.mon)DEV.mon(d);return}if(d[0]>=0xF8)return;for(const b of d){if(b===0xF0)this.part=[b];else if(this.part.length){this.part.push(b);if(b===0xF7){this.inbox.push(this.part);this.part=[];if(this.wake)this.wake()}}}}}
  /* quiet: skip the per-frame log during whole-project transfers (thousands of frames) */
  async send(bytes,o={}){this.inbox=[];if(!this.quiet)devLog("→ "+hex(bytes),"tx");this.out.send(bytes);
   if(o.commit){await sleep(3000);return this.inbox}
@@ -53,7 +54,7 @@ const pjKey=(param,ix)=>ix[0]===1&&ix.length===1?param:param+"/"+ix.join(",");
 const SIM_SLOT_PARAMS=[0x32,0x6D,0x6E,0x6F,0x70,0x71,0x36,0x75,0x76,0x77,0x78,0x79],SIM_STEP_DEFAULTS={0x31:15,0x33:15,0x35:15},SIM_PAT_DEFAULTS={0x61:25,0x62:15,0x63:20,0x64:26,0x6D:60,0x6E:7,0x6F:100,0x70:49,0x71:100,0x72:25,0x73:15,0x74:16};
 const SIMDEV={namesFw:true,sess:null,
  handle(b){const out=[];
-  /* identity: stock 2.5.20 build 2085 (0x25 = its low 7 bits); the patched builds say 2.5.99 and count their own builds */
+  /* identity: stock 2.5.20 build 2085 (0x25 = its low 7 bits); KSCON builds say 2.5.99 and count their own builds */
   if(b[1]===0x7E&&b[3]===0x06&&b[4]===0x01)return [[0xF0,0x7E,0x7F,0x06,0x02,0x00,0x20,0x6B,0x02,0x00,0x09,0x00,...(this.namesFw?[0x01,99]:[0x25,0x14]),0x05,0x02,0xF7]];
   if(b.slice(0,6).some((x,i)=>i!==4&&x!==PREFIX[i]))return out;
   const cmd=b[6],p=b[7];
@@ -375,11 +376,11 @@ async function quickConnect(){if(DEV.connecting)return;DEV.connecting=true;devSt
 async function devConnect(){const sel=$("#devPort").value;if(DEV.link&&DEV.link.close)DEV.link.close();DEV.link=null;DEV.gvals={};
  if(sel==="sim"){DEV.link=new SimLink();if($("#simNames"))SIMDEV.namesFw=$("#simNames").checked}
  else{const [oi,ii]=sel.split("|");const out=[...DEV.ports.outputs.values()].find(o=>o.id===oi),inp=[...DEV.ports.inputs.values()].find(i=>i.id===ii);if(!out||!inp){devLog("Port not found.","bad");return}DEV.link=new WebMidiLink(out,inp)}
- const id=await DEV.link.identity();if(id){const v=id.slice(12,16);DEV.fw=`${v[3]}.${v[2]}.${v[1]}`;DEV.fwBuild=v[0];devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");devStatus(DEV.link.sim?"simulated KeyStep Pro":`KeyStep Pro ${DEV.fw}${fwPatched()?" (patched)":""}`,DEV.link.sim?"sim":"real");DEV.connOpen(false);
+ const id=await DEV.link.identity();if(id){const v=id.slice(12,16);DEV.fw=`${v[3]}.${v[2]}.${v[1]}`;DEV.fwBuild=v[0];devLog(`Connected: Arturia family ${id[8]}, firmware ${v[3]}.${v[2]}.${v[1]} (build byte 0x${v[0].toString(16)})${DEV.link.sim?" — simulated":""}`,"ok");devStatus(DEV.link.sim?"simulated KeyStep Pro":fwPatched()?`KeyStep Pro · KSCON ${DEV.fw} b${DEV.fwBuild}`:`KeyStep Pro ${DEV.fw}`,DEV.link.sim?"sim":"real");DEV.connOpen(false);
   await busy(async()=>{devLog("Reading the global settings…");let n=0;await quietly(DEV.link,async()=>{for(const g of GLOBALS){DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}});devLog(`read ${n} global settings`,"ok")});
   if(DEV.globalsDraw)DEV.globalsDraw();fwDraw();emit("dev:connect")}
  else{devLog("No identity reply. Check the ports and that SysEx permission was granted.","bad");devStatus("not connected","");DEV.link=null}}
-/* 2.5.99 = this project's patched firmware (based on 2.5.20); stock reports 2.5.20 */
+/* 2.5.99 = KSCON firmware (based on 2.5.20); stock reports 2.5.20 */
 const fwPatched=()=>DEV.fw==="2.5.99";
 async function devScan(){const s=$("#devPort");s.innerHTML='<option value="sim">Simulated KeyStep Pro</option>';
  if(!navigator.requestMIDIAccess){devLog("This browser has no Web MIDI (use Chrome or Edge; Firefox needs the site permission add-on).","bad");return}

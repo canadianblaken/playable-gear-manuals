@@ -332,10 +332,20 @@ function setBuild(){const w=$("#setWrap");if(!SET.built){SET.built=true;
   w.innerHTML=`<div class="card"><h2>KeyStep settings <span style="flex:1"></span><button class="sm" data-a="read">Read from the KeyStep</button></h2>
    <p class="pg">Each change is written to the KeyStep straight away and read back. Settings marked <b style="color:var(--accent)">*</b> are ones MCC does not show.</p>
    <label class="pg"><input type="checkbox" data-a="hid" checked> show the settings MCC hides</label><p class="pg" data-a="msg" aria-live="polite"></p><div class="ggrid" data-a="grid"></div></div>
-   <div class="card" id="fwCard"></div>`;
+   <div class="card" id="fwCard"></div>
+   <div class="card"><h2>MIDI monitor <span style="flex:1"></span><button class="sm2" data-a="mon">Start</button> <button class="sm2" data-a="monclr">Clear</button></h2>
+    <p class="pg">What the KeyStep sends over USB while you play or the sequencer runs: notes, CCs, pitch bend, program changes (clock is left out). Needs a real KeyStep connection.</p><div class="mon" data-a="monlog" aria-live="off"></div></div>`;
+  const ml=w.querySelector("[data-a=monlog]"),mb=w.querySelector("[data-a=mon]");
+  w.querySelector("[data-a=monclr]").onclick=()=>{ml.textContent=""};
+  mb.onclick=()=>{if(DEV.mon){DEV.mon=null;mb.textContent="Start";return}DEV.mon=d=>monLine(ml,d);mb.textContent="Stop";if(!DEV.link||DEV.link.sim)monLine(ml,null)};
   w.querySelector("[data-a=read]").onclick=()=>busy(async()=>{let n=0;await quietly(DEV.link,async()=>{for(const g of GLOBALS){DEV.gvals[g.id]=await DEV.link.getGlobal(g.id);if(DEV.gvals[g.id]!=null)n++}});setMsg(`Read ${n} settings.`);emit("dev:read");setDraw()});
   w.querySelector("[data-a=hid]").onchange=e=>{SET.hidden=e.target.checked;setDraw()};DEV.globalsDraw=setDraw}
  setDraw();fwDraw()}
+/* one line per message: time, channel, what */
+function monLine(ml,d){const t=new Date().toISOString().slice(11,23);let s;
+ if(!d)s="(not connected to a real KeyStep: connect first; the simulation sends nothing here)";
+ else{const st=d[0]&0xF0,ch=(d[0]&15)+1;s=st===0x90&&d[2]?`ch ${ch}  note on   ${nm(d[1])} (${d[1]}) vel ${d[2]}`:st===0x80||st===0x90?`ch ${ch}  note off  ${nm(d[1])} (${d[1]})`:st===0xB0?`ch ${ch}  CC ${d[1]} = ${d[2]}`:st===0xC0?`ch ${ch}  program ${d[1]+1}`:st===0xE0?`ch ${ch}  pitch bend ${(d[1]|d[2]<<7)-8192}`:st===0xD0?`ch ${ch}  pressure ${d[1]}`:st===0xA0?`ch ${ch}  poly pressure ${nm(d[1])} ${d[2]}`:hex(d)}
+ const atEnd=ml.scrollTop+ml.clientHeight>=ml.scrollHeight-4;ml.textContent+=`${t}  ${s}\n`;const lines=ml.textContent.split("\n");if(lines.length>400)ml.textContent=lines.slice(-400).join("\n");if(atEnd)ml.scrollTop=ml.scrollHeight}
 function setMsg(s,bad){const m=$("#setWrap [data-a=msg]");if(m){m.textContent=s;m.style.color=bad?"var(--warn)":""}}
 function setDraw(){const grid=$("#setWrap [data-a=grid]");if(!grid)return;grid.innerHTML="";const groups=[];
  for(const g of GLOBALS){if(g.hidden&&!SET.hidden)continue;let gr=groups.find(x=>x.n===g.g);if(!gr)groups.push(gr={n:g.g,items:[]});gr.items.push(g)}
@@ -347,10 +357,10 @@ function setDraw(){const grid=$("#setWrap [data-a=grid]");if(!grid)return;grid.i
    card.appendChild(r)}grid.appendChild(card)}
  if(!Object.keys(DEV.gvals).length)setMsg(DEV.link?"Use Read from the KeyStep to fill in the values.":"Connect to the KeyStep (the pill at the top) to see and change its settings.")}
 function fwDraw(){const c=$("#fwCard");if(!c)return;
- const what=!DEV.fw?"":fwPatched()?` — this project's patched firmware (project names and step pads), based on 2.5.20, patch build ${DEV.fwBuild}`:DEV.fw==="2.5.20"?" — Arturia's stock firmware, or a patched build made before the version change":"";
- c.innerHTML=`<h2>Firmware</h2><p>Running: <b>${DEV.fw?esc(DEV.fw):"not connected"}</b>${esc(what)}${DEV.link&&DEV.link.sim?" (simulation)":""}.</p><p class="pg">Patched builds report <b>2.5.99</b> so they are not mistaken for Arturia's 2.5.20; the KeyStep's Utility &gt; FW version page says the same.</p>
+ const what=!DEV.fw?"":fwPatched()?` — KSCON build ${DEV.fwBuild} (KeyStep Con: project names, step pads, startup screen), based on 2.5.20`:DEV.fw==="2.5.20"?" — Arturia's stock firmware, or a patched build made before the version change":"";
+ c.innerHTML=`<h2>Firmware</h2><p>Running: <b>${DEV.fw?esc(DEV.fw):"not connected"}</b>${esc(what)}${DEV.link&&DEV.link.sim?" (simulation)":""}.</p><p class="pg">KSCON builds report <b>2.5.99</b> so they are not mistaken for Arturia's 2.5.20; the KeyStep's Utility &gt; FW version page says "KSCON 2.5.99 b&lt;build&gt;".</p>
   <p>Flash firmware with Arturia's MIDI Control Center: it uses the KeyStep's update mode, which this page does not drive.</p>
   <ol class="steps"><li><button class="sm2" data-a="bk">Back up all 16 projects</button> first.</li><li>Close this page, or disconnect, so MCC has the KeyStep to itself.</li>
-  <li>In MCC, choose the firmware update and pick the <code>.kspf</code> file. Builds in the KeyStep Pro Firmware folder carry the commit they were built from in their name; keep <code>KeyStepPro_2.5.20_STOCK.kspf</code> to go back.</li>
+  <li>In MCC, choose the firmware update and pick the <code>KSCON_….kspf</code> file. Their names carry the build number and commit; keep <code>KeyStepPro_2.5.20_STOCK.kspf</code> to go back.</li>
   <li>Reconnect here, Recall a project to check it, and restore from the backup if anything is missing.</li></ol>`;
  c.querySelector("[data-a=bk]").onclick=()=>{selectMode("proj");openTool("backup")}}

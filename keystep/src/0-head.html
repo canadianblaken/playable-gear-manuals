@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KeyStep Pro Interactive Manual</title>
+<title>KeyStep Con</title>
 <style>
 :root{
   --bg:#f4f3ef; --fg:#1d1d1f; --muted:#5b5b60; --card:#ffffff; --line:#d9d7d0; --accent:#2f6fd6; --accent-fg:#fff;
@@ -250,6 +250,7 @@ button:disabled{opacity:.5;cursor:default}
 .cgrid .cb.off{opacity:.35}
 .cgrid .st{height:18px;font-size:10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--muted);cursor:pointer;padding:0}.cgrid .st.on{background:var(--t5);color:#fff}
 .ppanel a,.pjHelp a{color:var(--accent)}
+.mon{font:11.5px/1.45 ui-monospace,monospace;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;height:220px;overflow:auto;white-space:pre}
 .pjHelp{background:var(--card);border-left:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:14px;font-size:13px}
 .pjHelp p{margin:0 0 6px}.pjHelp #devLog{max-height:none}
 /* device settings, synth CC */
@@ -273,14 +274,14 @@ ol.steps{margin:6px 0;padding-left:20px}ol.steps li{margin:3px 0}
 </head>
 <body>
 <header class="top">
-  <h1>KeyStep Pro</h1>
+  <h1>KeyStep Con</h1>
   <div class="modes" role="tablist" aria-label="Mode"><button role="tab" id="modeProj" data-mode="proj" aria-selected="true">Projects</button><button role="tab" id="modeMan" data-mode="man" aria-selected="false">Manual</button><button role="tab" id="modeSet" data-mode="set" aria-selected="false">Device settings</button><button role="tab" id="modeCC" data-mode="cc" aria-selected="false">Synth CC</button></div>
   <span class="ksp" role="group" aria-label="KeyStep Pro connection"><button id="connPill" title="Connect to the KeyStep Pro"><span id="devState" class="dot off"></span><span id="devStateText" aria-live="polite">Connect KeyStep</span></button><button id="connMore" aria-expanded="false" aria-controls="connPop" aria-label="Connection options: port, simulation" title="Port and simulation">▾</button><button id="devStopBtn" class="stop" title="Stop the transfer that is running" hidden>Stop transfer</button>
    <div id="connPop" class="pop" hidden><div class="prow"><label>Port <select id="devPort" aria-label="KeyStep Pro MIDI port"><option value="sim">Simulated KeyStep Pro</option></select></label></div>
     <div class="prow"><button id="devScanBtn" title="Ask the browser for MIDI ports (Chrome/Edge, with SysEx permission)">Find MIDI ports</button><button id="devConnBtn" class="pri">Connect</button></div>
-    <label class="pg"><input type="checkbox" id="simNames" checked> the simulation runs the patched firmware (2.5.99: names, step pads)</label>
+    <label class="pg"><input type="checkbox" id="simNames" checked> the simulation runs KSCON firmware (2.5.99: names, step pads)</label>
     <p class="pg">A real KeyStep needs Chrome or Edge on a computer, with SysEx permission. Safari, including on iPad, has no Web MIDI; the manual still works there.</p></div></span>
-  <details class="about"><summary>Unofficial and playable, firmware 2.5. Not affiliated with Arturia.</summary>A playable recreation of the Arturia KeyStep Pro, built from the 2.5.1 user manual, the MIDI Control Center device definition and a reverse-engineering study of firmware 2.5.20. All sounds are synthesized stand-ins. The Projects and Device settings modes talk to a real KeyStep Pro over Web MIDI, or to this simulation.</details>
+  <details class="about"><summary>KeyStep Con: unofficial firmware, editor and playable manual for the Arturia KeyStep Pro. Not affiliated with Arturia.</summary>A playable recreation of the Arturia KeyStep Pro, built from the 2.5.1 user manual, the MIDI Control Center device definition and a reverse-engineering study of firmware 2.5.20. All sounds are synthesized stand-ins. The Projects and Device settings modes talk to a real KeyStep Pro over Web MIDI, or to this simulation.</details>
 </header>
 <div id="vManual" class="mode" hidden>
 <div class="bar">
@@ -309,8 +310,8 @@ ol.steps{margin:6px 0;padding-left:20px}ol.steps li{margin:3px 0}
         <ul class="chap" id="chapList"></ul>
       </div>
       <div class="card">
-        <h2>What's new from this project</h2>
-        <p class="pg">Everything built here that is not in Arturia's manual. The firmware entries need the patched build (<code>KeyStepPro_2.5.20_names_pads_&lt;commit&gt;.kspf</code>, flashed with MCC); stock 2.5.20 ignores them. Show explains each one and lights the buttons it uses; for the web app, Open it takes you there.</p>
+        <h2>What's new in KeyStep Con</h2>
+        <p class="pg">Everything KeyStep Con adds that is not in Arturia's manual. The firmware entries need KSCON firmware (<code>KSCON_2.5.99_…_build&lt;N&gt;_&lt;commit&gt;.kspf</code>, flashed with MCC); stock 2.5.20 ignores them. Show explains each one and lights the buttons it uses; for the web app, Open it takes you there.</p>
         <ul class="chap" id="newChapList"></ul>
       </div>
       <div class="card">

@@ -1,4 +1,4 @@
-/* ================= Step pads, as in this project's patched firmware (keysteppro tools/pad_hooks.S) =================
+/* ================= Step pads, as in KSCON firmware (~/kscon tools/pad_hooks.S) =================
    Drum + Seq (track 1 row): drum pads. Seq + Arp on track 2-4: chord pads for that track. Seq + Mute on any track: root chords.
    One mode at a time; the same combo turns it off. While a mode is on, the steps are pads: they sound while held, light the keys
    of the selected track, and record like keys when the sequencer records. Chord pads keep the chord held on the keys when a step is
