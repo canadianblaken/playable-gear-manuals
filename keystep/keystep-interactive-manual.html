@@ -1679,7 +1679,7 @@ async function writeProject(link,song){const p=song.project,problems=[],tracks=s
  const after=await readStates(link,p);for(const [k,v] of after)if(v!==target.get(k))problems.push(`state ${k} reads ${v}, expected ${target.get(k)}`);
  if(song.title)await link.setName(p,displayName(song.title));
  return problems}
-const NAME_OVERRIDES={"Friday I'm in Love":"Friday In Love","World Loves Violence":"World Loves Viol"};
+const NAME_OVERRIDES={};   /* titles that need a shorter name: {"Long Title":"Short"} */
 function displayName(t){const n=NAME_OVERRIDES[t]||t;if(n.length<1||n.length>16||!/^[\x20-\x7E]+$/.test(n))throw new Error(`name “${n}” must be 1–16 printable ASCII characters`);return n}
 
 /* ---------- whole project: MCC's recall plan (BULK, 1c-bulk.js), read and written value for value ----------
