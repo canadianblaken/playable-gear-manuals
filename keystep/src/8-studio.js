@@ -376,10 +376,46 @@ function setDraw(){const grid=$("#setWrap [data-a=grid]");if(!grid)return;grid.i
    card.appendChild(r)}grid.appendChild(card)}
  if(!Object.keys(DEV.gvals).length)setMsg(DEV.link?"Use Read from the KeyStep to fill in the values.":"Connect to the KeyStep (the pill at the top) to see and change its settings.")}
 function fwDraw(){const c=$("#fwCard");if(!c)return;
- const what=!DEV.fw?"":fwPatched()?` — KSCON build ${DEV.fwBuild} (KeyStep Con: project names, step pads, startup screen), based on 2.5.20`:DEV.fw==="2.5.20"?" — Arturia's stock firmware, or a patched build made before the version change":"";
+ const what=!DEV.fw?"":fwPatched()?` — KSCON build ${DEV.fwBuild} (KeyStep Con: project names, step pads, root chords, Make bass, startup screen), based on 2.5.20`:DEV.fw==="2.5.20"?" — Arturia's stock firmware, or a patched build made before the version change":"";
  c.innerHTML=`<h2>Firmware</h2><p>Running: <b>${DEV.fw?esc(DEV.fw):"not connected"}</b>${esc(what)}${DEV.link&&DEV.link.sim?" (simulation)":""}.</p><p class="pg">KSCON builds report <b>2.5.99</b> so they are not mistaken for Arturia's 2.5.20; the KeyStep's Utility &gt; FW version page says "KSCON 2.5.99 b&lt;build&gt;".</p>
-  <p>Flash firmware with Arturia's MIDI Control Center: it uses the KeyStep's update mode, which this page does not drive.</p>
-  <ol class="steps"><li><button class="sm2" data-a="bk">Back up all 16 projects</button> first.</li><li>Close this page, or disconnect, so MCC has the KeyStep to itself.</li>
-  <li>In MCC, choose the firmware update and pick the <code>KSCON_….kspf</code> file. Their names carry the build number and commit; keep <code>KeyStepPro_2.5.20_STOCK.kspf</code> to go back.</li>
-  <li>Reconnect here, Recall a project to check it, and restore from the backup if anything is missing.</li></ol>`;
- c.querySelector("[data-a=bk]").onclick=()=>{selectMode("proj");openTool("backup")}}
+  <h3>Install KSCON build ${FW_PATCH.build}</h3>
+  <p class="pg">This page holds only KSCON's changes, not Arturia's firmware. It makes the KSCON file from your own copy of Arturia's 2.5.20 update (<code>keystep-pro_Firmware_Update_2.5.20.0.kspf</code>, the file MIDI Control Center installs; on a Mac it is in <code>/Library/Arturia/MIDI Control Center/</code>). Everything happens in this browser; nothing is uploaded.</p>
+  <ol class="steps"><li><button class="sm2" data-a="bk">Back up all 16 projects</button> first.</li>
+  <li><label class="sm2 file">Choose Arturia's 2.5.20 file…<input type="file" accept=".kspf" data-a="stock" hidden></label> <span data-a="fwmsg" aria-live="polite"></span></li>
+  <li>Close this page, or disconnect, so MIDI Control Center has the KeyStep to itself. In MCC, choose the firmware update and pick <code>${esc(FW_PATCH.file)}</code>.</li>
+  <li>Reconnect here, Recall a project to check it, and restore from the backup if anything is missing. To go back to stock, flash Arturia's 2.5.20 file the same way.</li></ol>`;
+ c.querySelector("[data-a=bk]").onclick=()=>{selectMode("proj");openTool("backup")};
+ const msg=c.querySelector("[data-a=fwmsg]");
+ c.querySelector("[data-a=stock]").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;msg.className="";msg.textContent="Checking…";
+  try{const r=await fwPatchMake(new Uint8Array(await f.arrayBuffer()));const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([r.bytes],{type:"application/octet-stream"}));a.download=FW_PATCH.file;a.className="sm2";a.textContent="Download "+FW_PATCH.file;
+   msg.className="fwok";msg.textContent=`Checked: every part matches the tested build ${FW_PATCH.build}${r.identical?" byte for byte":""}. `;msg.appendChild(a);devLog(`made ${FW_PATCH.file} from ${f.name}`,"ok")}
+  catch(err){msg.className="fwbad";msg.textContent=err.message;devLog(`${f.name}: ${err.message}`,"bad")}}}
+/* KSCON from the user's stock 2.5.20 .kspf: a stored (uncompressed) zip. Every entry must match the stock SHA-256; the changed
+   runs from FW_PATCH are applied and every result must match the tested build, so only that exact build can come out. */
+const sha256=async b=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",b))].map(x=>x.toString(16).padStart(2,"0")).join("");
+const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC_T[(c^b[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+async function fwPatchMake(zip){const NOT="This is not Arturia's KeyStep Pro 2.5.20 update file";
+ const v=new DataView(zip.buffer,zip.byteOffset,zip.byteLength);let e=zip.length-22;while(e>=0&&v.getUint32(e,true)!==0x06054b50)e--;
+ if(e<0)throw new Error(NOT+" (not a .kspf).");
+ const count=v.getUint16(e+10,true),cdOff=v.getUint32(e+16,true),items=[];let p=cdOff;
+ for(let i=0;i<count;i++){if(v.getUint32(p,true)!==0x02014b50)throw new Error(NOT+" (damaged zip).");
+  const nl=v.getUint16(p+28,true),xl=v.getUint16(p+30,true),cl=v.getUint16(p+32,true),name=new TextDecoder().decode(zip.subarray(p+46,p+46+nl));
+  const lo=v.getUint32(p+42,true),lnl=v.getUint16(lo+26,true),lxl=v.getUint16(lo+28,true),size=v.getUint32(p+20,true);
+  if(v.getUint16(p+10,true)!==0||v.getUint32(lo,true)!==0x04034b50)throw new Error(NOT+" (unexpected zip layout).");
+  items.push({name,cen:zip.slice(p,p+46+nl+xl+cl),loc:zip.slice(lo,lo+30+lnl+lxl),data:zip.subarray(lo+30+lnl+lxl,lo+30+lnl+lxl+size)});p+=46+nl+xl+cl}
+ const want=FW_PATCH.entries;if(items.length!==want.length||items.some((it,i)=>it.name!==want[i].name))throw new Error(NOT+" (different files inside).");
+ const blob=new Uint8Array(await new Response(new Blob([Uint8Array.from(atob(FW_PATCH.blob),c=>c.charCodeAt(0))]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
+ let bp=0;const parts=[],cens=[];let off=0;
+ for(let i=0;i<items.length;i++){const it=items[i],w=want[i];
+  if(await sha256(it.data)!==w.inSha)throw new Error(w.runs.length&&await sha256(it.data)===w.outSha?"This file is already KSCON firmware; choose Arturia's original 2.5.20 file.":NOT+` (${it.name} differs).`);
+  const out=new Uint8Array(w.len);out.set(it.data.subarray(0,Math.min(it.data.length,w.len)));
+  for(const [o,n] of w.runs){out.set(blob.subarray(bp,bp+n),o);bp+=n}
+  if(await sha256(out)!==w.outSha)throw new Error(`Patching ${it.name} did not give the tested result; nothing was made.`);
+  const crc=crc32(out),loc=it.loc.slice(),cen=it.cen.slice(),lv=new DataView(loc.buffer),cv=new DataView(cen.buffer);
+  lv.setUint32(14,crc,true);lv.setUint32(18,out.length,true);lv.setUint32(22,out.length,true);
+  cv.setUint32(16,crc,true);cv.setUint32(20,out.length,true);cv.setUint32(24,out.length,true);cv.setUint32(42,off,true);
+  parts.push(loc,out);cens.push(cen);off+=loc.length+out.length}
+ const cdSize=cens.reduce((s,c)=>s+c.length,0),end=zip.slice(e),ev=new DataView(end.buffer);ev.setUint32(12,cdSize,true);ev.setUint32(16,off,true);
+ const bytes=new Uint8Array(await new Blob([...parts,...cens,end]).arrayBuffer());
+ return {bytes,identical:await sha256(bytes)===FW_PATCH.outZipSha}}
