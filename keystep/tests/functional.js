@@ -278,5 +278,6 @@ $(".featBtns [data-feat=fw]").click();[...$("#featDlg").querySelectorAll(".fi")]
 ok("Show in the manual opens the Make bass entry",$("#featDlg").hidden&&STU.mode==="man"&&/Make bass/.test($("#info h2").textContent),$("#info h2")&&$("#info h2").textContent);
 $(".featBtns [data-feat=editor]").click();[...$("#featDlg").querySelectorAll(".fi")].find(r=>/Scenes and chains/.test(r.textContent)).querySelector("button").click();
 ok("Go there opens the editor on Scenes",$("#featDlg").hidden&&STU.mode==="proj"&&STU.tab===4);
+ok("tip link on the top row and in the welcome popup",$(".featBtns .tipLink")?.href==="https://ko-fi.com/canadianblaken"&&!!$("#welDlg a[href='https://ko-fi.com/canadianblaken']"));
 $(".featBtns [data-feat=manual]").click();dispatchEvent(new KeyboardEvent("keydown",{key:"Escape"}));ok("Escape closes the features popup",$("#featDlg").hidden);
 selectTab("man");try{localStorage.setItem("ksp.mode","proj")}catch(e){}return R;
