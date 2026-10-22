@@ -271,4 +271,12 @@ $("#welDlg [data-a=go]").click();ok("Start closes it and remembers",$("#welDlg")
  localStorage.setItem(FWBAR_KEY,String(FW_PATCH.build-1));fwBarDraw();ok("bar: comes back for a newer build",!b.hidden);
  DEV.link=save.link;DEV.fw=save.fw;DEV.fwBuild=save.b;fwBarDraw()}
 ok("firmware card links to the installer",(selectMode("set"),!!$("#fwCard a[href='kscon-install.html']")));
+/* feature popups from the top row: each lists its features, every Go leads somewhere real */
+for(const k of ["editor","manual","fw"]){$(`.featBtns [data-feat=${k}]`).click();const n=$("#featDlg").querySelectorAll(".fi").length;ok(`features popup ${k} opens with its list`,!$("#featDlg").hidden&&n>=10&&$("#featT").textContent===FEAT[k].t,n);featClose()}
+ok("every firmware feature's Show finds its What's new entry",FEAT.fw.groups.flatMap(g=>g[1]).concat(FEAT.manual.groups.flatMap(g=>g[1])).filter(i=>i[2].chap).every(i=>NEW_CHAPTERS.some(c=>c[2]===i[2].chap)));
+$(".featBtns [data-feat=fw]").click();[...$("#featDlg").querySelectorAll(".fi")].find(r=>/Make bass/.test(r.textContent)).querySelector("button").click();
+ok("Show in the manual opens the Make bass entry",$("#featDlg").hidden&&STU.mode==="man"&&/Make bass/.test($("#info h2").textContent),$("#info h2")&&$("#info h2").textContent);
+$(".featBtns [data-feat=editor]").click();[...$("#featDlg").querySelectorAll(".fi")].find(r=>/Scenes and chains/.test(r.textContent)).querySelector("button").click();
+ok("Go there opens the editor on Scenes",$("#featDlg").hidden&&STU.mode==="proj"&&STU.tab===4);
+$(".featBtns [data-feat=manual]").click();dispatchEvent(new KeyboardEvent("keydown",{key:"Escape"}));ok("Escape closes the features popup",$("#featDlg").hidden);
 selectTab("man");try{localStorage.setItem("ksp.mode","proj")}catch(e){}return R;
