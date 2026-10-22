@@ -9,6 +9,9 @@ async function loadCatalog(){if(MG)return MG;
  if(typeof DecompressionStream!=="function")throw new Error("this browser cannot unpack the catalog (it needs DecompressionStream: Chrome 80, Safari 16.4, Firefox 113 or later)");
  const bin=Uint8Array.from(atob(MIDIGUIDE_GZ),c=>c.charCodeAt(0));
  const cat=JSON.parse(await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"))).text());
+ /* hand-added synths (1d2-extra-synths.js) join the list in the importer's order: manufacturer, then model, ignoring case */
+ const low=(a,b)=>a<b?-1:a>b?1:0,key=d=>[d.m.toLowerCase(),d.d.toLowerCase()];
+ cat.devices.push(...EXTRA_SYNTHS.map(d=>structuredClone(d)));cat.devices.sort((a,b)=>{const x=key(a),y=key(b);return low(x[0],y[0])||low(x[1],y[1])});
  cat.devices.forEach(d=>{d.id=d.m+"/"+d.d;d.params=d.p.map(a=>mgParam(d,a));d.cc=d.params.filter(p=>p.kind==="cc");d.pairs=d.params.filter(isPair);d.unsupported=d.params.filter(p=>p.kind!=="cc")});
  cat.byId=new Map(cat.devices.map(d=>[d.id,d]));return MG=cat}
 /* one catalog row; the importer drops trailing empty fields */
@@ -97,7 +100,7 @@ async function renderCCMap(){const pane=$("#paneCC");if(pane.dataset.built)retur
   <p class="pg" id="ccmCredit"></p></div>`;
  const credit=$("#ccmCredit");credit.append("Synth data: ",ccEl("a",{href:"https://midi.guide/",textContent:"MIDI Guide",target:"_blank",rel:"noopener"})," by Pencil Research, ",
   ccEl("a",{href:"https://creativecommons.org/licenses/by-sa/4.0/",textContent:"CC BY-SA 4.0",target:"_blank",rel:"noopener"}),
-  `, snapshot ${MIDIGUIDE_META.revision.slice(0,12)} (${MIDIGUIDE_META.revisionDate}), converted for this page. Parts that describe a specific device may be owned by its manufacturer. Check a synth's manual before relying on a mapping.`);
+  `, snapshot ${MIDIGUIDE_META.revision.slice(0,12)} (${MIDIGUIDE_META.revisionDate}), converted for this page; synths marked “added” come from the source named on them. Parts that describe a specific device may be owned by its manufacturer. Check a synth's manual before relying on a mapping.`);
  const chSel=$("#ccmCh");for(let c=0;c<16;c++)chSel.add(new Option(String(c+1),c));chSel.add(new Option("Global",GLOBAL_CH));
  const portSel=$("#ccmPort");(GBY[KNOB_IDS.port].o||[[0,"USB"],[1,"MIDI 1"],[2,"MIDI 2"],[3,"All"]]).forEach(([v,n])=>portSel.add(new Option(n,v)));
  chSel.value=CCM.channel;portSel.value=CCM.port;chSel.onchange=()=>{CCM.channel=+chSel.value;ccmSaveDraft()};portSel.onchange=()=>{CCM.port=+portSel.value;ccmSaveDraft()};
@@ -120,7 +123,7 @@ async function renderCCMap(){const pane=$("#paneCC");if(pane.dataset.built)retur
  const search=$("#ccmSearch"),list=$("#ccmList");
  const drawList=()=>{const words=search.value.toLowerCase().split(/\s+/).filter(Boolean),keep=list.value;list.innerHTML="";let n=0;
   for(const d of MG.devices){const hay=(d.m+" "+d.d).toLowerCase();if(CCM.coarse&&!d.pairs.length||!words.every(w=>hay.includes(w)))continue;n++;
-   list.add(new Option(`${d.m} — ${d.d} (${d.cc.length} CC${CCM.coarse?`, ${d.pairs.length} 14-bit pair${d.pairs.length===1?"":"s"}`:""})`,d.id))}
+   list.add(new Option(`${d.m} — ${d.d}${d.src?" · added":""} (${d.cc.length} CC${CCM.coarse?`, ${d.pairs.length} 14-bit pair${d.pairs.length===1?"":"s"}`:""})`,d.id))}
   list.value=keep;$("#ccmCount").textContent=CCM.coarse?`${n} of ${MG.devices.filter(d=>d.pairs.length).length} synths with 14-bit pairs`:`${n} of ${MG.devices.length} synths`};
  const coarseBtn=$("#ccmCoarse"),setCoarse=on=>{CCM.coarse=on;coarseBtn.setAttribute("aria-pressed",on);try{localStorage.setItem(CCMAP_COARSE,on?"1":"0")}catch(e){}};
  coarseBtn.onclick=()=>{setCoarse(!CCM.coarse);drawList();if(CCM.dev)selectDevice(CCM.dev,false);
@@ -135,6 +138,7 @@ function selectDevice(d,suggest){CCM.dev=d||null;const box=$("#ccmDevice");box.i
  if(d){$("#ccmList").value=d.id;const by=k=>d.unsupported.filter(p=>p.kind===k).length;
   const off=offered(d),pairs=CCM.coarse?d.pairs.length:0,not=d.unsupported.filter(p=>!(CCM.coarse&&isPair(p)));
   box.append(ccEl("h3",{textContent:`${d.m} ${d.d}`}),ccEl("div",{className:"pg",textContent:`${d.cc.length} parameter${d.cc.length===1?"":"s"} a knob can send (single CC)${pairs?`, plus ${pairs} 14-bit pair${pairs===1?"":"s"} offered as coarse CC`:""}. Not offered: ${by("nrpn")} NRPN, ${CCM.coarse?by("cc14")-pairs:by("cc14")} 14-bit CC pair, ${by("mode")} channel mode, ${by("other")} other.`}));
+  if(d.src)box.append(ccEl("p",{className:"pg"},["Added to this page from ",ccEl("a",{href:d.src.url,textContent:d.src.name,target:"_blank",rel:"noopener"}),", not from MIDI Guide. "+d.src.note]));
   if(!off.length)box.append(ccEl("p",{className:"need",textContent:"None of this synth's documented parameters can go on a KeyStep Pro knob: a knob sends one 7-bit CC, and this synth uses NRPN, 14-bit CC pairs or other messages for them (listed below). Use the synth's own controls, or software that sends NRPN."}));
   if(!off.length&&!CCM.coarse&&d.pairs.length)box.append(ccEl("p",{className:"pg",textContent:`It has ${d.pairs.length} 14-bit CC pair${d.pairs.length===1?"":"s"}: the “14-bit synths” button offers their coarse halves.`}));
   if(not.length){const det=ccEl("details",{},[ccEl("summary",{textContent:`Parameters not offered (${not.length})`})]),ul=ccEl("ul",{className:"tight pg"});

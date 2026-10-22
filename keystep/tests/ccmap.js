@@ -8,7 +8,14 @@ Object.defineProperty(DEV,"link",{get(){touched.push("DEV.link");return null},se
 const realRMA=navigator.requestMIDIAccess;navigator.requestMIDIAccess=()=>{touched.push("requestMIDIAccess");return Promise.reject(new Error("blocked"))};
 /* catalog */
 const C=await loadCatalog();const dev=id=>C.byId.get(id);
-ok("catalog: 447 devices, row counts match the importer",C.devices.length===447&&Object.entries(MIDIGUIDE_META.counts).every(([k,n])=>C.devices.reduce((s,d)=>s+d.params.filter(p=>p.kind===k).length,0)===n),MIDIGUIDE_META.counts);
+const MGD=C.devices.filter(d=>!d.src);
+ok("catalog: 447 MIDI Guide devices, row counts match the importer",MGD.length===447&&Object.entries(MIDIGUIDE_META.counts).every(([k,n])=>MGD.reduce((s,d)=>s+d.params.filter(p=>p.kind===k).length,0)===n),MIDIGUIDE_META.counts);
+/* hand-added synths: M-VAVE FM-1 on the FM-1+VA firmware, synth CCs and effect CCs as two entries */
+const fmS=dev("M-VAVE/FM-1 (FM-1+VA firmware, MIDI Channel)"),fmX=dev("M-VAVE/FM-1 (FM-1+VA firmware, FX Channel)");
+ok("added synths join the catalog in order, with their source",C.devices.length===447+EXTRA_SYNTHS.length&&fmS&&fmX&&fmS.src.url.includes("baudgirl.com")&&C.devices.every((d,i)=>!i||[C.devices[i-1].m.toLowerCase(),C.devices[i-1].d.toLowerCase()].join("\0")<=[d.m.toLowerCase(),d.d.toLowerCase()].join("\0")),{n:C.devices.length});
+const fmCut=fmS&&fmS.cc.find(p=>p.cc===74),fmRes=fmX&&fmX.cc.find(p=>p.cc===3);
+ok("FM-1 rows: every CC offered, effect ranges capped to the FM-1's maxima",fmS.cc.length===fmS.params.length&&fmX.cc.length===24&&fmCut&&/Cutoff/.test(fmCut.name)&&fmRes.max===10&&fmX.cc.find(p=>p.cc===2).max===107&&!fmS.cc.some(p=>p.cc===109),{s:fmS.cc.length,x:fmX.cc.length});
+const fmSug=suggestKnobs(fmS);ok("FM-1 suggestions come from its own rows",fmSug.filter(Boolean).every(k=>fmS.cc.some(p=>p.cc===k.cc))&&fmSug[0]&&fmSug[0].cc===74&&fmSug[1]&&fmSug[1].cc===71,fmSug.map(k=>k&&k.cc));
 const xd=dev("KORG/minilogue xd"),eg=xd&&xd.cc.find(p=>p.name==="EG target");
 ok("conversion keeps CC, range, section and value meanings",eg&&eg.cc===23&&eg.min===0&&eg.max===127&&eg.section==="EG"&&eg.usage==="0-42: Cutoff; 43-85: Pitch2; 86-127: Pitch",eg);
 ok("only single 7-bit CCs (0-119, no LSB) are offered",C.devices.every(d=>d.cc.every(p=>p.kind==="cc"&&Number.isInteger(p.cc)&&p.cc<=119&&p.lsb===null)));
