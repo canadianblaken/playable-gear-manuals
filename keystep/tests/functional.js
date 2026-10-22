@@ -256,4 +256,10 @@ navigator.requestMIDIAccess=async()=>({outputs:new Map(),inputs:new Map()});DEV.
 $("#connPill").click();for(let i=0;i<40&&$("#connPop").hidden;i++)await W(25);
 ok("no KeyStep port: the options open instead",!DEV.link&&!$("#connPop").hidden&&/Connect KeyStep/.test($("#devStateText").textContent));
 navigator.requestMIDIAccess=rma;DEV.connOpen(false);$("#devPort").value="sim";await devConnect();
+/* welcome: not shown when the page is opened as a file; shown from the about box, says whether this browser can connect, closing remembers it */
+ok("welcome stays closed when opened as a file",$("#welDlg").hidden);
+try{localStorage.removeItem(WEL_KEY)}catch(e){}$("#welAgain").click();
+ok("welcome opens from the about box and checks the browser",!$("#welDlg").hidden&&/can connect to a KeyStep/.test($("#welDlg [data-a=chk]").textContent)&&/Chrome or Edge on a computer/.test($("#welDlg").textContent));
+$("#welDlg [data-a=go]").click();ok("Start closes it and remembers",$("#welDlg").hidden&&localStorage.getItem(WEL_KEY)==="1");
+{const rm=navigator.requestMIDIAccess;navigator.requestMIDIAccess=undefined;welcomeShow();ok("no Web MIDI: says the manual still works",/cannot connect to a KeyStep/.test($("#welDlg [data-a=chk]").textContent));navigator.requestMIDIAccess=rm;dispatchEvent(new KeyboardEvent("keydown",{key:"Escape"}));ok("Escape closes it",$("#welDlg").hidden)}
 selectTab("man");try{localStorage.setItem("ksp.mode","proj")}catch(e){}return R;

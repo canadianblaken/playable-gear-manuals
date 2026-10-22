@@ -263,6 +263,7 @@ button:disabled{opacity:.5;cursor:default}
 .ggrid .fld .r select{max-width:9.5em}.ggrid .fld .r.hid span::after{content:" *";color:var(--accent)}
 ol.steps{margin:6px 0;padding-left:20px}ol.steps li{margin:3px 0}
 /* tool dialog */
+.wel a{color:var(--accent)}.wel h3{font-size:14px;margin:12px 0 4px}.wel ul{margin:0;padding-left:18px}.wel li{margin:4px 0;line-height:1.4}.welCols{display:grid;grid-template-columns:1fr 1fr;gap:18px}@media (max-width:700px){.welCols{grid-template-columns:1fr}}.welChk{margin:10px 0 0;padding:6px 9px;border-radius:7px;border:1px solid var(--line)}.welChk.ok{border-color:var(--ok)}.welChk.no{border-color:var(--warn);color:var(--warn)}.welBtns{display:flex;justify-content:flex-end;margin-top:10px}.welBtns button{font:inherit;padding:6px 18px;border-radius:8px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-fg)}#welAgain{font:inherit;font-size:12px;padding:3px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
 .dlgBack{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow:auto}
 .dlgBack[hidden]{display:none}
 .dlg{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;width:min(920px,100%);box-shadow:0 10px 40px rgba(0,0,0,.4)}
@@ -282,7 +283,7 @@ ol.steps{margin:6px 0;padding-left:20px}ol.steps li{margin:3px 0}
     <div class="prow"><button id="devScanBtn" title="Ask the browser for MIDI ports (Chrome/Edge, with SysEx permission)">Find MIDI ports</button><button id="devConnBtn" class="pri">Connect</button></div>
     <label class="pg"><input type="checkbox" id="simNames" checked> the simulation runs KSCON firmware (2.5.99: names, step pads)</label>
     <p class="pg">A real KeyStep needs Chrome or Edge on a computer, with SysEx permission. Safari, including on iPad, has no Web MIDI; the manual still works there.</p></div></span>
-  <details class="about"><summary>KeyStep Con: unofficial firmware, editor and playable manual for the Arturia KeyStep Pro. Not affiliated with Arturia.</summary>A playable recreation of the Arturia KeyStep Pro, built from the 2.5.1 user manual, the MIDI Control Center device definition and a reverse-engineering study of firmware 2.5.20. All sounds are synthesized stand-ins. The Projects and Device settings modes talk to a real KeyStep Pro over Web MIDI, or to this simulation.</details>
+  <details class="about"><summary>KeyStep Con: unofficial firmware, editor and playable manual for the Arturia KeyStep Pro. Not affiliated with Arturia.</summary><button class="sm2" id="welAgain" style="margin:0 0 6px">What is this site?</button><br>A playable recreation of the Arturia KeyStep Pro, built from the 2.5.1 user manual, the MIDI Control Center device definition and a reverse-engineering study of firmware 2.5.20. All sounds are synthesized stand-ins. The Projects and Device settings modes talk to a real KeyStep Pro over Web MIDI, or to this simulation.</details>
 </header>
 <div id="vManual" class="mode" hidden>
 <div class="bar">
@@ -379,6 +380,20 @@ ol.steps{margin:6px 0;padding-left:20px}ol.steps li{margin:3px 0}
 <div id="vSet" class="mode devArea" hidden><div class="setWrap" id="setWrap"></div></div>
 <div id="vCC" class="mode" hidden><div class="ccWrap"><div id="paneCC"></div></div></div>
 <div id="toolDlg" class="dlgBack" hidden><div class="dlg devArea" role="dialog" aria-modal="true" aria-labelledby="toolDlgT"><div class="dlgHead"><h2 id="toolDlgT"></h2><button id="toolDlgX" aria-label="Close">Close</button></div><p class="pg" id="toolDlgLine"></p><div id="toolHost"></div><details class="pg"><summary>Details and limits</summary><div id="toolDlgAbout"></div></details></div></div>
+<div id="welDlg" class="dlgBack" hidden><div class="dlg wel" role="dialog" aria-modal="true" aria-labelledby="welT"><div class="dlgHead"><h2 id="welT">Welcome to KeyStep Con</h2><button data-a="x" aria-label="Close">Close</button></div>
+ <p>An unofficial companion for the <b>Arturia KeyStep Pro</b>. It runs entirely in this browser: nothing is installed and nothing you open here is uploaded.</p>
+ <div class="welCols"><div><h3>What it does</h3><ul>
+  <li><b>Projects</b>: read any of the KeyStep's 16 projects, edit notes, drums, scenes and settings, and send them back. A replacement for MIDI Control Center, with undo, a library, backups and MIDI file import.</li>
+  <li><b>Device settings</b>: every global setting, including the ones MCC hides, a MIDI monitor, and the <b>KSCON firmware</b> maker.</li>
+  <li><b>Manual</b>: a playable KeyStep Pro with help on every control and guided tours.</li>
+  <li><b>Synth CC</b>: map your synth's controls to the five knobs.</li></ul></div>
+ <div><h3>What you need</h3><ul>
+  <li><b>To look around</b>: any modern browser. Until you connect, the page uses a simulated KeyStep Pro.</li>
+  <li><b>To connect your KeyStep</b>: <b>Chrome or Edge on a computer</b> (Mac, Windows or Linux) and a USB cable. Allow MIDI and SysEx when the browser asks. Safari (also on iPad and iPhone) has no Web MIDI; Firefox needs a site-permission add-on.</li>
+  <li><b>KSCON firmware</b> (optional: drum and chord pads, root chords, Make bass, project names): your own copy of Arturia's 2.5.20 update and MIDI Control Center to flash it. See Device settings &gt; Firmware. The editor also works on stock firmware.</li></ul>
+  <p class="welChk" data-a="chk" aria-live="polite"></p></div></div>
+ <p class="pg">Not affiliated with Arturia. Back up your projects before writing to the KeyStep. Source and notes: <a href="https://github.com/canadianblaken/keystep-con" target="_blank" rel="noopener">github.com/canadianblaken/keystep-con</a>.</p>
+ <div class="welBtns"><button class="pri" data-a="go">Start</button></div></div></div>
 <div id="tip" hidden></div>
 <script>
 "use strict";
@@ -2785,6 +2800,18 @@ async function fwPatchMake(zip){const NOT="This is not Arturia's KeyStep Pro 2.5
  const cdSize=cens.reduce((s,c)=>s+c.length,0),end=zip.slice(e),ev=new DataView(end.buffer);ev.setUint32(12,cdSize,true);ev.setUint32(16,off,true);
  const bytes=new Uint8Array(await new Blob([...parts,...cens,end]).arrayBuffer());
  return {bytes,identical:await sha256(bytes)===FW_PATCH.outZipSha}}
+/* ================= Welcome: what the site does and what it needs; shown once on the website (not when opened as a file) ================= */
+const WEL_KEY="kscon.welcome.v1";
+function welcomeShow(){const d=$("#welDlg");if(!d)return;const chk=d.querySelector("[data-a=chk]"),midi=!!navigator.requestMIDIAccess,phone=/iPhone|iPad|Android/i.test(navigator.userAgent);
+ chk.className="welChk "+(midi&&!phone?"ok":"no");
+ chk.textContent=midi&&!phone?"This browser can connect to a KeyStep: use Connect KeyStep at the top once it is plugged in.":midi?"This browser has Web MIDI, but a KeyStep connects over USB to a computer: use Chrome or Edge on a Mac, Windows or Linux computer to connect. The manual and simulation work here.":"This browser cannot connect to a KeyStep (no Web MIDI). The manual and the simulated KeyStep work here; open the page in Chrome or Edge on a computer to connect.";
+ d.hidden=false;d.scrollTop=0;d.querySelector("[data-a=go]").focus({preventScroll:true})}
+function welcomeClose(){$("#welDlg").hidden=true;try{localStorage.setItem(WEL_KEY,"1")}catch(e){}}
+function welcomeBind(){const d=$("#welDlg");if(!d)return;d.querySelector("[data-a=go]").onclick=welcomeClose;d.querySelector("[data-a=x]").onclick=welcomeClose;
+ d.onclick=e=>{if(e.target===d)welcomeClose()};addEventListener("keydown",e=>{if(e.key==="Escape"&&!d.hidden)welcomeClose()});
+ const again=$("#welAgain");if(again)again.onclick=e=>{e.preventDefault();welcomeShow()};
+ let seen=false;try{seen=!!localStorage.getItem(WEL_KEY)}catch(e){}if(/^https?:/.test(location.protocol)&&!seen)welcomeShow()}
+queueMicrotask(welcomeBind);
 boot();
 </script>
 </body>

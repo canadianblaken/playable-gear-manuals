@@ -419,3 +419,15 @@ async function fwPatchMake(zip){const NOT="This is not Arturia's KeyStep Pro 2.5
  const cdSize=cens.reduce((s,c)=>s+c.length,0),end=zip.slice(e),ev=new DataView(end.buffer);ev.setUint32(12,cdSize,true);ev.setUint32(16,off,true);
  const bytes=new Uint8Array(await new Blob([...parts,...cens,end]).arrayBuffer());
  return {bytes,identical:await sha256(bytes)===FW_PATCH.outZipSha}}
+/* ================= Welcome: what the site does and what it needs; shown once on the website (not when opened as a file) ================= */
+const WEL_KEY="kscon.welcome.v1";
+function welcomeShow(){const d=$("#welDlg");if(!d)return;const chk=d.querySelector("[data-a=chk]"),midi=!!navigator.requestMIDIAccess,phone=/iPhone|iPad|Android/i.test(navigator.userAgent);
+ chk.className="welChk "+(midi&&!phone?"ok":"no");
+ chk.textContent=midi&&!phone?"This browser can connect to a KeyStep: use Connect KeyStep at the top once it is plugged in.":midi?"This browser has Web MIDI, but a KeyStep connects over USB to a computer: use Chrome or Edge on a Mac, Windows or Linux computer to connect. The manual and simulation work here.":"This browser cannot connect to a KeyStep (no Web MIDI). The manual and the simulated KeyStep work here; open the page in Chrome or Edge on a computer to connect.";
+ d.hidden=false;d.scrollTop=0;d.querySelector("[data-a=go]").focus({preventScroll:true})}
+function welcomeClose(){$("#welDlg").hidden=true;try{localStorage.setItem(WEL_KEY,"1")}catch(e){}}
+function welcomeBind(){const d=$("#welDlg");if(!d)return;d.querySelector("[data-a=go]").onclick=welcomeClose;d.querySelector("[data-a=x]").onclick=welcomeClose;
+ d.onclick=e=>{if(e.target===d)welcomeClose()};addEventListener("keydown",e=>{if(e.key==="Escape"&&!d.hidden)welcomeClose()});
+ const again=$("#welAgain");if(again)again.onclick=e=>{e.preventDefault();welcomeShow()};
+ let seen=false;try{seen=!!localStorage.getItem(WEL_KEY)}catch(e){}if(/^https?:/.test(location.protocol)&&!seen)welcomeShow()}
+queueMicrotask(welcomeBind);
