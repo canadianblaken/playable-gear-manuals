@@ -375,50 +375,15 @@ function setDraw(){const grid=$("#setWrap [data-a=grid]");if(!grid)return;grid.i
      const okv=rb===nv;setMsg(`${g.g}: ${g.n} ${okv?"set":"reads "+rb+", expected "+nv}.`,!okv);devLog(`global ${g.id} ${g.n} = ${rb}${okv?"":" (expected "+nv+")"}`,okv?"ok":"bad")});setDraw()};
    card.appendChild(r)}grid.appendChild(card)}
  if(!Object.keys(DEV.gvals).length)setMsg(DEV.link?"Use Read from the KeyStep to fill in the values.":"Connect to the KeyStep (the pill at the top) to see and change its settings.")}
-function fwDraw(){const c=$("#fwCard");if(!c)return;
+function fwDraw(){fwBarDraw();const c=$("#fwCard");if(!c)return;
  const what=!DEV.fw?"":fwPatched()?` — KSCON build ${DEV.fwBuild} (KeyStep Con: project names, step pads, root chords, Make bass, startup screen), based on 2.5.20`:DEV.fw==="2.5.20"?" — Arturia's stock firmware, or a patched build made before the version change":"";
  c.innerHTML=`<h2>Firmware</h2><p>Running: <b>${DEV.fw?esc(DEV.fw):"not connected"}</b>${esc(what)}${DEV.link&&DEV.link.sim?" (simulation)":""}.</p><p class="pg">KSCON builds report <b>2.5.99</b> so they are not mistaken for Arturia's 2.5.20; the KeyStep's Utility &gt; FW version page says "KSCON 2.5.99 b&lt;build&gt;".</p>
   <h3>Install KSCON build ${FW_PATCH.build}</h3>
-  <p class="pg">This page holds only KSCON's changes, not Arturia's firmware. It makes the KSCON file from your own copy of Arturia's 2.5.20 update (<code>keystep-pro_Firmware_Update_2.5.20.0.kspf</code>, the file MIDI Control Center installs; on a Mac it is in <code>/Library/Arturia/MIDI Control Center/</code>). Everything happens in this browser; nothing is uploaded.</p>
-  <ol class="steps"><li><button class="sm2" data-a="bk">Back up all 16 projects</button> first.</li>
-  <li><label class="sm2 file">Choose Arturia's 2.5.20 file…<input type="file" accept=".kspf" data-a="stock" hidden></label> <span data-a="fwmsg" aria-live="polite"></span></li>
-  <li>Close this page, or disconnect, so MIDI Control Center has the KeyStep to itself. In MCC, choose the firmware update and pick <code>${esc(FW_PATCH.file)}</code>.</li>
-  <li>Reconnect here, Recall a project to check it, and restore from the backup if anything is missing. To go back to stock, flash Arturia's 2.5.20 file the same way.</li></ol>`;
+  <p class="pg">The installer makes the KSCON file from your own copy of Arturia's 2.5.20 update and walks you through flashing it with MIDI Control Center.</p>
+  <p><a class="sm2" href="kscon-install.html" target="_blank" rel="noopener">Open the KSCON installer</a> <button class="sm2" data-a="bk">Back up all 16 projects</button></p>`;
  c.querySelector("[data-a=bk]").onclick=()=>{selectMode("proj");openTool("backup")};
- const msg=c.querySelector("[data-a=fwmsg]");
- c.querySelector("[data-a=stock]").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;msg.className="";msg.textContent="Checking…";
-  try{const r=await fwPatchMake(new Uint8Array(await f.arrayBuffer()));const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([r.bytes],{type:"application/octet-stream"}));a.download=FW_PATCH.file;a.className="sm2";a.textContent="Download "+FW_PATCH.file;
-   msg.className="fwok";msg.textContent=`Checked: every part matches the tested build ${FW_PATCH.build}${r.identical?" byte for byte":""}. `;msg.appendChild(a);devLog(`made ${FW_PATCH.file} from ${f.name}`,"ok")}
-  catch(err){msg.className="fwbad";msg.textContent=err.message;devLog(`${f.name}: ${err.message}`,"bad")}}}
-/* KSCON from the user's stock 2.5.20 .kspf: a stored (uncompressed) zip. Every entry must match the stock SHA-256; the changed
-   runs from FW_PATCH are applied and every result must match the tested build, so only that exact build can come out. */
-const sha256=async b=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",b))].map(x=>x.toString(16).padStart(2,"0")).join("");
-const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
-function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC_T[(c^b[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
-async function fwPatchMake(zip){const NOT="This is not Arturia's KeyStep Pro 2.5.20 update file";
- const v=new DataView(zip.buffer,zip.byteOffset,zip.byteLength);let e=zip.length-22;while(e>=0&&v.getUint32(e,true)!==0x06054b50)e--;
- if(e<0)throw new Error(NOT+" (not a .kspf).");
- const count=v.getUint16(e+10,true),cdOff=v.getUint32(e+16,true),items=[];let p=cdOff;
- for(let i=0;i<count;i++){if(v.getUint32(p,true)!==0x02014b50)throw new Error(NOT+" (damaged zip).");
-  const nl=v.getUint16(p+28,true),xl=v.getUint16(p+30,true),cl=v.getUint16(p+32,true),name=new TextDecoder().decode(zip.subarray(p+46,p+46+nl));
-  const lo=v.getUint32(p+42,true),lnl=v.getUint16(lo+26,true),lxl=v.getUint16(lo+28,true),size=v.getUint32(p+20,true);
-  if(v.getUint16(p+10,true)!==0||v.getUint32(lo,true)!==0x04034b50)throw new Error(NOT+" (unexpected zip layout).");
-  items.push({name,cen:zip.slice(p,p+46+nl+xl+cl),loc:zip.slice(lo,lo+30+lnl+lxl),data:zip.subarray(lo+30+lnl+lxl,lo+30+lnl+lxl+size)});p+=46+nl+xl+cl}
- const want=FW_PATCH.entries;if(items.length!==want.length||items.some((it,i)=>it.name!==want[i].name))throw new Error(NOT+" (different files inside).");
- const blob=new Uint8Array(await new Response(new Blob([Uint8Array.from(atob(FW_PATCH.blob),c=>c.charCodeAt(0))]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
- let bp=0;const parts=[],cens=[];let off=0;
- for(let i=0;i<items.length;i++){const it=items[i],w=want[i];
-  if(await sha256(it.data)!==w.inSha)throw new Error(w.runs.length&&await sha256(it.data)===w.outSha?"This file is already KSCON firmware; choose Arturia's original 2.5.20 file.":NOT+` (${it.name} differs).`);
-  const out=new Uint8Array(w.len);out.set(it.data.subarray(0,Math.min(it.data.length,w.len)));
-  for(const [o,n] of w.runs){out.set(blob.subarray(bp,bp+n),o);bp+=n}
-  if(await sha256(out)!==w.outSha)throw new Error(`Patching ${it.name} did not give the tested result; nothing was made.`);
-  const crc=crc32(out),loc=it.loc.slice(),cen=it.cen.slice(),lv=new DataView(loc.buffer),cv=new DataView(cen.buffer);
-  lv.setUint32(14,crc,true);lv.setUint32(18,out.length,true);lv.setUint32(22,out.length,true);
-  cv.setUint32(16,crc,true);cv.setUint32(20,out.length,true);cv.setUint32(24,out.length,true);cv.setUint32(42,off,true);
-  parts.push(loc,out);cens.push(cen);off+=loc.length+out.length}
- const cdSize=cens.reduce((s,c)=>s+c.length,0),end=zip.slice(e),ev=new DataView(end.buffer);ev.setUint32(12,cdSize,true);ev.setUint32(16,off,true);
- const bytes=new Uint8Array(await new Blob([...parts,...cens,end]).arrayBuffer());
- return {bytes,identical:await sha256(bytes)===FW_PATCH.outZipSha}}
+}
+
 /* ================= Welcome: what the site does and what it needs; shown once on the website (not when opened as a file) ================= */
 const WEL_KEY="kscon.welcome.v1";
 function welcomeShow(){const d=$("#welDlg");if(!d)return;const chk=d.querySelector("[data-a=chk]"),midi=!!navigator.requestMIDIAccess,phone=/iPhone|iPad|Android/i.test(navigator.userAgent);
@@ -429,5 +394,16 @@ function welcomeClose(){$("#welDlg").hidden=true;try{localStorage.setItem(WEL_KE
 function welcomeBind(){const d=$("#welDlg");if(!d)return;d.querySelector("[data-a=go]").onclick=welcomeClose;d.querySelector("[data-a=x]").onclick=welcomeClose;
  d.onclick=e=>{if(e.target===d)welcomeClose()};addEventListener("keydown",e=>{if(e.key==="Escape"&&!d.hidden)welcomeClose()});
  const again=$("#welAgain");if(again)again.onclick=e=>{e.preventDefault();welcomeShow()};
- let seen=false;try{seen=!!localStorage.getItem(WEL_KEY)}catch(e){}if(/^https?:/.test(location.protocol)&&!seen)welcomeShow()}
+ let seen=false;try{seen=!!localStorage.getItem(WEL_KEY)}catch(e){}if(/^https?:/.test(location.protocol)&&!seen&&location.hash!=="#backup")welcomeShow()}
 queueMicrotask(welcomeBind);
+/* the bar at the top: offers the KSCON installer; says when a connected KeyStep has an older build; hidden when it runs this
+   build or after ×, until a newer build comes out */
+const FWBAR_KEY="kscon.fwbar.hidden";
+function fwBarDraw(){const b=$("#fwBar");if(!b)return;const n=FW_PATCH.build,real=DEV.link&&!DEV.link.sim&&DEV.fw;let hid=0;try{hid=+(localStorage.getItem(FWBAR_KEY)||0)}catch(e){}
+ const cur=real&&fwPatched()?DEV.fwBuild:0;
+ if((cur&&cur>=n)||(!cur&&hid>=n)){b.hidden=true;return}
+ b.querySelector("[data-a=txt]").textContent=cur?`Update available: KSCON build ${n} (your KeyStep runs build ${cur}).`:`KSCON firmware for the KeyStep Pro: drum and chord pads on the steps, root chords, Make bass and project names. Free; made from your own copy of Arturia's 2.5.20.`;
+ b.querySelector("[data-a=go]").textContent=cur?`Update to build ${n}`:"Install KSCON firmware";b.hidden=false}
+function fwBarBind(){const b=$("#fwBar");if(!b)return;b.querySelector("[data-a=x]").onclick=()=>{try{localStorage.setItem(FWBAR_KEY,String(FW_PATCH.build))}catch(e){}b.hidden=true};fwBarDraw();
+ if(location.hash==="#backup"){try{localStorage.setItem(WEL_KEY,"1")}catch(e){}selectMode("proj");openTool("backup")}}
+queueMicrotask(fwBarBind);

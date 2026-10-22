@@ -262,4 +262,13 @@ try{localStorage.removeItem(WEL_KEY)}catch(e){}$("#welAgain").click();
 ok("welcome opens from the about box and checks the browser",!$("#welDlg").hidden&&/can connect to a KeyStep/.test($("#welDlg [data-a=chk]").textContent)&&/Chrome or Edge on a computer/.test($("#welDlg").textContent));
 $("#welDlg [data-a=go]").click();ok("Start closes it and remembers",$("#welDlg").hidden&&localStorage.getItem(WEL_KEY)==="1");
 {const rm=navigator.requestMIDIAccess;navigator.requestMIDIAccess=undefined;welcomeShow();ok("no Web MIDI: says the manual still works",/cannot connect to a KeyStep/.test($("#welDlg [data-a=chk]").textContent));navigator.requestMIDIAccess=rm;dispatchEvent(new KeyboardEvent("keydown",{key:"Escape"}));ok("Escape closes it",$("#welDlg").hidden)}
+/* the firmware bar: offers the installer, says when a real KeyStep has an older build, hides on this build and after × until a newer build */
+{const b=$("#fwBar"),save={link:DEV.link,fw:DEV.fw,b:DEV.fwBuild};try{localStorage.removeItem(FWBAR_KEY)}catch(e){}
+ DEV.link={sim:false};DEV.fw="2.5.20";fwBarDraw();ok("bar: stock KeyStep is offered the installer",!b.hidden&&/Install KSCON firmware/.test(b.textContent)&&b.querySelector("[data-a=go]").getAttribute("href")==="kscon-install.html");
+ DEV.fw="2.5.99";DEV.fwBuild=FW_PATCH.build-1;fwBarDraw();ok("bar: an older KSCON build is offered the update",!b.hidden&&new RegExp(`Update to build ${FW_PATCH.build}`).test(b.textContent)&&/runs build/.test(b.textContent),b.textContent);
+ DEV.fwBuild=FW_PATCH.build;fwBarDraw();ok("bar: hidden when the KeyStep runs this build",b.hidden);
+ DEV.link=null;DEV.fw=null;fwBarDraw();b.querySelector("[data-a=x]").click();fwBarDraw();ok("bar: × hides it for this build",b.hidden&&localStorage.getItem(FWBAR_KEY)===String(FW_PATCH.build));
+ localStorage.setItem(FWBAR_KEY,String(FW_PATCH.build-1));fwBarDraw();ok("bar: comes back for a newer build",!b.hidden);
+ DEV.link=save.link;DEV.fw=save.fw;DEV.fwBuild=save.b;fwBarDraw()}
+ok("firmware card links to the installer",(selectMode("set"),!!$("#fwCard a[href='kscon-install.html']")));
 selectTab("man");try{localStorage.setItem("ksp.mode","proj")}catch(e){}return R;

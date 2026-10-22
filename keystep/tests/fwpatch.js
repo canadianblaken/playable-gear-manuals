@@ -7,8 +7,11 @@ const err=async b=>{try{await fwPatchMake(b);return "no error"}catch(e){return e
 ok("a KSCON file is refused",/already KSCON firmware/.test(await err(r.bytes)),await err(r.bytes));
 const bad=stock.slice();bad[stock.length>>1]^=1;ok("a changed stock file is refused",/not Arturia's KeyStep Pro 2\.5\.20/.test(await err(bad)),await err(bad));
 ok("something that is not a .kspf is refused",/not a \.kspf/.test(await err(new Uint8Array(1000))),await err(new Uint8Array(1000)));
-/* the card: pick the file, get a download link named after the build */
-$("#devPort").value="sim";await devConnect();selectMode("set");const inp=$("#fwCard [data-a=stock]"),dt=new DataTransfer();dt.items.add(new File([stock],"keystep-pro_Firmware_Update_2.5.20.0.kspf"));inp.files=dt.files;inp.dispatchEvent(new Event("change"));
-for(let i=0;i<50&&!$("#fwCard a[download]")&&!/fwbad/.test($("#fwCard [data-a=fwmsg]").className);i++)await new Promise(q=>setTimeout(q,100));
-const a=$("#fwCard a[download]");ok("Firmware card offers the download",!!a&&a.download===FW_PATCH.file&&/byte for byte/.test($("#fwCard [data-a=fwmsg]").textContent),$("#fwCard [data-a=fwmsg]").textContent);
+/* the installer page: pick the file, get a download link named after the build (the page is loaded by test_web_patch.py) */
+const inp=$("#stock"),dt=new DataTransfer();dt.items.add(new File([stock],"keystep-pro_Firmware_Update_2.5.20.0.kspf"));inp.files=dt.files;inp.dispatchEvent(new Event("change"));
+for(let i=0;i<50&&$("#dl").hidden&&!/bad/.test($("#msg").className);i++)await new Promise(q=>setTimeout(q,100));
+ok("installer offers the download",!$("#dl").hidden&&$("#dl").download===FW_PATCH.file&&/byte for byte/.test($("#msg").textContent),$("#msg").textContent);
+const bad2=new File([bad],"x.kspf"),dt2=new DataTransfer();dt2.items.add(bad2);inp.files=dt2.files;inp.dispatchEvent(new Event("change"));
+for(let i=0;i<50&&!/bad/.test($("#msg").className);i++)await new Promise(q=>setTimeout(q,100));
+ok("installer refuses a changed file and hides the download",$("#dl").hidden&&/not Arturia's/.test($("#msg").textContent),$("#msg").textContent);
 R.outSha=await sha256(r.bytes);return R;
