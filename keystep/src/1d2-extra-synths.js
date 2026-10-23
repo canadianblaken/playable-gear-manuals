@@ -2,7 +2,10 @@
    [section, name, description, kind, cc, lsb, nrpn msb, nrpn lsb, cc min, cc max, cc default, nrpn min, nrpn max, nrpn default, centered, notes, usage].
    A usage without "~" marks a switch or a list, which works on a knob but is not suggested. Each synth names its source in src.
    M-VAVE FM-1 rows: Baud Girl's FM-1+VA firmware manual, Version 102, sections 11.8 and 11.9 (https://baudgirl.com/work/FM-1+VA/manual).
-   M-VAVE's own firmware does not answer these CCs. The synth CCs and the effect CCs arrive on two different channels, so each is its own entry. */
+   M-VAVE's own firmware does not answer these CCs. The synth CCs and the effect CCs arrive on two different channels, so each is its own entry.
+   1010music Blackbox rows: Blackbox 3.0 User Manual (2023-05-04), "Mod Target?" columns of the pad, LFO, sample, granular and FX tables, and "Use MIDI Devices".
+   The Blackbox has no fixed CC chart: CC 1, 7 and 10 are its MODW, MVOL and MPAN sources, and every other CC is MIDI-learned per parameter,
+   so its CC numbers here are this page's own suggestion (free CCs, the usual synth numbers where there is one). */
 const EXTRA_SYNTHS=(()=>{
  const src={name:"Baud Girl's FM-1+VA manual (Version 102)",url:"https://baudgirl.com/work/FM-1+VA/manual",
   note:"Needs the FM-1+VA firmware by Baud Girl; M-VAVE's own firmware does not answer these CCs."};
@@ -52,4 +55,23 @@ const EXTRA_SYNTHS=(()=>{
   r(3,"Distortion on/off","",12,127,onOff),r(3,"Distortion Gain","",13,100),r(3,"Distortion Tone","",14,100),r(3,"Distortion Level","",15,100),
   r(4,"Chorus on/off","",16,127,onOff),r(4,"Chorus Rate","",17,100),r(4,"Chorus Depth","",18,100),r(4,"Chorus Mix","",19,100),
   r(5,"Phaser on/off","",20,127,onOff),r(5,"Phaser Rate","",21,100),r(5,"Phaser Depth","",22,100),r(5,"Phaser Mix","",23,100)]};
- return [synth,fx]})();
+ const L="Learn: on the Blackbox select the parameter, push INFO, pick a Source row, touch Learn, turn this knob; then set Amount (the knob moves the on-screen value by up to ±Amount)";
+ const b=(s,name,desc,cc,centered,notes)=>[s,name,desc,"cc",cc,null,null,null,0,127,null,null,null,null,centered?1:0,notes??L,""];
+ const bb={m:"1010music",d:"Blackbox (MIDI Learn)",src:{name:"1010music Blackbox 3.0 User Manual",url:"https://1010music.com/product/blackbox",
+  note:"The Blackbox has no fixed CC chart: you MIDI-learn each CC onto a parameter, and the mapping is saved in the Blackbox preset with its channel. The CC numbers here are a suggested layout, not Blackbox defaults. A pad takes at most eight CC mappings; a ninth is dropped. CCs are not recorded into sequences."},
+  s:["Fixed MIDI sources","Pad","Pad LFO","Sample position","Granular","Effects"],p:[
+  b(0,"Mod wheel (MODW)","Choose MODW as a parameter's mod Source; follows the pad's MIDI In channel",1,0,"No Learn needed: pick MODW in a mod slot and set Amount"),
+  b(0,"Volume (MVOL)","Choose MVOL as a parameter's mod Source; follows the pad's MIDI In channel",7,0,"No Learn needed: pick MVOL in a mod slot and set Amount"),
+  b(0,"Pan (MPAN)","Choose MPAN as a parameter's mod Source; follows the pad's MIDI In channel",10,1,"No Learn needed: pick MPAN in a mod slot and set Amount"),
+  b(1,"Level","Pad level, -96 to +12 dB",20),b(1,"Pitch","Pad pitch, -24 to +24 semitones",21,1),
+  b(1,"Filter (cutoff)","One knob: negative is low pass, positive is high pass",74,1),b(1,"Resonance","Boost around the filter cutoff",71),
+  b(1,"Attack","Envelope attack, 0 to 9 s (log)",73),b(1,"Decay","Envelope decay, 0 to 38 s (log)",75),b(1,"Release","Envelope release, 0 to 38 s (log)",72),
+  b(1,"Pan","Pad pan on a stereo output",22,1),
+  b(2,"LFO Rate","The pad's LFO rate",76),b(2,"LFO Depth","The pad's LFO depth",77),
+  b(3,"Start","Sample start point",23),b(3,"Length","Sample length when Loop Mode is None",24),b(3,"Loop Start","Loop start point",25),b(3,"Loop End","Loop end point",26),
+  b(4,"Speed","Granular pads: how fast playback moves through the grains, 0-200 %",27),
+  b(5,"Delay time","FX1 Delay length (in steps when Beat Sync is on)",85,0,L+". Effects: push FX, touch FX1 or FX2, push INFO, select the parameter, push INFO"),
+  b(5,"Delay Feedback","FX1 Delay feedback",86,0,L+". Effects: push FX, touch FX1 or FX2, push INFO, select the parameter, push INFO"),
+  b(5,"Reverb Decay","FX2 Reverb decay",87,0,L+". Effects: push FX, touch FX1 or FX2, push INFO, select the parameter, push INFO"),
+  b(5,"Reverb Damping","FX2 Reverb high-frequency damping",88,0,L+". Effects: push FX, touch FX1 or FX2, push INFO, select the parameter, push INFO")]};
+ return [synth,fx,bb]})();

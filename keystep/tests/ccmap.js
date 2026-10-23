@@ -16,6 +16,9 @@ ok("added synths join the catalog in order, with their source",C.devices.length=
 const fmCut=fmS&&fmS.cc.find(p=>p.cc===74),fmRes=fmX&&fmX.cc.find(p=>p.cc===3);
 ok("FM-1 rows: every CC offered, effect ranges capped to the FM-1's maxima",fmS.cc.length===fmS.params.length&&fmX.cc.length===24&&fmCut&&/Cutoff/.test(fmCut.name)&&fmRes.max===10&&fmX.cc.find(p=>p.cc===2).max===107&&!fmS.cc.some(p=>p.cc===109),{s:fmS.cc.length,x:fmX.cc.length});
 const fmSug=suggestKnobs(fmS);ok("FM-1 suggestions come from its own rows",fmSug.filter(Boolean).every(k=>fmS.cc.some(p=>p.cc===k.cc))&&fmSug[0]&&fmSug[0].cc===74&&fmSug[1]&&fmSug[1].cc===71,fmSug.map(k=>k&&k.cc));
+/* hand-added: 1010music Blackbox, MIDI-learned CCs */
+const bbx=dev("1010music/Blackbox (MIDI Learn)"),bbSug=bbx&&suggestKnobs(bbx);
+ok("Blackbox: every row offered, fixed MODW/MVOL/MPAN on CC 1/7/10, no CC used twice, suggestions from its own rows",bbx&&bbx.cc.length===bbx.params.length&&bbx.src.note.includes("MIDI-learn")&&[1,7,10].every(c=>bbx.cc.some(p=>p.cc===c&&p.section==="Fixed MIDI sources"))&&new Set(bbx.cc.map(p=>p.cc)).size===bbx.cc.length&&bbSug[0]&&bbSug[0].cc===74&&bbSug[1]&&bbSug[1].cc===71&&bbSug[3]&&bbSug[3].cc===72&&bbSug[4]&&bbSug[4].cc===76,{n:bbx&&bbx.cc.length,sug:bbSug&&bbSug.map(k=>k&&k.cc)});
 const xd=dev("KORG/minilogue xd"),eg=xd&&xd.cc.find(p=>p.name==="EG target");
 ok("conversion keeps CC, range, section and value meanings",eg&&eg.cc===23&&eg.min===0&&eg.max===127&&eg.section==="EG"&&eg.usage==="0-42: Cutoff; 43-85: Pitch2; 86-127: Pitch",eg);
 ok("only single 7-bit CCs (0-119, no LSB) are offered",C.devices.every(d=>d.cc.every(p=>p.kind==="cc"&&Number.isInteger(p.cc)&&p.cc<=119&&p.lsb===null)));
