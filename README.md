@@ -31,6 +31,10 @@ The tests drive headless Chrome over the DevTools protocol (Node 22+, no depende
 
 This project is not affiliated with, endorsed by, or connected to Pioneer DJ / AlphaTheta, 1010music, Squarp Instruments, or Arturia. Product names are trademarks of their owners and are used only to say what each simulation is of. No manuals, firmware, samples or artwork from those companies are included. The explanations are written from scratch, with page references to the official manuals.
 
+## Support
+
+If these pages are useful to you, you can leave a tip on [Ko-fi](https://ko-fi.com/canadianblaken).
+
 ## License
 
 MIT, see [LICENSE](LICENSE). It covers the code and text in this repository only, not the instruments, their names or their manuals. Exception: `keystep/src/1d-midiguide.js` (and the copy of it inside the built KeyStep pages) is an adaptation of the MIDI Guide dataset by Pencil Research and is licensed CC BY-SA 4.0; see `keystep/README.md`.
