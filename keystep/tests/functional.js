@@ -37,6 +37,9 @@ down("s3");ok("the pad then plays the kept chord",PADS.down.get(3).notes.join()=
 const lit=Array(37).fill(null);padLights(lit,1,48,false,"x");ok("its notes light the keys of the selected track",lit[12]===TCOL[1]&&lit[16]===TCOL[1]&&lit[19]===TCOL[1]);up("s3");
 down("erase");tap("s3");up("erase");ok("Erase + step forgets it",padChords(1)[3]===null);
 down("shift");tap("exit");up("shift");ok("Shift + Exit undoes that",padChords(1)[3]&&padChords(1)[3].join()==="60,64,67");
+trk(1).oct=-2;down("s3");ok("a kept chord moves with the octave",PADS.down.get(3).notes.join()==="36,40,43",PADS.down.get(3).notes);up("s3");
+down("k2");down("k5");down("k9");tap("s5");up("k2");up("k5");up("k9");down("s5");ok("one kept at another octave plays where it was held",PADS.down.get(5).notes.join()==="26,29,33",PADS.down.get(5).notes);up("s5");
+trk(1).oct=0;down("s5");ok("and moves back up with the octave",PADS.down.get(5).notes.join()==="50,53,57",PADS.down.get(5).notes);up("s5");
 down("t1seq");tap("t1mute");up("t1seq");ok("Seq + Mute: root chords for track 2, mute untouched",PADS.mode===6&&!S.mute[1],[PADS.mode,S.mute[1]]);
 down("k14");ok("a key picks the root and makes no sound",PADS.root===62&&!S.keysDown.get(14).v,PADS.root);up("k14");
 down("s2");ok("step 3 plays a triad on that root",PADS.down.get(2).notes.join()==="62,65,69",PADS.down.get(2).notes);up("s2");

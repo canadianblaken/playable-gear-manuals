@@ -2,7 +2,7 @@
    Drum + Seq (track 1 row): drum pads. Seq + Arp on track 2-4: chord pads for that track. Seq + Mute on any track: root chords.
    One mode at a time; the same combo turns it off. While a mode is on, the steps are pads: they sound while held, light the keys
    of the selected track, and record like keys when the sequencer records. Chord pads keep the chord held on the keys when a step is
-   tapped (Erase + step forgets it, Shift + Exit undoes the last change); empty pads play the scale's chords. Root-chord keys only
+   tapped (it moves with the octave buttons) (Erase + step forgets it, Shift + Exit undoes the last change); empty pads play the scale's chords. Root-chord keys only
    pick the root, silently. The device shows no message for these; the simulation does, so the mode is visible. */
 const PADS={mode:0,root:null,down:new Map(),undo:null};
 const PAD_CHORD_NOTES=5,PAD_U=0x40,PAD_D=0x20;
@@ -38,8 +38,9 @@ function padPress(i){if(PADS.down.has(i))return;const m=PADS.mode,rec=S.rec==="r
  if(m<5){const slots=padChords(t);
   if(held("erase")){PADS.undo={t,pad:i,prev:slots[i]};slots[i]=null;msg(`Pad ${i+1}\nforgotten`,900);PADS.down.set(i,{lit:[]});emit("pads:erase");dirty();return}
   if(S.cur===t&&S.keysDown.size){const keys=[...new Set([...S.keysDown.values()].map(kd=>kd.notes&&kd.notes[0]).filter(x=>x!=null))].sort((a,b)=>a-b).slice(0,PAD_CHORD_NOTES);
-   if(keys.length){PADS.undo={t,pad:i,prev:slots[i]};slots[i]=keys;msg(`Pad ${i+1}\n${keys.map(nm).join(" ")}`,1200);PADS.down.set(i,{lit:[]});emit("pads:capture");dirty();return}}
-  notes=slots[i]||scaleChord(t,i)}
+   if(keys.length){PADS.undo={t,pad:i,prev:slots[i]};slots[i]=keys.map(p=>p-12*trk(t).oct);msg(`Pad ${i+1}\n${keys.map(nm).join(" ")}`,1200);PADS.down.set(i,{lit:[]});emit("pads:capture");dirty();return}}
+  /* a kept chord is stored as played at octave 0 and moves with the octave buttons */
+  notes=slots[i]?slots[i].map(p=>p+12*trk(t).oct).filter(p=>p>=0&&p<=127):scaleChord(t,i)}
  else notes=rootChord(t,i);
  const vs=notes.map(p=>liveOn(t,p,100));notes.forEach(p=>midiOn(t,p,100));
  const recs=rec&&S.cur===t&&!isDrum(t)?notes.map(p=>recordNote(t,p,100,now())):null;
