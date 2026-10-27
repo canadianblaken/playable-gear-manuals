@@ -456,6 +456,7 @@ const FEAT={
    ["Chord pads","Hold Seq and press Arp on track 2–4: steps play chords of the track's scale; hold a chord and tap a step to keep it there. Erase + step clears it, Shift + Exit undoes. Saved with the project.",{chap:"fwChordPads"}],
    ["Root chords","Hold Seq and press Mute: a key sets the root silently, steps 1–16 play 16 chord types on it.",{chap:"fwRootChords"}],
    ["Key lights and recording","Pad notes light the keys they play and are recorded like key presses, drum hits included.",{chap:"fwLightsRec"}],
+   ["Note and chord names","The screen names the note or chord you play on the keys, in Chord mode and on chord pads (E3, C#m, A/C#).",{chap:"fwNoteNames"}],
    ["Project names","Projects show a name (up to 16 characters) instead of \"Project N\"; set it from the editor.",{chap:"fwNames"}],
    ["Startup screen and version","KEYSTEP CON at power-on; reports 2.5.99 and shows \"KSCON 2.5.99 bN\" on the FW version page.",{chap:"fwVersion"}],
    ["Stock combos stay stock","Seq, Arp and Mute on their own, Shift + Control and Shift + Drum work as before; one pad mode at a time.",{chap:"fwRules"}]]],
