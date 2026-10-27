@@ -142,7 +142,7 @@ const NEW_CHAPTERS=[
  ["Firmware","Drum pads: Drum + Seq","fwDrumPads",["t0alt","t0seq","s0","s15"]],
  ["Firmware","Chord pads: Seq + Arp","fwChordPads",["t1seq","t1alt","erase","exit"]],
  ["Firmware","Root chords: Seq + Mute","fwRootChords",["t1seq","t1mute","s0","s15"]],
- ["Firmware","Key lights and recording with the pads","fwLightsRec",["rec","play","s0"]],
+ ["Firmware","Step lights, key lights and recording with the pads","fwLightsRec",["rec","play","s0"]],
  ["Firmware","Note and chord names on the screen","fwNoteNames",["project"]],
  ["Firmware","Make bass: Seq + the chord track's Track button","fwBass",["t2seq","t0trk","s0","s4"]],
  ["Firmware","One pad mode at a time; what stays stock","fwRules",["t0seq","t0alt","t1mute"]],
