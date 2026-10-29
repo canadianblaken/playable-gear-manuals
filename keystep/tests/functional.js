@@ -233,6 +233,7 @@ ok("export: chained bass patterns play in order, 25 notes",bb.length===25&&bb[16
 /* new empty project from the hardware template, then a MIDI import into it */
 const bp=await blankProject(3);const bpat=edReadPattern(bp,0x7B,1),bsc=edReadScene(bp,1);
 ok("empty project: valid file, fresh patterns and scenes, no chords, 120 BPM",bp.project===3&&bp.data.length===8951&&!bpat.valid&&bpat.len===16&&bpat.steps.every(s=>s.passes===15&&!s.notes.length)&&!bsc.valid&&mfGetTempo(bp)===120&&TRACK_ITEMS.every(it=>edGet(bp,it,0x57,[1])===0x7F&&!(edGet(bp,it,0x56,[1])&0x10)),{len:bpat.len,valid:bpat.valid,tempo:mfGetTempo(bp)});
+ok("chord shape bytes end with 0 (firmware stops at 0; 0x7F would add a stray note)",(()=>{const b=chordBytes([60,64,67]);return b.length===16&&b[0]===60&&b[1]===4&&b[2]===7&&b.slice(3).every(x=>x===0)})(),chordBytes([60,64,67]));
 DEV.project=null;DEV.midiLoad();ok("MIDI tool offers an empty project when none is loaded",!$("#feat-midifile").querySelector("[data-a=none]").hidden&&!!$("#feat-midifile").querySelector("[data-a=blank]"));
 $("#feat-midifile").querySelector("[data-a=blank]").click();for(let i=0;i<50&&!DEV.project;i++)await W(20);
 ok("the button starts a new empty project in the editor",DEV.project&&DEV.project.data.length===8951&&/New empty project/.test($("#workSrc").textContent));closeTool();

@@ -1695,7 +1695,7 @@ class SimLink extends Link{constructor(){super();this.sim=true}
  async send(bytes,o={}){if(!this.quiet)devLog("→ "+hex(bytes),"tx");const out=SIMDEV.handle(bytes);if(!this.quiet){out.forEach(r=>devLog("← "+hex(r),"tx"));dirty()}if(o.commit){await sleep(150);dirty()}return out}}
 /* the stored chord bytes: root, then signed offsets as 8-bit bytes (a note below the root is 0xF7..0xFF) */
 /* no chord reads 0x7F then zeros, as on the hardware */
-const chordRaw=tr=>{const c=tr.chord;return c.root==null?[0x7F,...Array(15).fill(0)]:[c.root,...c.off.map(o=>o&255),...Array(15-c.off.length).fill(0x7F)]};
+const chordRaw=tr=>{const c=tr.chord;return c.root==null?[0x7F,...Array(15).fill(0)]:[c.root,...c.off.map(o=>o&255),...Array(15-c.off.length).fill(0)]};
 
 /* ---------- the simulated device: answers the same frames from the panel's state ---------- */
 /* what a fresh pattern reads on the hardware (backup of 2026-10-20): empty note slots are 0x7F in all six fields;
@@ -1761,7 +1761,7 @@ const SIMDEV={namesFw:true,sess:null,
   buf.name=S.flash[pn].name;S.flash[pn]=buf;S.ram[pn]=deep(buf);this.sess=null;mapCache.clear();emit("dev:commit");dirty()}};
 
 /* ---------- write one project: name, chord shape + chord mode, root/scale on all patterns (port of ksp_setlist.py) ---------- */
-function chordBytes(shape){const root=shape[0],offs=shape.slice(1).map(n=>n-root);if(root<0||root>127||offs.some(o=>!(o>0&&o<0x7F))||shape.length>16)throw new Error("bad chord shape "+shape.join(" "));return [root,...offs,...Array(16-shape.length).fill(0x7F)]}
+function chordBytes(shape){const root=shape[0],offs=shape.slice(1).map(n=>n-root);if(root<0||root>127||offs.some(o=>!(o>0&&o<0x7F))||shape.length>16)throw new Error("bad chord shape "+shape.join(" "));return [root,...offs,...Array(16-shape.length).fill(0)]}  // 0 ends the offsets; the firmware plays a 0x7F offset as a stray note (key+127 wraps into the next track's scale map)
 function userMaskParts(iv){const mask=[...new Set(iv)].reduce((m,i)=>m|1<<i,0);if(!(mask>0&&mask<0x1000&&mask&1))throw new Error("bad user scale");return [mask&0x7F,mask>>7,0]}
 async function readStates(link,p){const keys=[];for(let i=1;i<=16;i++)keys.push([SCENE_ITEM,P_SCENE_STATE,i]);for(const it of STATE_ITEMS)for(let i=1;i<=16;i++)keys.push([it,P_PATTERN_STATE,i]);
  const m=new Map();for(const k of keys)m.set(k.join("/"),await link.get(p,k[1],k[0],k[2]));return m}
