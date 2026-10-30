@@ -145,6 +145,7 @@ const NEW_CHAPTERS=[
  ["Firmware","Step lights, key lights and recording with the pads","fwLightsRec",["rec","play","s0"]],
  ["Firmware","Note and chord names on the screen","fwNoteNames",["project"]],
  ["Firmware","Make bass: Seq + the chord track's Track button","fwBass",["t2seq","t0trk","s0","s4"]],
+ ["Firmware","Chord pads into the arpeggiator: Arp on the pad's track","fwPadArp",["t1alt","t1seq","s0","s15"]],
  ["Firmware","Mod strip lock: Shift + touch the mod strip","fwModLock",["shift","modw"]],
  ["Firmware","One pad mode at a time; what stays stock","fwRules",["t0seq","t0alt","t1mute"]],
  ["Firmware","Startup screen and version 2.5.99","fwVersion",["project"]],
