@@ -3,7 +3,8 @@
    One mode at a time; the same combo turns it off. While a mode is on, the steps are pads: they sound while held, light the keys
    of the selected track, and record like keys when the sequencer records. Chord pads keep the chord held on the keys when a step is
    tapped (it moves with the octave buttons) (Erase + step forgets it, Shift + Exit undoes the last change); empty pads play the scale's chords. Root-chord keys only
-   pick the root, silently. The device shows no message for these; the simulation does, so the mode is visible. */
+   pick the root, silently. The device shows no message for these; the simulation does, so the mode is visible.
+   Also simulated: note/chord names (build 7), step lights (build 8), mod strip lock (build 9), pads into the arp (build 10). */
 const PADS={mode:0,root:null,down:new Map(),undo:null};
 const PAD_CHORD_NOTES=5,PAD_U=0x40,PAD_D=0x20;
 /* root chords, by step: scale degrees above the root (0 = root), +U one octave up, +D one octave down */
@@ -33,7 +34,7 @@ function rootChord(t,pad){const sc=padScale(t),low=padLow(t);let r=PADS.root!=nu
 /* a step pressed while a mode is on */
 function padPress(i){if(PADS.down.has(i))return;const m=PADS.mode,rec=S.rec==="rt"&&S.playing;
  if(m===1){const ch=S.globals[79];const e={drum:i,lit:[i],rec:null};PADS.down.set(i,e);if(ch>15){dirty();return}
-  drum(i,100,now());midiDrum(i,100,now(),now()+.1);if(rec&&isDrum())e.rec=padRecordDrum(i,100);emit("pads:press");dirty();return}
+  drum(i,100,now());midiDrum(i,100,now(),now()+.1);if(!S.menu&&!S.confirm)msg(`Drum ${i+1}\n${nm(S.globals[81]?S.globals[83+i]:S.globals[82]+i)}`,1000);if(rec&&isDrum())e.rec=padRecordDrum(i,100);emit("pads:press");dirty();return}
  const t=padTrack();let notes;
  if(m<5){const slots=padChords(t);
   if(held("erase")){PADS.undo={t,pad:i,prev:slots[i]};slots[i]=null;msg(`Pad ${i+1}\nforgotten`,900);PADS.down.set(i,{lit:[]});emit("pads:erase");dirty();return}
@@ -42,11 +43,17 @@ function padPress(i){if(PADS.down.has(i))return;const m=PADS.mode,rec=S.rec==="r
   /* a kept chord is stored as played at octave 0 and moves with the octave buttons */
   notes=slots[i]?slots[i].map(p=>p+12*trk(t).oct).filter(p=>p>=0&&p<=127):scaleChord(t,i)}
  else notes=rootChord(t,i);
+ const show=()=>{if(m>=5)msg(`${i+1} ${ROOT_CHORD_NAMES[i]}\n${notes.map(nm).join(" ")}`,900);else nsShow(notes)};
+ /* KSCON build 10: on a track in Arp mode the pad's notes go to its arpeggiator, as if held on the keys (Chord mode not applied) */
+ if(t>0&&trk(t).mode==="arp"){const L=S.hold[t]?S.arpLatched[t]:S.arpHeld[t];
+  if(S.hold[t]&&!S.keysDown.size&&![...PADS.down.values()].some(e=>e.arp&&e.t===t))L.length=0;
+  for(const p of notes){if(L.length>=16)break;if(!L.some(x=>x.p===p))L.push({p,v:100})}
+  PADS.down.set(i,{t,arp:notes,lit:notes});show();emit("pads:arp");emit("arp:note:"+t);dirty();return}
  const vs=notes.map(p=>liveOn(t,p,100));notes.forEach(p=>midiOn(t,p,100));
  const recs=rec&&S.cur===t&&!isDrum(t)?notes.map(p=>recordNote(t,p,100,now())):null;
- PADS.down.set(i,{t,notes,v:vs,lit:notes,rec:recs});if(m>=5)msg(`${i+1} ${ROOT_CHORD_NAMES[i]}\n${notes.map(nm).join(" ")}`,900);emit("pads:press");dirty()}
+ PADS.down.set(i,{t,notes,v:vs,lit:notes,rec:recs});show();emit("pads:press");dirty()}
 function padRelease(i){const e=PADS.down.get(i);PADS.down.delete(i);if(!e)return;
- (e.v||[]).forEach(liveOff);if(e.notes)e.notes.forEach(p=>midiOff(e.t,p));
+ (e.v||[]).forEach(liveOff);if(e.arp&&!S.hold[e.t])S.arpHeld[e.t]=S.arpHeld[e.t].filter(x=>!e.arp.includes(x.p));if(e.notes)e.notes.forEach(p=>midiOff(e.t,p));
  if(e.rec&&e.rec.forEach){const pat=curPat(e.t),dur=stepDur(pat);e.rec.forEach(r=>{if(r)r.n.g=clamp((now()-r.time)/dur,.06,64)})}
  else if(e.rec&&e.rec.st){e.rec.st.g=clamp((now()-e.rec.time)/stepDur(curPat()),.06,64)}
  dirty()}
@@ -68,3 +75,29 @@ function padKey(k){if(PADS.mode<5||S.cur!==PADS.mode-5||held("shift"))return fal
 /* key lights for what the pads play, on the selected track (drum hits while track 1 shows drums) */
 function padLights(kled,t,base,dr,col){for(const e of PADS.down.values()){if(e.drum!=null){if(dr&&e.drum<37)kled[e.drum]=col;continue}
   if(e.t!==t||dr)continue;for(const p of e.lit){const k=p-base;if(k>=0&&k<37)kled[k]=TCOL[t]}}}
+/* note and chord names on the screen (KSCON build 7, note_show.c): one note "E3"; several: the chord name (root position first,
+   else a slash chord over the lowest note; no known chord: the pitch classes) over the notes, cut at 16 characters */
+const NS_SHAPES=[[0x091,""],[0x089,"m"],[0x081,"5"],[0x0A1,"sus4"],[0x085,"sus2"],[0x049,"dim"],[0x111,"aug"],[0x491,"7"],[0x891,"maj7"],[0x489,"m7"],
+ [0x449,"m7b5"],[0x249,"dim7"],[0x889,"mMaj7"],[0x291,"6"],[0x289,"m6"],[0x4A1,"7sus4"],[0x095,"add9"],[0x08D,"madd9"],[0x495,"9"],[0x895,"maj9"],
+ [0x48D,"m9"],[0x4B5,"11"],[0x4AD,"m11"],[0x695,"13"],[0x68D,"m13"],[0x411,"7"],[0x811,"maj7"],[0x409,"m7"],[0x415,"9"],[0x815,"maj9"],
+ [0x40D,"m9"],[0x435,"11"],[0x42D,"m11"],[0x615,"13"],[0x60D,"m13"]];
+const pcMask=ns=>ns.reduce((m,p)=>m|1<<(((p%12)+12)%12),0);
+function nsChord(mask,bass){for(let k=0;k<12;k++){const r=(bass+k)%12;if(!(mask>>r&1))continue;const rel=((mask>>r)|(mask<<(12-r)))&0xFFF,s=NS_SHAPES.find(x=>x[0]===rel);
+  if(s)return NN[r]+s[1]+(r!==bass?"/"+NN[bass]:"")}return null}
+function nsText(notes){const ns=[...new Set(notes.filter(p=>p>=0&&p<=127))].slice(0,12).sort((a,b)=>a-b);if(!ns.length)return null;if(ns.length===1)return nm(ns[0]);
+ const mask=pcMask(ns);let top=mask&(mask-1)?nsChord(mask,ns[0]%12):null;
+ if(!top){top="";for(const pc of [...new Set(ns.map(p=>p%12))]){if(top.length+3>16)break;top+=(top?" ":"")+NN[pc]}}
+ let line="";for(let i=0;i<ns.length;i++){if(line.length+(i?5:4)>16){line+="..";break}line+=(i?" ":"")+nm(ns[i])}
+ return top+"\n"+line}
+function nsShow(notes){if(S.menu||S.confirm)return;const tx=nsText(notes);if(tx){msg(tx,1000);emit("names")}}
+/* step lights while a pad mode is on (KSCON build 8, ns_leds): held pad bright white, the chord pad matching the chord on its track's
+   keys bright in the track colour, kept chord / drum / root-chord pads dim track colour, empty chord pads dim white */
+function padStepLight(i){const m=PADS.mode,t=padTrack(),col=TCOL[t];if(PADS.down.has(i))return "#ffffff";
+ if(m>=2&&m<5){const kept=padChords(t)[i];
+  if(S.cur===t&&S.keysDown.size){const km=pcMask([...S.keysDown.values()].filter(kd=>kd.tt==null).flatMap(kd=>kd.notes||kd.arp||[]));
+   const pm=pcMask(kept?kept:scaleChord(t,i));if(km&&km===pm)return col}
+  if(!kept)return dim("#ffffff",.35)}
+ return dim(col,.35)}
+/* mod strip lock (KSCON build 9): Shift + touch the mod strip toggles it, once per Shift press; locked, the strip sends nothing */
+function modStripLock(){const h=HELD.get("shift");if(!h)return S.modLock;h.used=true;
+ if(!h.ml){h.ml=1;S.modLock=!S.modLock;msg(S.modLock?"Mod strip\nlocked":"Mod strip\nunlocked",1000);emit(S.modLock?"modlock:on":"modlock:off")}return true}

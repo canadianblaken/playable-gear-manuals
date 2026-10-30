@@ -455,6 +455,8 @@ const FEAT={
    ["Drum pads","Hold Drum and press Seq: steps 1–16 play the drum lanes while the keys play another track.",{chap:"fwDrumPads"}],
    ["Chord pads","Hold Seq and press Arp on track 2–4: steps play chords of the track's scale; hold a chord and tap a step to keep it there. Erase + step clears it, Shift + Exit undoes. Saved with the project.",{chap:"fwChordPads"}],
    ["Root chords","Hold Seq and press Mute: a key sets the root silently, steps 1–16 play 16 chord types on it.",{chap:"fwRootChords"}],
+   ["Chord pads into the arpeggiator","Put the pads' track in Arp mode (its Arp button): holding a step arpeggiates its chord with the stock arp, at the Time Division rate. Seq mode plays plain chords again.",{chap:"fwPadArp"}],
+   ["Mod strip lock","Hold Shift and touch the mod strip to lock it (and again to unlock), so a bump does not change the mod value.",{chap:"fwModLock"}],
    ["Step lights, key lights and recording","In a pad mode the steps show the pads (kept chords, empty pads, the one held, the one matching the keys); pad notes light the keys they play and are recorded like key presses.",{chap:"fwLightsRec"}],
    ["Note and chord names","The screen names the note or chord you play on the keys, in Chord mode and on chord and drum pads (E3, C#m, A/C#, Drum 1).",{chap:"fwNoteNames"}],
    ["Project names","Projects show a name (up to 16 characters) instead of \"Project N\"; set it from the editor.",{chap:"fwNames"}],

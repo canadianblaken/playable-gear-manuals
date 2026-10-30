@@ -812,7 +812,7 @@ function baseState(){
   trans:[0,1,2,3].map(()=>({semi:0,on:false})),tgroup:new Set(),transMode:false,
   view:[0,0,0,0,0],follow:true,control:false,ctrlTrack:0,cc:[64,64,64,64,64],knobLabels:[null,null,null,null,null],mod:[0,0,0,0],
   defs:[0,1,2,3].map(newDefaults),drumDefs:newDefaults(),arpP:[0,1,2,3].map(newArpParams),
-  menu:null,confirm:null,msg:null,msgT:0,copy:null,undo:null,globalBpm:false,gbpm:120,waitLoad:true,looper:null,looperOn:true,
+  menu:null,confirm:null,msg:null,msgT:0,copy:null,undo:null,globalBpm:false,gbpm:120,waitLoad:true,looper:null,looperOn:true,modLock:false,
   lane:0,chordEntry:null,taps:[],stopTaps:[],cvr:[1,2,4,8],split:null,lastNote:60,rootSel:false,userEdit:null,stepRecPos:0,patMode:null,
   sceneCur:-1,keysDown:new Map(),recPending:new Map()};
  S.flash=S.ram.map(deep);
@@ -1123,6 +1123,7 @@ function render(){
   if(S.playing&&!S.paused&&play&&play.idx===idx&&!held("project")&&!held("pattern")&&!held("scene")&&!S.control)c="#ffffff";
   if(held("shift")&&c&&c.length===7)c=dim(c,.35);
   if(S.confirm&&S.confirm.kind==="save")c=null;
+  if(PADS.mode)c=padStepLight(i);
   lamp("s"+i,c)}
  /* key LEDs */
  const kled=Array(37).fill(null),base=48+12*tr.oct;
@@ -1241,7 +1242,8 @@ function keyDown(k,vel=100){for(const h of HELD.values())h.used=true;const t=S.c
   S.keysDown.set(k,{arp:outNotes});emit("arp:note");emit("arp:note:"+t);if(trk().chordOn)emit("chord:play");dirty();return}
  const vs=outNotes.map(pn=>liveOn(t,pn,S.globals[fvId(t)]?S.defs[t].v:vel));outNotes.forEach(pn=>midiOn(t,pn,vel));
  const rec=S.rec==="rt"&&S.playing&&tr.mode==="seq"?outNotes.map(pn=>recordNote(t,pn,vel,now())):null;
- S.keysDown.set(k,{v:vs,notes:outNotes,rec,t0:now()});if(tr.chordOn)emit("chord:play");dirty()}
+ S.keysDown.set(k,{v:vs,notes:outNotes,rec,t0:now()});if(tr.chordOn)emit("chord:play");
+ if(target==null&&!held("shift"))nsShow([...S.keysDown.values()].filter(kd=>kd.tt==null).flatMap(kd=>kd.notes||[]));dirty()}
 function liveNotes(t,note){const tr=trk(t),base=q(t,note);if(!tr.chordOn||tr.chord.root==null)return [base];
  return [base,...tr.chord.off.map(o=>q(t,base+o))].filter((x,i,a)=>a.indexOf(x)===i)}
 function keyUp(k){const t=S.cur,kd=S.keysDown.get(k);S.keysDown.delete(k);
@@ -1386,7 +1388,7 @@ function showTip(id,e){const inf=infoFor(id);if(!inf){tip.hidden=true;return}tip
 function showInfo(id){const inf=infoFor(id);if(!inf)return;$("#info").innerHTML=`<div class="crumb">Manual <b>${inf[3]}</b></div><h2>${inf[0]}</h2><p>${inf[1]}</p>${inf[2]?`<p><b>Shift:</b> ${inf[2]}</p>`:""}${inf[4]?`<div class="fw"><b>Firmware:</b> ${inf[4]}</div>`:""}`}
 function toggleLatch(id){if(LATCH.has(id)){LATCH.delete(id);ctlEls[id].classList.remove("latched");up(id)}else{LATCH.add(id);ctlEls[id].classList.add("latched");down(id)}}
 const stripVal=(c,e)=>{const r=svg.getScreenCTM().inverse(),p=new DOMPoint(e.clientX,e.clientY).matrixTransform(r);return c.t==="looper"?clamp((p.x-c.x)/c.w,0,.999):clamp(1-(p.y-c.y)/c.h,0,1)};
-function stripInput(c,e){const v=stripVal(c,e);if(c.id==="pbend"){const b=(v-.5)*2;const bb=Math.abs(b)<.08?0:b;setBend(bb*2);midiBend(bb)}else if(c.id==="modw"){S.mod[S.cur]=Math.round(v*127);midiCC(-1,S.mod[S.cur])}
+function stripInput(c,e){const v=stripVal(c,e);if(c.id==="pbend"){const b=(v-.5)*2;const bb=Math.abs(b)<.08?0:b;setBend(bb*2);midiBend(bb)}else if(c.id==="modw"){if(held("shift")?modStripLock():S.modLock)return;S.mod[S.cur]=Math.round(v*127);midiCC(-1,S.mod[S.cur])}
  else if(c.id==="looper"){if(held("shift")){S.looperOn=!S.looperOn;msg(S.looperOn?"Touch Strip\nON":"Touch Strip\nOFF");HELD.get("shift").used=true;return}if(!S.looperOn||!S.playing)return;const z=Math.floor(v*4),beats=[1,.5,.25,.125][z];
   if(!S.looper||S.looper.beats!==beats){S.looper={beats,start:P.map(p=>p.cnt),idx:P.map(p=>p.idx)};emit("looper")}}dirty()}
 function bindInput(){
@@ -1497,8 +1499,8 @@ const SHOW={
  waSetlist(){return "<p>Paste or load a set list (song, slot, chord, root and scale per track) and write them all: each slot gets its name, its chord with Chord mode on, and the root and scale on every pattern of the chosen tracks, then everything is read back. Tested with a 14-song set list on slots 1–14.</p>"},
  waSettings(){return "<p>All the KeyStep's global settings in MCC's groups, each written straight away and read back. It also shows the ones MCC leaves out: Program Change Send and Fixed Velocity per track, Brightness and Transpose Latch.</p><p>The <b>MIDI monitor</b> lists the notes, CCs and program changes the KeyStep sends over USB, for checking what the sequencer, the pads or the control track really output.</p>"},
  waFirmware(){return "<p><b>Install KSCON firmware</b> (the bar at the top, or Device settings &gt; Firmware) opens the installer. It takes your own copy of Arturia's 2.5.20 update, checks it is exactly that file, adds KSCON's changes in the browser and checks the result against the tested build before offering it; then you flash it with MIDI Control Center. Nothing is uploaded, and no Arturia firmware is shipped: only the few kilobytes KSCON changes.</p><p class='pg'>When a connected KeyStep runs an older KSCON build, the bar offers the update. To go back, flash Arturia's 2.5.20 file.</p>"},
- fwPadArp(){return "<p>Turn on chord pads (<b>Seq + Arp</b>) or root chords (<b>Seq + Mute</b>) for track 2, 3 or 4, then press that track's <b>Arp</b> button so the track is in Arp mode. Now holding a step arpeggiates its chord instead of playing it as a block: the KeyStep's own arpeggiator plays the pad's notes, as if you held them on the keys.</p><p class='pg'>Everything is the stock arp: the rate is the Time Division (Shift + the Time Division keys), the pattern, octaves, gate, swing and Hold are as set, the looper strip works on it, and it follows the clock. Letting go of the step stops it (unless Hold is on). Press the track's <b>Seq</b> button and the pads play plain chords again. While the pads are on and the track is in Arp mode, its Chord mode is ignored so a pad's chord is not stacked into bigger chords. With Rec on, the arpeggiator records as it does for keys; the pad itself records nothing.</p>"},
- fwModLock(){return "<p>Hold <b>Shift</b> and touch the <b>mod strip</b>: the screen says <b>Mod strip locked</b>, and the strip stops sending until you do it again (<b>Mod strip unlocked</b>). Handy if you bump it while playing.</p><p class='pg'>The last mod value sent stays where it was, so a held vibrato or filter setting keeps going. While locked nothing goes out from the strip: no CC 1 and no mod CV. One toggle per Shift press; touching the strip with Shift held never sends. The pitch bend strip and the looper strip are not affected (Shift + looper strip is Arturia's own on/off for that strip). The lock is off after power-up.</p>"},
+ fwPadArp(){S.cur=1;if(PADS.mode!==2)padsSet(2);trk(1).mode="arp";return "<div class='fw'><b>Try it:</b> chord pads for track 2 are on and track 2 is in Arp mode in the simulation. Hold a step to hear its chord arpeggiated; press track 2's Seq button for plain chords again.</div>"+"<p>Turn on chord pads (<b>Seq + Arp</b>) or root chords (<b>Seq + Mute</b>) for track 2, 3 or 4, then press that track's <b>Arp</b> button so the track is in Arp mode. Now holding a step arpeggiates its chord instead of playing it as a block: the KeyStep's own arpeggiator plays the pad's notes, as if you held them on the keys.</p><p class='pg'>Everything is the stock arp: the rate is the Time Division (Shift + the Time Division keys), the pattern, octaves, gate, swing and Hold are as set, the looper strip works on it, and it follows the clock. Letting go of the step stops it (unless Hold is on). Press the track's <b>Seq</b> button and the pads play plain chords again. While the pads are on and the track is in Arp mode, its Chord mode is ignored so a pad's chord is not stacked into bigger chords. With Rec on, the arpeggiator records as it does for keys; the pad itself records nothing.</p>"},
+ fwModLock(){return "<div class='fw'><b>Try it:</b> right-click Shift to latch it, touch the mod strip (the screen says locked), right-click Shift again; the strip now does nothing until you repeat it.</div>"+"<p>Hold <b>Shift</b> and touch the <b>mod strip</b>: the screen says <b>Mod strip locked</b>, and the strip stops sending until you do it again (<b>Mod strip unlocked</b>). Handy if you bump it while playing.</p><p class='pg'>The last mod value sent stays where it was, so a held vibrato or filter setting keeps going. While locked nothing goes out from the strip: no CC 1 and no mod CV. One toggle per Shift press; touching the strip with Shift held never sends. The pitch bend strip and the looper strip are not affected (Shift + looper strip is Arturia's own on/off for that strip). The lock is off after power-up.</p>"},
  waBass(){return "<p>Track tab &gt; <b>Make bass…</b>: pick the track and pattern with the chords and an octave, then a style (Root, Root + 5th, Octaves, Pulse, Follow rhythm). The pattern is written straight away; pick another style to switch, Undo goes back one style at a time, and Store sends it to the KeyStep. Same rules as Make bass on the KeyStep itself.</p>"},
  waCC(){return "<p>Pick your synth from the MIDI Guide catalogue (447 instruments) and map its parameters to the five encoders in Control mode. Suggestions come from each synth's own controls; mappings can be saved, imported and exported.</p><p class='pg'>Single 7-bit CCs only. It sets up the simulation; writing a mapping to the KeyStep is not done yet.</p>"},
  waView(){return "<p>The drawing of the KeyStep zooms to the part in use: Auto follows the chapter, tour step or tool, or pick Whole, Transport, Tracks, Steps &amp; encoders, Knobs or Keys above it.</p>"},
@@ -1542,7 +1544,7 @@ const VIEWS=[["auto","Auto"],["whole","Whole",null],["transport","Transport",["t
  ["knobs","Knobs",["enc0","enc4","lst","pg3"]],["keys","Keys",["k0","k36"]]];
 const CHAP_VIEW={trackSettings:"tracks",recordBasics:"steps",arpBasics:"keys",scaleBasics:"keys",tempo:"transport",encoders:"steps",shiftFns:"keys",seqLength:"steps",stepEdit:"steps",
  copyPaste:"transport",saving:"transport",drum:"keys",chordMode:"keys",projects:"transport",tracks:"tracks",patterns:"tracks",arranging:"tracks",controlMode:"knobs",utility:"transport",
- fwNames:"transport",fwDrumPads:"tracks",fwChordPads:"whole",fwRootChords:"whole",fwLightsRec:"whole",fwNoteNames:"transport",fwRules:"tracks",fwBass:"tracks",fwVersion:"transport",waCC:"knobs"};
+ fwNames:"transport",fwDrumPads:"tracks",fwChordPads:"whole",fwRootChords:"whole",fwPadArp:"whole",fwModLock:"whole",fwLightsRec:"whole",fwNoteNames:"transport",fwRules:"tracks",fwBass:"tracks",fwVersion:"transport",waCC:"knobs"};
 const FEATURE_VIEW={projects:"tracks",library:"tracks",backup:"tracks",setlist:"tracks",names:"tracks",midifile:"tracks",editor:"steps",trackkey:"keys",globals:"knobs"};
 let viewMode="auto",viewAuto="whole",viewCur=VB_WHOLE.slice(),viewAnim=0;
 function viewBox(name){const v=VIEWS.find(x=>x[0]===name);if(!v||!v[2])return VB_WHOLE.slice();
@@ -1589,7 +1591,8 @@ function boot(){baseState();drawPanel();bindInput();renderChapters();initPanelVi
    One mode at a time; the same combo turns it off. While a mode is on, the steps are pads: they sound while held, light the keys
    of the selected track, and record like keys when the sequencer records. Chord pads keep the chord held on the keys when a step is
    tapped (it moves with the octave buttons) (Erase + step forgets it, Shift + Exit undoes the last change); empty pads play the scale's chords. Root-chord keys only
-   pick the root, silently. The device shows no message for these; the simulation does, so the mode is visible. */
+   pick the root, silently. The device shows no message for these; the simulation does, so the mode is visible.
+   Also simulated: note/chord names (build 7), step lights (build 8), mod strip lock (build 9), pads into the arp (build 10). */
 const PADS={mode:0,root:null,down:new Map(),undo:null};
 const PAD_CHORD_NOTES=5,PAD_U=0x40,PAD_D=0x20;
 /* root chords, by step: scale degrees above the root (0 = root), +U one octave up, +D one octave down */
@@ -1619,7 +1622,7 @@ function rootChord(t,pad){const sc=padScale(t),low=padLow(t);let r=PADS.root!=nu
 /* a step pressed while a mode is on */
 function padPress(i){if(PADS.down.has(i))return;const m=PADS.mode,rec=S.rec==="rt"&&S.playing;
  if(m===1){const ch=S.globals[79];const e={drum:i,lit:[i],rec:null};PADS.down.set(i,e);if(ch>15){dirty();return}
-  drum(i,100,now());midiDrum(i,100,now(),now()+.1);if(rec&&isDrum())e.rec=padRecordDrum(i,100);emit("pads:press");dirty();return}
+  drum(i,100,now());midiDrum(i,100,now(),now()+.1);if(!S.menu&&!S.confirm)msg(`Drum ${i+1}\n${nm(S.globals[81]?S.globals[83+i]:S.globals[82]+i)}`,1000);if(rec&&isDrum())e.rec=padRecordDrum(i,100);emit("pads:press");dirty();return}
  const t=padTrack();let notes;
  if(m<5){const slots=padChords(t);
   if(held("erase")){PADS.undo={t,pad:i,prev:slots[i]};slots[i]=null;msg(`Pad ${i+1}\nforgotten`,900);PADS.down.set(i,{lit:[]});emit("pads:erase");dirty();return}
@@ -1628,11 +1631,17 @@ function padPress(i){if(PADS.down.has(i))return;const m=PADS.mode,rec=S.rec==="r
   /* a kept chord is stored as played at octave 0 and moves with the octave buttons */
   notes=slots[i]?slots[i].map(p=>p+12*trk(t).oct).filter(p=>p>=0&&p<=127):scaleChord(t,i)}
  else notes=rootChord(t,i);
+ const show=()=>{if(m>=5)msg(`${i+1} ${ROOT_CHORD_NAMES[i]}\n${notes.map(nm).join(" ")}`,900);else nsShow(notes)};
+ /* KSCON build 10: on a track in Arp mode the pad's notes go to its arpeggiator, as if held on the keys (Chord mode not applied) */
+ if(t>0&&trk(t).mode==="arp"){const L=S.hold[t]?S.arpLatched[t]:S.arpHeld[t];
+  if(S.hold[t]&&!S.keysDown.size&&![...PADS.down.values()].some(e=>e.arp&&e.t===t))L.length=0;
+  for(const p of notes){if(L.length>=16)break;if(!L.some(x=>x.p===p))L.push({p,v:100})}
+  PADS.down.set(i,{t,arp:notes,lit:notes});show();emit("pads:arp");emit("arp:note:"+t);dirty();return}
  const vs=notes.map(p=>liveOn(t,p,100));notes.forEach(p=>midiOn(t,p,100));
  const recs=rec&&S.cur===t&&!isDrum(t)?notes.map(p=>recordNote(t,p,100,now())):null;
- PADS.down.set(i,{t,notes,v:vs,lit:notes,rec:recs});if(m>=5)msg(`${i+1} ${ROOT_CHORD_NAMES[i]}\n${notes.map(nm).join(" ")}`,900);emit("pads:press");dirty()}
+ PADS.down.set(i,{t,notes,v:vs,lit:notes,rec:recs});show();emit("pads:press");dirty()}
 function padRelease(i){const e=PADS.down.get(i);PADS.down.delete(i);if(!e)return;
- (e.v||[]).forEach(liveOff);if(e.notes)e.notes.forEach(p=>midiOff(e.t,p));
+ (e.v||[]).forEach(liveOff);if(e.arp&&!S.hold[e.t])S.arpHeld[e.t]=S.arpHeld[e.t].filter(x=>!e.arp.includes(x.p));if(e.notes)e.notes.forEach(p=>midiOff(e.t,p));
  if(e.rec&&e.rec.forEach){const pat=curPat(e.t),dur=stepDur(pat);e.rec.forEach(r=>{if(r)r.n.g=clamp((now()-r.time)/dur,.06,64)})}
  else if(e.rec&&e.rec.st){e.rec.st.g=clamp((now()-e.rec.time)/stepDur(curPat()),.06,64)}
  dirty()}
@@ -1654,6 +1663,32 @@ function padKey(k){if(PADS.mode<5||S.cur!==PADS.mode-5||held("shift"))return fal
 /* key lights for what the pads play, on the selected track (drum hits while track 1 shows drums) */
 function padLights(kled,t,base,dr,col){for(const e of PADS.down.values()){if(e.drum!=null){if(dr&&e.drum<37)kled[e.drum]=col;continue}
   if(e.t!==t||dr)continue;for(const p of e.lit){const k=p-base;if(k>=0&&k<37)kled[k]=TCOL[t]}}}
+/* note and chord names on the screen (KSCON build 7, note_show.c): one note "E3"; several: the chord name (root position first,
+   else a slash chord over the lowest note; no known chord: the pitch classes) over the notes, cut at 16 characters */
+const NS_SHAPES=[[0x091,""],[0x089,"m"],[0x081,"5"],[0x0A1,"sus4"],[0x085,"sus2"],[0x049,"dim"],[0x111,"aug"],[0x491,"7"],[0x891,"maj7"],[0x489,"m7"],
+ [0x449,"m7b5"],[0x249,"dim7"],[0x889,"mMaj7"],[0x291,"6"],[0x289,"m6"],[0x4A1,"7sus4"],[0x095,"add9"],[0x08D,"madd9"],[0x495,"9"],[0x895,"maj9"],
+ [0x48D,"m9"],[0x4B5,"11"],[0x4AD,"m11"],[0x695,"13"],[0x68D,"m13"],[0x411,"7"],[0x811,"maj7"],[0x409,"m7"],[0x415,"9"],[0x815,"maj9"],
+ [0x40D,"m9"],[0x435,"11"],[0x42D,"m11"],[0x615,"13"],[0x60D,"m13"]];
+const pcMask=ns=>ns.reduce((m,p)=>m|1<<(((p%12)+12)%12),0);
+function nsChord(mask,bass){for(let k=0;k<12;k++){const r=(bass+k)%12;if(!(mask>>r&1))continue;const rel=((mask>>r)|(mask<<(12-r)))&0xFFF,s=NS_SHAPES.find(x=>x[0]===rel);
+  if(s)return NN[r]+s[1]+(r!==bass?"/"+NN[bass]:"")}return null}
+function nsText(notes){const ns=[...new Set(notes.filter(p=>p>=0&&p<=127))].slice(0,12).sort((a,b)=>a-b);if(!ns.length)return null;if(ns.length===1)return nm(ns[0]);
+ const mask=pcMask(ns);let top=mask&(mask-1)?nsChord(mask,ns[0]%12):null;
+ if(!top){top="";for(const pc of [...new Set(ns.map(p=>p%12))]){if(top.length+3>16)break;top+=(top?" ":"")+NN[pc]}}
+ let line="";for(let i=0;i<ns.length;i++){if(line.length+(i?5:4)>16){line+="..";break}line+=(i?" ":"")+nm(ns[i])}
+ return top+"\n"+line}
+function nsShow(notes){if(S.menu||S.confirm)return;const tx=nsText(notes);if(tx){msg(tx,1000);emit("names")}}
+/* step lights while a pad mode is on (KSCON build 8, ns_leds): held pad bright white, the chord pad matching the chord on its track's
+   keys bright in the track colour, kept chord / drum / root-chord pads dim track colour, empty chord pads dim white */
+function padStepLight(i){const m=PADS.mode,t=padTrack(),col=TCOL[t];if(PADS.down.has(i))return "#ffffff";
+ if(m>=2&&m<5){const kept=padChords(t)[i];
+  if(S.cur===t&&S.keysDown.size){const km=pcMask([...S.keysDown.values()].filter(kd=>kd.tt==null).flatMap(kd=>kd.notes||kd.arp||[]));
+   const pm=pcMask(kept?kept:scaleChord(t,i));if(km&&km===pm)return col}
+  if(!kept)return dim("#ffffff",.35)}
+ return dim(col,.35)}
+/* mod strip lock (KSCON build 9): Shift + touch the mod strip toggles it, once per Shift press; locked, the strip sends nothing */
+function modStripLock(){const h=HELD.get("shift");if(!h)return S.modLock;h.used=true;
+ if(!h.ml){h.ml=1;S.modLock=!S.modLock;msg(S.modLock?"Mod strip\nlocked":"Mod strip\nunlocked",1000);emit(S.modLock?"modlock:on":"modlock:off")}return true}
 /* ================= Device tools: SysEx to a real KeyStep Pro (Web MIDI) or to this simulation =================
    Protocol notes are from the firmware 2.5.20 study (~/keysteppro/findings.md) and were checked on hardware.
    Frame: F0 00 20 6B <dev 7F> 42 <cmd> <project 0=current|1..16> <param> ...
@@ -2966,6 +3001,8 @@ const FEAT={
    ["Drum pads","Hold Drum and press Seq: steps 1–16 play the drum lanes while the keys play another track.",{chap:"fwDrumPads"}],
    ["Chord pads","Hold Seq and press Arp on track 2–4: steps play chords of the track's scale; hold a chord and tap a step to keep it there. Erase + step clears it, Shift + Exit undoes. Saved with the project.",{chap:"fwChordPads"}],
    ["Root chords","Hold Seq and press Mute: a key sets the root silently, steps 1–16 play 16 chord types on it.",{chap:"fwRootChords"}],
+   ["Chord pads into the arpeggiator","Put the pads' track in Arp mode (its Arp button): holding a step arpeggiates its chord with the stock arp, at the Time Division rate. Seq mode plays plain chords again.",{chap:"fwPadArp"}],
+   ["Mod strip lock","Hold Shift and touch the mod strip to lock it (and again to unlock), so a bump does not change the mod value.",{chap:"fwModLock"}],
    ["Step lights, key lights and recording","In a pad mode the steps show the pads (kept chords, empty pads, the one held, the one matching the keys); pad notes light the keys they play and are recorded like key presses.",{chap:"fwLightsRec"}],
    ["Note and chord names","The screen names the note or chord you play on the keys, in Chord mode and on chord and drum pads (E3, C#m, A/C#, Drum 1).",{chap:"fwNoteNames"}],
    ["Project names","Projects show a name (up to 16 characters) instead of \"Project N\"; set it from the editor.",{chap:"fwNames"}],

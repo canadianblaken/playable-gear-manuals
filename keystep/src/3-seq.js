@@ -23,7 +23,7 @@ function baseState(){
   trans:[0,1,2,3].map(()=>({semi:0,on:false})),tgroup:new Set(),transMode:false,
   view:[0,0,0,0,0],follow:true,control:false,ctrlTrack:0,cc:[64,64,64,64,64],knobLabels:[null,null,null,null,null],mod:[0,0,0,0],
   defs:[0,1,2,3].map(newDefaults),drumDefs:newDefaults(),arpP:[0,1,2,3].map(newArpParams),
-  menu:null,confirm:null,msg:null,msgT:0,copy:null,undo:null,globalBpm:false,gbpm:120,waitLoad:true,looper:null,looperOn:true,
+  menu:null,confirm:null,msg:null,msgT:0,copy:null,undo:null,globalBpm:false,gbpm:120,waitLoad:true,looper:null,looperOn:true,modLock:false,
   lane:0,chordEntry:null,taps:[],stopTaps:[],cvr:[1,2,4,8],split:null,lastNote:60,rootSel:false,userEdit:null,stepRecPos:0,patMode:null,
   sceneCur:-1,keysDown:new Map(),recPending:new Map()};
  S.flash=S.ram.map(deep);

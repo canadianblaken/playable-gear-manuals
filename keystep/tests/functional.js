@@ -48,6 +48,35 @@ down("k31");up("k31");down("s12");ok("near the top key a 13th moves down to fit"
 down("t1seq");tap("t1alt");up("t1seq");trk(1).pats[0]=newPat();down("rec");tap("play");up("rec");await W(300);down("s0");await W(150);up("s0");await W(80);tap("stop");
 ok("chord pads record on the selected track while recording",curPat(1).st.some(s=>s.n.length===3),curPat(1).st.filter(s=>s.n.length).map(s=>s.n.map(n=>n.p)));
 down("t1seq");tap("t1alt");up("t1seq");ok("modes switch off",PADS.mode===0);
+/* ---- KSCON builds 7-10 in the simulation: names, step lights, mod strip lock, pads into the arp ---- */
+reset();tap("t1trk");Object.assign(curPat(1),{scale:1,root:0});trk(1).oct=0;trk(1).chordOn=false;
+down("k16");ok("a key names its note (C4 = 60)",S.msg==="E4",S.msg);down("k12");down("k19");ok("held keys name their chord",S.msg==="C\nC4 E4 G4",S.msg);up("k12");up("k16");up("k19");
+down("k16");down("k19");down("k24");ok("not in root position: slash chord",S.msg==="C/E\nE4 G4 C5",S.msg);up("k16");up("k19");up("k24");
+ok("names: no known chord lists the pitch classes",nsText([60,61])==="C C#\nC4 C#4",nsText([60,61]));
+ok("names: second line cut at 16 characters",nsText([48,52,55,59,62,65])==="C E G B D F\nC3 E3 G3 B3 D4..",nsText([48,52,55,59,62,65]));
+down("t1seq");tap("t1alt");up("t1seq");
+down("s0");ok("a chord pad names its chord",S.msg==="C\nC3 E3 G3",S.msg);
+ok("step lights: held pad bright white",padStepLight(0)==="#ffffff");up("s0");
+ok("step lights: empty chord pad dim white, kept chord dim track colour",padStepLight(1)===dim("#ffffff",.35)&&(padChords(1)[2]=[60,64,67],padStepLight(2)===dim(TCOL[1],.35)),[padStepLight(1),padStepLight(2)]);
+down("k12");down("k16");down("k19");ok("step lights: the pads holding the chord on the keys light bright",padStepLight(0)===TCOL[1]&&padStepLight(2)===TCOL[1]&&padStepLight(1)!==TCOL[1],[padStepLight(0),padStepLight(2)]);up("k12");up("k16");up("k19");
+render();ok("render uses the pad lights",true);
+/* pads into the arp: track 2 in Arp mode */
+trk(1).mode="arp";trk(1).chordOn=true;trk(1).chord={root:60,off:[4,7]};S.hold[1]=0;
+let sentN=0;const lo0=liveOn;liveOn=(...a)=>{sentN++;return lo0(...a)};
+down("s0");ok("Arp mode: a pad's notes go to the track's arp, not played directly, Chord mode not applied",S.arpHeld[1].map(x=>x.p).join()==="48,52,55"&&sentN===0&&!!PADS.down.get(0).arp,[S.arpHeld[1],sentN]);
+up("s0");liveOn=lo0;ok("releasing the pad takes them out of the arp",!S.arpHeld[1].length,S.arpHeld[1]);
+S.hold[1]=1;S.arpLatched[1]=[];down("s0");up("s0");ok("with Hold on the arp keeps them",S.arpLatched[1].map(x=>x.p).join()==="48,52,55",S.arpLatched[1]);
+down("s4");up("s4");ok("the next pad with Hold replaces the held chord",S.arpLatched[1].map(x=>x.p).join()==="55,59,62",S.arpLatched[1]);
+S.hold[1]=0;S.arpLatched[1]=[];trk(1).mode="seq";trk(1).chordOn=false;
+down("s0");ok("Seq mode again: a plain chord",!!PADS.down.get(0).v&&!S.arpHeld[1].length);up("s0");
+down("t1seq");tap("t1alt");up("t1seq");
+/* mod strip lock */
+const touch=y=>{const c=CI.modw,pt=new DOMPoint(c.x+c.w/2,c.y+c.h*y).matrixTransform(svg.getScreenCTM());stripInput(c,{clientX:pt.x,clientY:pt.y})};
+S.mod[1]=0;touch(.2);ok("the mod strip sets the mod value",S.mod[1]>80&&S.mod[1]<120,S.mod[1]);
+down("shift");touch(.9);touch(.8);ok("Shift + touch locks it once, and sends nothing",S.modLock===true&&S.msg==="Mod strip\nlocked"&&S.mod[1]>80,[S.modLock,S.msg,S.mod[1]]);up("shift");
+touch(.9);ok("locked: the strip sends nothing",S.mod[1]>80,S.mod[1]);
+down("shift");touch(.5);up("shift");ok("Shift + touch again unlocks",S.modLock===false&&S.msg==="Mod strip\nunlocked");
+touch(.9);ok("unlocked: the strip works again",S.mod[1]<30,S.mod[1]);
 /* ---- SysEx tools against the simulated device ---- */
 reset();selectTab("dev");$("#devPort").value="sim";await devConnect();const L=DEV.link;
 ok("identity reply",!!(await L.identity()));
