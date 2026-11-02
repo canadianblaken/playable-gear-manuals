@@ -4,13 +4,15 @@
    of the selected track, and record like keys when the sequencer records. Chord pads keep the chord held on the keys when a step is
    tapped (it moves with the octave buttons) (Erase + step forgets it, Shift + Exit undoes the last change); empty pads play the scale's chords. Root-chord keys only
    pick the root, silently. The device shows no message for these; the simulation does, so the mode is visible.
-   Also simulated: note/chord names (build 7), step lights (build 8), mod strip lock (build 9), pads into the arp (build 10). */
-const PADS={mode:0,root:null,down:new Map(),undo:null};
-const PAD_CHORD_NOTES=5,PAD_U=0x40,PAD_D=0x20;
+   Also simulated: note/chord names (build 7), step lights (build 8), mod strip lock (build 9), pads into the arp (build 10),
+   shared pads (build 11: in chord pad mode Shift + 64 switches the project to 64 pads shared by tracks 2-4, 3 notes each, and back;
+   the page buttons pick the 16 the steps play). */
+const PADS={mode:0,root:null,down:new Map(),undo:null,bank:0};
+const PAD_CHORD_NOTES=5,PAD_SHARED_NOTES=3,PAD_U=0x40,PAD_D=0x20;
 /* root chords, by step: scale degrees above the root (0 = root), +U one octave up, +D one octave down */
 const ROOT_CHORDS=[[0,PAD_U],[0,1,4],[0,2,4],[0,3,4],[0,4,PAD_U],[0,2,4,5],[0,2,4,6],[PAD_U,2|PAD_U,4|PAD_U],[0,2,4,6,8],[0,2,4,8],[0,2,6,8,10],[2,4,PAD_U],[0,2,6,8,12],[4,PAD_U,2|PAD_U],[0,3,4,6],[PAD_D,2|PAD_D,4|PAD_D]];
 const ROOT_CHORD_NAMES=["root + octave","sus2","triad","sus4","power","6th","7th","triad +8va","9th","add9","11th","1st inversion","13th","2nd inversion","7sus4","triad -8va"];
-function resetPads(){padsReleaseAll();PADS.mode=0;PADS.root=null;PADS.undo=null}
+function resetPads(){padsReleaseAll();PADS.mode=0;PADS.root=null;PADS.undo=null;PADS.bank=0}
 const padTrack=()=>PADS.mode>=5?PADS.mode-5:PADS.mode>=2?PADS.mode-1:0;
 const padLow=t=>48+12*trk(t).oct;                      // lowest key shown for track t
 /* the track's scale as a mask from its root; Chromatic (and drum mode) count as major */
@@ -21,6 +23,17 @@ function padsSet(mode){padsReleaseAll();PADS.mode=PADS.mode===mode?0:mode;if(PAD
 function padsReleaseAll(){for(const i of [...PADS.down.keys()])padRelease(i)}
 /* chords kept by chord pads live with the project, like the device keeps them with Save Project */
 function padChords(t){const pj=proj();pj.padChords=pj.padChords||{};return pj.padChords[t]=pj.padChords[t]||Array(16).fill(null)}
+/* shared layout (build 11): 64 pads for tracks 2-4 in proj().padShared, the page buttons pick 16 */
+const padShared=()=>proj().padShared||null;
+const padKept=(t,i)=>{const sh=padShared();return sh?sh[PADS.bank*16+i]:padChords(t)[i]};
+function padKeep(t,i,v){const sh=padShared();if(sh)sh[PADS.bank*16+i]=v&&v.slice(0,PAD_SHARED_NOTES);else padChords(t)[i]=v}
+const padNotesMax=()=>padShared()?PAD_SHARED_NOTES:PAD_CHORD_NOTES;
+/* Shift + 64: per track -> shared (track 2-4's pads become pages 1-3, past the 3rd note dropped, page 4 empty) and back */
+function padLayoutToggle(){const pj=proj(),sh=padShared();
+ if(sh){for(let t=1;t<=3;t++){const c=padChords(t);for(let i=0;i<16;i++)c[i]=sh[(t-1)*16+i]}pj.padShared=null}
+ else{pj.padShared=Array(64).fill(null);for(let t=1;t<=3;t++)padChords(t).forEach((c,i)=>{pj.padShared[(t-1)*16+i]=c&&c.slice(0,PAD_SHARED_NOTES)})}
+ PADS.bank=0;PADS.undo=null;msg(pj.padShared?"Pads: shared 64\npage 1":"Pads: per track",1000);emit("pads:layout");dirty()}
+function padBank(b){PADS.bank=b;PADS.undo=null;msg(`Pads ${["1-16","17-32","33-48","49-64"][b]}\nshared`,1000);emit("pads:bank");dirty()}
 function scaleChord(t,pad){const sc=padScale(t),low=padLow(t),deg=[];let p=low+((sc.root-low)%12+12)%12;
  for(;deg.length<14&&p<128;p++)if(inScale(sc,p))deg.push(p);
  const k=pad<8?pad:pad-8,n=pad<8?3:4;return [...Array(n).keys()].map(i=>deg[k+2*i]).filter(x=>x!=null)}
@@ -36,12 +49,12 @@ function padPress(i){if(PADS.down.has(i))return;const m=PADS.mode,rec=S.rec==="r
  if(m===1){const ch=S.globals[79];const e={drum:i,lit:[i],rec:null};PADS.down.set(i,e);if(ch>15){dirty();return}
   drum(i,100,now());midiDrum(i,100,now(),now()+.1);if(!S.menu&&!S.confirm)msg(`Drum ${i+1}\n${nm(S.globals[81]?S.globals[83+i]:S.globals[82]+i)}`,1000);if(rec&&isDrum())e.rec=padRecordDrum(i,100);emit("pads:press");dirty();return}
  const t=padTrack();let notes;
- if(m<5){const slots=padChords(t);
-  if(held("erase")){PADS.undo={t,pad:i,prev:slots[i]};slots[i]=null;msg(`Pad ${i+1}\nforgotten`,900);PADS.down.set(i,{lit:[]});emit("pads:erase");dirty();return}
-  if(S.cur===t&&S.keysDown.size){const keys=[...new Set([...S.keysDown.values()].map(kd=>kd.notes&&kd.notes[0]).filter(x=>x!=null))].sort((a,b)=>a-b).slice(0,PAD_CHORD_NOTES);
-   if(keys.length){PADS.undo={t,pad:i,prev:slots[i]};slots[i]=keys.map(p=>p-12*trk(t).oct);msg(`Pad ${i+1}\n${keys.map(nm).join(" ")}`,1200);PADS.down.set(i,{lit:[]});emit("pads:capture");dirty();return}}
+ if(m<5){const kept=padKept(t,i);
+  if(held("erase")){PADS.undo={t,pad:i,prev:kept};padKeep(t,i,null);msg(`Pad ${i+1}\nforgotten`,900);PADS.down.set(i,{lit:[]});emit("pads:erase");dirty();return}
+  if(S.cur===t&&S.keysDown.size){const keys=[...new Set([...S.keysDown.values()].map(kd=>kd.notes&&kd.notes[0]).filter(x=>x!=null))].sort((a,b)=>a-b).slice(0,padNotesMax());
+   if(keys.length){PADS.undo={t,pad:i,prev:kept};padKeep(t,i,keys.map(p=>p-12*trk(t).oct));msg(`Pad ${i+1}\n${keys.map(nm).join(" ")}`,1200);PADS.down.set(i,{lit:[]});emit("pads:capture");dirty();return}}
   /* a kept chord is stored as played at octave 0 and moves with the octave buttons */
-  notes=slots[i]?slots[i].map(p=>p+12*trk(t).oct).filter(p=>p>=0&&p<=127):scaleChord(t,i)}
+  notes=kept?kept.map(p=>p+12*trk(t).oct).filter(p=>p>=0&&p<=127):scaleChord(t,i)}
  else notes=rootChord(t,i);
  const show=()=>{if(m>=5)msg(`${i+1} ${ROOT_CHORD_NAMES[i]}\n${notes.map(nm).join(" ")}`,900);else nsShow(notes)};
  /* KSCON build 10: on a track in Arp mode the pad's notes go to its arpeggiator, as if held on the keys (Chord mode not applied) */
@@ -65,8 +78,11 @@ function padDown(id){let m;
  if(id==="t0seq"&&held("t0alt")){HELD.get("t0alt").used=true;padsSet(1);return true}
  if((m=id.match(/^t([1-3])alt$/))&&held(`t${m[1]}seq`)){padsSet(+m[1]+1);return true}
  if((m=id.match(/^t([0-3])mute$/))&&held(`t${m[1]}seq`)){HELD.get(id).used=true;padsSet(5+(+m[1]));return true}
- if(id==="exit"&&held("shift")&&PADS.mode>=2&&PADS.mode<5&&PADS.undo){const u=PADS.undo,slots=padChords(u.t),cur=slots[u.pad];slots[u.pad]=u.prev;u.prev=cur;
-  msg(`Pad ${u.pad+1}\n${slots[u.pad]?slots[u.pad].map(nm).join(" "):"scale chord"}`,1000);emit("pads:undo");dirty();return true}
+ if(id==="exit"&&held("shift")&&PADS.mode>=2&&PADS.mode<5&&PADS.undo){const u=PADS.undo,cur=padKept(u.t,u.pad);padKeep(u.t,u.pad,u.prev);u.prev=cur;
+  const k=padKept(u.t,u.pad);msg(`Pad ${u.pad+1}\n${k?k.map(nm).join(" "):"scale chord"}`,1000);emit("pads:undo");dirty();return true}
+ if(PADS.mode>=2&&PADS.mode<5&&(m=id.match(/^pg([0-3])$/))){
+  if(held("shift")){if(m[1]!=="3")return false;HELD.get("shift").used=true;padLayoutToggle();return true}
+  if(padShared()){padBank(+m[1]);return true}}
  if(PADS.mode&&(m=id.match(/^s(\d+)$/))){HELD.delete(id);padPress(+m[1]);return true}
  return false}
 function padUp(id){const m=id.match(/^s(\d+)$/);if(!m||!PADS.down.has(+m[1]))return false;padRelease(+m[1]);return true}
@@ -93,7 +109,7 @@ function nsShow(notes){if(S.menu||S.confirm)return;const tx=nsText(notes);if(tx)
 /* step lights while a pad mode is on (KSCON build 8, ns_leds): held pad bright white, the chord pad matching the chord on its track's
    keys bright in the track colour, kept chord / drum / root-chord pads dim track colour, empty chord pads dim white */
 function padStepLight(i){const m=PADS.mode,t=padTrack(),col=TCOL[t];if(PADS.down.has(i))return "#ffffff";
- if(m>=2&&m<5){const kept=padChords(t)[i];
+ if(m>=2&&m<5){const kept=padKept(t,i);
   if(S.cur===t&&S.keysDown.size){const km=pcMask([...S.keysDown.values()].filter(kd=>kd.tt==null).flatMap(kd=>kd.notes||kd.arp||[]));
    const pm=pcMask(kept?kept:scaleChord(t,i));if(km&&km===pm)return col}
   if(!kept)return dim("#ffffff",.35)}

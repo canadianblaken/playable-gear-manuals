@@ -48,6 +48,22 @@ down("k31");up("k31");down("s12");ok("near the top key a 13th moves down to fit"
 down("t1seq");tap("t1alt");up("t1seq");trk(1).pats[0]=newPat();down("rec");tap("play");up("rec");await W(300);down("s0");await W(150);up("s0");await W(80);tap("stop");
 ok("chord pads record on the selected track while recording",curPat(1).st.some(s=>s.n.length===3),curPat(1).st.filter(s=>s.n.length).map(s=>s.n.map(n=>n.p)));
 down("t1seq");tap("t1alt");up("t1seq");ok("modes switch off",PADS.mode===0);
+/* ---- KSCON build 11: shared pads ---- */
+reset();tap("t1trk");Object.assign(curPat(1),{scale:1,root:0});trk(1).oct=0;
+padChords(1)[0]=[60,64,67,71,74];padChords(2)[0]=[62];padChords(3)[15]=[65,69];
+down("t1seq");tap("t1alt");up("t1seq");
+tap("pg1");ok("per-track layout: page buttons stay stock",!padShared()&&PADS.bank===0);tap("pg0");
+down("shift");tap("pg3");up("shift");const sh11=padShared();
+ok("chord pad mode, Shift + 64: shared, tracks 2-4 become pages 1-3, 3 notes kept",sh11&&sh11[0].join()==="60,64,67"&&sh11[16].join()==="62"&&sh11[47].join()==="65,69"&&S.msg==="Pads: shared 64\npage 1",[sh11&&sh11.slice(0,1),S.msg]);
+tap("pg1");ok("a page button picks pads 17-32",PADS.bank===1&&S.msg==="Pads 17-32\nshared",[PADS.bank,S.msg]);
+down("s0");ok("step 1 now plays shared pad 17",PADS.down.get(0).notes.join()==="62",PADS.down.get(0).notes);up("s0");
+down("t1seq");tap("t1alt");up("t1seq");down("t2seq");tap("t2alt");up("t2seq");
+down("s0");ok("track 3 plays the same shared pads",PADS.down.get(0).notes.join()==="62"&&PADS.down.get(0).t===2,PADS.down.get(0));up("s0");
+tap("t2trk");tap("pg3");down("k12");down("k16");down("k19");down("k23");tap("s4");up("k12");up("k16");up("k19");up("k23");
+ok("capture in the shared layout keeps the lowest 3",sh11[52]&&sh11[52].join()==="60,64,67",sh11[52]);
+down("shift");tap("pg3");up("shift");
+ok("Shift + 64 again: per track, pages 1-3 back on tracks 2-4, page 4 dropped",!padShared()&&padChords(1)[0].join()==="60,64,67"&&padChords(3)[15].join()==="65,69"&&S.msg==="Pads: per track",[padShared(),padChords(1)[0]]);
+down("t2seq");tap("t2alt");up("t2seq");tap("pg1");ok("pads off: page buttons stock",PADS.mode===0&&PADS.bank===0);
 /* ---- KSCON builds 7-10 in the simulation: names, step lights, mod strip lock, pads into the arp ---- */
 reset();tap("t1trk");Object.assign(curPat(1),{scale:1,root:0});trk(1).oct=0;trk(1).chordOn=false;
 down("k16");ok("a key names its note (C4 = 60)",S.msg==="E4",S.msg);down("k12");down("k19");ok("held keys name their chord",S.msg==="C\nC4 E4 G4",S.msg);up("k12");up("k16");up("k19");
