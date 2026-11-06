@@ -456,6 +456,7 @@ const FEAT={
    ["Chord pads","Hold Seq and press Arp on track 2–4: steps play chords of the track's scale; hold a chord and tap a step to keep it there. Erase + step clears it, Shift + Exit undoes. Saved with the project.",{chap:"fwChordPads"}],
    ["Root chords","Hold Seq and press Mute: a key sets the root silently, steps 1–16 play 16 chord types on it.",{chap:"fwRootChords"}],
    ["Chord pads into the arpeggiator","Put the pads' track in Arp mode (its Arp button): holding a step arpeggiates its chord with the stock arp, at the Time Division rate. Seq mode plays plain chords again.",{chap:"fwPadArp"}],
+   ["Step play and octave follow","Build 12. Shared pads play the notes stored on them and the keyboard octave moves to show them. Shift + 48 turns on step play: Shift + any key plays the next pad, left to right; 2 s without a step starts again from pad 1.",{chap:"fwSharedPads"}],
    ["Shared pads","In chord pad mode, Shift + 64 switches the project to 64 pads shared by tracks 2–4 (up to 3 notes each); the page buttons pick which 16 the steps play. Shift + 64 again goes back to 16 per track. Per project, saved with it.",{chap:"fwSharedPads"}],
    ["Mod strip lock","Hold Shift and touch the mod strip to lock it (and again to unlock), so a bump does not change the mod value.",{chap:"fwModLock"}],
    ["Step lights, key lights and recording","In a pad mode the steps show the pads (kept chords, empty pads, the one held, the one matching the keys); pad notes light the keys they play and are recorded like key presses.",{chap:"fwLightsRec"}],
