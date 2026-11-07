@@ -83,6 +83,11 @@ down("shift");down("k5");up("k5");up("shift");const pj12=S.proj;loadProject(pj12
 down("shift");down("k5");ok("a project change: step play starts again at pad 1",pn(PADS.spad)==="64",[S.proj,PADS.step]);up("k5");up("shift");
 down("shift");tap("pg2");up("shift");ok("Shift + 48 again: step play off",!proj().padStep&&S.msg==="Step play off",S.msg);
 toggleLatch("shift");tap("pg2");down("k3");const lt12=pn(PADS.spad);up("k3");ok("latched Shift (the page's way): 48 turns step play on, a key steps",proj().padStep&&lt12==="64"&&!PADS.down.size,[lt12]);toggleLatch("shift");
+/* ---- Make bass from the panel ---- */
+reset();Object.assign(curPat(1),{scale:1,root:0,len:16});[[0,[60,64,67]],[8,[57,60,64]]].forEach(([i,ns])=>{curPat(1).st[i]={on:true,skip:[0,0,0,0],n:ns.map(p=>({p,g:4,v:100,t:0,r:100}))}});curPat(1).valid=true;
+down("t2seq");tap("t1trk");ok("Seq on track 3 + Track 2: a root bass line from track 2",S.msg==="Bass: Root\nfrom track 2"&&curPat(2).st[0].n[0].p===36&&curPat(2).st[8].n[0].p===45,[S.msg,curPat(2).st[0].n,curPat(2).st[8].n]);
+tap("s2");ok("step 3 with Seq held: Octaves",S.msg==="Bass: Octaves\nfrom track 2"&&curPat(2).st[1].n[0].p===48,[S.msg,curPat(2).st[1].n]);up("t2seq");
+tap("s2");ok("Seq let go: steps are stock again",S.msg!=="Bass: Octaves\nfrom track 2"||PADS.down.size===0);
 /* ---- KSCON builds 7-10 in the simulation: names, step lights, mod strip lock, pads into the arp ---- */
 reset();tap("t1trk");Object.assign(curPat(1),{scale:1,root:0});trk(1).oct=0;trk(1).chordOn=false;
 down("k16");ok("a key names its note (C4 = 60)",S.msg==="E4",S.msg);down("k12");down("k19");ok("held keys name their chord",S.msg==="C\nC4 E4 G4",S.msg);up("k12");up("k16");up("k19");

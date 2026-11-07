@@ -8,7 +8,7 @@
    shared pads (build 11: in chord pad mode Shift + 64 switches the project to 64 pads shared by tracks 2-4, 3 notes each, and back;
    the page buttons pick the 16 the steps play), the keyboard follows shared pads (build 12), step play (builds 12-13: in the shared
    layout Shift + 48 turns it on, then Shift + any key plays the next pad with notes, 2 s without one starts again at pad 1) and the
-   octave buttons moving the shared pads (build 14). */
+   octave buttons moving the shared pads (build 14), and Make bass from the panel (Seq + Track, steps 1-5 pick the style). */
 const PADS={mode:0,root:null,down:new Map(),undo:null,bank:0,pj:null,poff:{},loct:{},step:0,stime:0,skey:null,spad:null,nocap:false};
 const PAD_CHORD_NOTES=5,PAD_SHARED_NOTES=3,PAD_U=0x40,PAD_D=0x20;
 /* root chords, by step: scale degrees above the root (0 = root), +U one octave up, +D one octave down */
@@ -97,9 +97,20 @@ function padDown(id){let m;
   if(held("shift")){if(m[1]==="2"&&padShared()){HELD.get("shift").used=true;padStepToggle();return true}
    if(m[1]!=="3")return false;HELD.get("shift").used=true;padLayoutToggle();return true}
   if(padShared()){padBank(+m[1]);return true}}
+ /* Make bass: hold Seq on the bass track and press the chord track's Track button; steps 1-5 with that Seq still held pick the style */
+ if((m=id.match(/^t([0-3])trk$/))){const b=[0,1,2,3].find(x=>x!==+m[1]&&held(`t${x}seq`));
+  if(b!=null){HELD.get(`t${b}seq`).used=true;PADS.bass={b,c:+m[1],style:PADS.bassStyle||0};padBass();return true}}
+ if(PADS.bass&&held(`t${PADS.bass.b}seq`)&&(m=id.match(/^s([0-4])$/))){HELD.delete(id);PADS.bass.style=PADS.bassStyle=+m[1];padBass();return true}
  if(PADS.mode&&(m=id.match(/^s(\d+)$/))){HELD.delete(id);padPress(+m[1]);return true}
  return false}
 function padUp(id){const m=id.match(/^s(\d+)$/);if(!m||!PADS.down.has(+m[1]))return false;padRelease(+m[1]);return true}
+/* Make bass (bass_gen.c): the chord track's current pattern -> a bass line (C2-B2) in the bass track's current pattern */
+function padBass(){const {b,c,style}=PADS.bass,src=curPat(c),dst=curPat(b);
+ if(isDrum(b)||isDrum(c)){msg(`Bass: not with\ndrum mode on track ${isDrum(b)?b+1:c+1}`,1000);return}
+ const sp={len:src.len,root:src.root,scale:src.scale,steps:src.st.map(st=>({on:st.on,passes:15,notes:st.n.map(n=>({pitch:n.p,gate:Graw(n.g),vel:n.v,shift:n.t,rand:n.r}))}))};
+ let bs;try{bs=makeBass(sp,BASS_STYLES[style][0],2)}catch(e){msg(`Bass: no notes\nin track ${c+1}`,1000);return}
+ Object.assign(dst,{len:bs.len,root:bs.root,scale:bs.scale,valid:true,st:bs.steps.map(x=>({on:x.on,skip:[0,0,0,0],n:x.notes.map(n=>({p:n.pitch,g:gateSteps(n.gate),v:n.vel,t:n.shift,r:n.rand}))}))});
+ msg(`Bass: ${["Root","Root + 5th","Octaves","Pulse","Follow"][style]}\nfrom track ${c+1}`,1000);emit("pads:bass");dirty()}
 /* step play (builds 12-13), per project (chord block byte 5 on the device; Save Project keeps it) */
 function padStepToggle(){const pj=proj();pj.padStep=!pj.padStep;padProjCheck();PADS.step=0;msg(pj.padStep?"Step play on\nShift+key = next":"Step play off",1200);emit("pads:steptoggle");dirty()}
 /* Shift + any key with chord pads on, shared layout and step play on: the next shared pad with notes, then the one after it */
