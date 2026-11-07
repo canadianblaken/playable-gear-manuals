@@ -6,13 +6,26 @@
    pick the root, silently. The device shows no message for these; the simulation does, so the mode is visible.
    Also simulated: note/chord names (build 7), step lights (build 8), mod strip lock (build 9), pads into the arp (build 10),
    shared pads (build 11: in chord pad mode Shift + 64 switches the project to 64 pads shared by tracks 2-4, 3 notes each, and back;
-   the page buttons pick the 16 the steps play). */
-const PADS={mode:0,root:null,down:new Map(),undo:null,bank:0};
+   the page buttons pick the 16 the steps play), the keyboard follows shared pads (build 12), step play (builds 12-13: in the shared
+   layout Shift + 48 turns it on, then Shift + any key plays the next pad with notes, 2 s without one starts again at pad 1) and the
+   octave buttons moving the shared pads (build 14). */
+const PADS={mode:0,root:null,down:new Map(),undo:null,bank:0,pj:null,poff:{},loct:{},step:0,stime:0,skey:null,spad:null,nocap:false};
 const PAD_CHORD_NOTES=5,PAD_SHARED_NOTES=3,PAD_U=0x40,PAD_D=0x20;
 /* root chords, by step: scale degrees above the root (0 = root), +U one octave up, +D one octave down */
 const ROOT_CHORDS=[[0,PAD_U],[0,1,4],[0,2,4],[0,3,4],[0,4,PAD_U],[0,2,4,5],[0,2,4,6],[PAD_U,2|PAD_U,4|PAD_U],[0,2,4,6,8],[0,2,4,8],[0,2,6,8,10],[2,4,PAD_U],[0,2,6,8,12],[4,PAD_U,2|PAD_U],[0,3,4,6],[PAD_D,2|PAD_D,4|PAD_D]];
 const ROOT_CHORD_NAMES=["root + octave","sus2","triad","sus4","power","6th","7th","triad +8va","9th","add9","11th","1st inversion","13th","2nd inversion","7sus4","triad -8va"];
-function resetPads(){padsReleaseAll();PADS.mode=0;PADS.root=null;PADS.undo=null;PADS.bank=0}
+function resetPads(){padsReleaseAll();PADS.mode=0;PADS.root=null;PADS.undo=null;PADS.bank=0;PADS.pj=null;padProjCheck()}
+/* per-project RAM state, reset on a project change as chords_load does: pad octave offsets and the step play position */
+function padProjCheck(){if(PADS.pj===S.proj)return;PADS.pj=S.proj;PADS.poff={};PADS.loct={};PADS.step=0}
+/* build 14: shared pads play as stored plus the octaves the octave buttons moved since: an octave change since the last press of
+   that track's pads, other than the follow's own, adds to its offset (po_shift). Per track pads: kept at octave 0, move with it. */
+function padShift(t){const tr=trk(t);if(!padShared())return 12*tr.oct;padProjCheck();
+ if(PADS.loct[t]!=null)PADS.poff[t]=clamp((PADS.poff[t]||0)+tr.oct-PADS.loct[t],-4,4);PADS.loct[t]=tr.oct;return 12*(PADS.poff[t]||0)}
+/* build 12: the keyboard octave follows shared pads onto the 37 keys shown, by the fewest octaves (oc_follow) */
+function padFollow(t,notes){if(!padShared()||!notes.length)return;const tr=trk(t),lo=Math.min(...notes),hi=Math.max(...notes),
+  fits=o=>o>=-3&&o<=2&&48+12*o<=lo&&hi<=84+12*o;if(fits(tr.oct))return;let best=null;
+ for(let d=1;d<=5&&best==null;d++){if(fits(tr.oct-d))best=tr.oct-d;else if(fits(tr.oct+d))best=tr.oct+d}
+ if(best==null)best=clamp(Math.floor((lo-48)/12),-3,2);if(best===tr.oct)return;tr.oct=best;PADS.loct[t]=best;emit("oct")}
 const padTrack=()=>PADS.mode>=5?PADS.mode-5:PADS.mode>=2?PADS.mode-1:0;
 const padLow=t=>48+12*trk(t).oct;                      // lowest key shown for track t
 /* the track's scale as a mask from its root; Chromatic (and drum mode) count as major */
@@ -51,10 +64,10 @@ function padPress(i){if(PADS.down.has(i))return;const m=PADS.mode,rec=S.rec==="r
  const t=padTrack();let notes;
  if(m<5){const kept=padKept(t,i);
   if(held("erase")){PADS.undo={t,pad:i,prev:kept};padKeep(t,i,null);msg(`Pad ${i+1}\nforgotten`,900);PADS.down.set(i,{lit:[]});emit("pads:erase");dirty();return}
-  if(S.cur===t&&S.keysDown.size){const keys=[...new Set([...S.keysDown.values()].map(kd=>kd.notes&&kd.notes[0]).filter(x=>x!=null))].sort((a,b)=>a-b).slice(0,padNotesMax());
-   if(keys.length){PADS.undo={t,pad:i,prev:kept};padKeep(t,i,keys.map(p=>p-12*trk(t).oct));msg(`Pad ${i+1}\n${keys.map(nm).join(" ")}`,1200);PADS.down.set(i,{lit:[]});emit("pads:capture");dirty();return}}
-  /* a kept chord is stored as played at octave 0 and moves with the octave buttons */
-  notes=kept?kept.map(p=>p+12*trk(t).oct).filter(p=>p>=0&&p<=127):scaleChord(t,i)}
+  if(S.cur===t&&S.keysDown.size&&!PADS.nocap){const keys=[...new Set([...S.keysDown.values()].map(kd=>kd.notes&&kd.notes[0]).filter(x=>x!=null))].sort((a,b)=>a-b).slice(0,padNotesMax());
+   if(keys.length){const sh=padShift(t);PADS.undo={t,pad:i,prev:kept};padKeep(t,i,keys.map(p=>p-sh));msg(`Pad ${i+1}\n${keys.map(nm).join(" ")}`,1200);PADS.down.set(i,{lit:[]});emit("pads:capture");dirty();return}}
+  /* a kept chord is stored as played at octave 0 and moves with the octave buttons (shared: padShift) */
+  if(kept){const sh=padShift(t);notes=kept.map(p=>p+sh).filter(p=>p>=0&&p<=127);padFollow(t,notes)}else notes=scaleChord(t,i)}
  else notes=rootChord(t,i);
  const show=()=>{if(m>=5)msg(`${i+1} ${ROOT_CHORD_NAMES[i]}\n${notes.map(nm).join(" ")}`,900);else nsShow(notes)};
  /* KSCON build 10: on a track in Arp mode the pad's notes go to its arpeggiator, as if held on the keys (Chord mode not applied) */
@@ -81,11 +94,21 @@ function padDown(id){let m;
  if(id==="exit"&&held("shift")&&PADS.mode>=2&&PADS.mode<5&&PADS.undo){const u=PADS.undo,cur=padKept(u.t,u.pad);padKeep(u.t,u.pad,u.prev);u.prev=cur;
   const k=padKept(u.t,u.pad);msg(`Pad ${u.pad+1}\n${k?k.map(nm).join(" "):"scale chord"}`,1000);emit("pads:undo");dirty();return true}
  if(PADS.mode>=2&&PADS.mode<5&&(m=id.match(/^pg([0-3])$/))){
-  if(held("shift")){if(m[1]!=="3")return false;HELD.get("shift").used=true;padLayoutToggle();return true}
+  if(held("shift")){if(m[1]==="2"&&padShared()){HELD.get("shift").used=true;padStepToggle();return true}
+   if(m[1]!=="3")return false;HELD.get("shift").used=true;padLayoutToggle();return true}
   if(padShared()){padBank(+m[1]);return true}}
  if(PADS.mode&&(m=id.match(/^s(\d+)$/))){HELD.delete(id);padPress(+m[1]);return true}
  return false}
 function padUp(id){const m=id.match(/^s(\d+)$/);if(!m||!PADS.down.has(+m[1]))return false;padRelease(+m[1]);return true}
+/* step play (builds 12-13), per project (chord block byte 5 on the device; Save Project keeps it) */
+function padStepToggle(){const pj=proj();pj.padStep=!pj.padStep;padProjCheck();PADS.step=0;msg(pj.padStep?"Step play on\nShift+key = next":"Step play off",1200);emit("pads:steptoggle");dirty()}
+/* Shift + any key with chord pads on, shared layout and step play on: the next shared pad with notes, then the one after it */
+function padStepKey(k){const sh=padShared();if(!held("shift")||PADS.mode<2||PADS.mode>4||!sh||!proj().padStep)return false;padProjCheck();
+ const t0=Date.now();if(t0-PADS.stime>2000)PADS.step=0;PADS.stime=t0;
+ let q=-1;for(let n=0;n<64;n++){const c=(PADS.step+n)%64;if(sh[c]&&sh[c].length){q=c;break}}if(q<0)return true;
+ if(PADS.skey!=null){PADS.skey=null;padRelease(PADS.spad)}
+ PADS.bank=q>>4;PADS.nocap=true;padPress(q&15);PADS.nocap=false;PADS.skey=k;PADS.spad=q&15;PADS.step=(q+1)%64;emit("pads:step");dirty();return true}
+function padStepUp(k){if(PADS.skey!==k)return false;PADS.skey=null;padRelease(PADS.spad);dirty();return true}
 /* root chords: a key on that track picks the root and makes no sound */
 function padKey(k){if(PADS.mode<5||S.cur!==PADS.mode-5||held("shift"))return false;PADS.root=q(S.cur,keyMidi(k));S.keysDown.set(k,{});msg(`Root\n${nm(PADS.root)}`,700);emit("pads:root");dirty();return true}
 /* key lights for what the pads play, on the selected track (drum hits while track 1 shows drums) */

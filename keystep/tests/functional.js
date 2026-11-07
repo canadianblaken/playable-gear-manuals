@@ -64,6 +64,25 @@ ok("capture in the shared layout keeps the lowest 3",sh11[52]&&sh11[52].join()==
 down("shift");tap("pg3");up("shift");
 ok("Shift + 64 again: per track, pages 1-3 back on tracks 2-4, page 4 dropped",!padShared()&&padChords(1)[0].join()==="60,64,67"&&padChords(3)[15].join()==="65,69"&&S.msg==="Pads: per track",[padShared(),padChords(1)[0]]);
 down("t2seq");tap("t2alt");up("t2seq");tap("pg1");ok("pads off: page buttons stock",PADS.mode===0&&PADS.bank===0);
+/* ---- KSCON builds 12-14: the keyboard follows shared pads, step play, octave buttons move shared pads ---- */
+reset();tap("t1trk");Object.assign(curPat(1),{scale:1,root:4});trk(1).oct=0;
+down("t1seq");tap("t1alt");up("t1seq");down("shift");tap("pg3");up("shift");
+const sh12=padShared(),pn=i=>PADS.down.get(i).notes.join();sh12[0]=[64];sh12[1]=[44];sh12[2]=[71,75,78];sh12[17]=[59];
+down("s0");ok("a shared pad on the keys plays as stored, the octave stays",pn(0)==="64"&&trk(1).oct===0,[pn(0),trk(1).oct]);up("s0");
+down("s1");ok("below the keys: the keyboard moves down an octave",pn(1)==="44"&&trk(1).oct===-1,[pn(1),trk(1).oct]);up("s1");
+tap("octup");tap("octup");down("s0");ok("octave up twice: the pads move up 2 octaves (64 -> 88)",pn(0)==="88"&&trk(1).oct===1,[pn(0),trk(1).oct]);up("s0");
+down("s1");ok("the follow moving the keyboard keeps the offset (44 -> 68)",pn(1)==="68"&&trk(1).oct===1,[pn(1),trk(1).oct]);up("s1");
+tap("octdn");tap("octdn");down("s0");ok("octave down twice: back to the stored notes",pn(0)==="64",pn(0));up("s0");
+down("shift");down("k5");ok("step play off: Shift + key stays stock",PADS.skey==null&&!PADS.down.size);up("k5");up("shift");
+down("shift");tap("pg2");up("shift");ok("Shift + 48: step play on",proj().padStep&&S.msg==="Step play on\nShift+key = next",S.msg);
+down("k12");down("shift");const st12=[];for(let i=0;i<5;i++){down("k5");st12.push(pn(PADS.spad)+"@"+PADS.bank);up("k5");ok("released on key up",!PADS.down.size)}up("shift");up("k12");
+ok("Shift + key plays the next pad with notes, pages follow, wraps",st12.join(" ")==="64@0 44@0 71,75,78@0 59@1 64@0",st12);
+ok("held keys are never captured",sh12[0].join()==="64"&&sh12[1].join()==="44",[sh12[0],sh12[1]]);
+down("shift");down("k5");up("k5");PADS.stime-=2500;down("k5");ok("2 s without a step: from pad 1 again",pn(PADS.spad)==="64",pn(PADS.spad));up("k5");up("shift");
+down("shift");down("k5");up("k5");up("shift");const pj12=S.proj;loadProject(pj12+1);loadProject(pj12);
+down("shift");down("k5");ok("a project change: step play starts again at pad 1",pn(PADS.spad)==="64",[S.proj,PADS.step]);up("k5");up("shift");
+down("shift");tap("pg2");up("shift");ok("Shift + 48 again: step play off",!proj().padStep&&S.msg==="Step play off",S.msg);
+toggleLatch("shift");tap("pg2");down("k3");const lt12=pn(PADS.spad);up("k3");ok("latched Shift (the page's way): 48 turns step play on, a key steps",proj().padStep&&lt12==="64"&&!PADS.down.size,[lt12]);toggleLatch("shift");
 /* ---- KSCON builds 7-10 in the simulation: names, step lights, mod strip lock, pads into the arp ---- */
 reset();tap("t1trk");Object.assign(curPat(1),{scale:1,root:0});trk(1).oct=0;trk(1).chordOn=false;
 down("k16");ok("a key names its note (C4 = 60)",S.msg==="E4",S.msg);down("k12");down("k19");ok("held keys name their chord",S.msg==="C\nC4 E4 G4",S.msg);up("k12");up("k16");up("k19");

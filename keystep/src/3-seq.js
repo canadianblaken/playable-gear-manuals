@@ -192,7 +192,7 @@ function pasteSteps(i){const c=S.copy,dr=isDrum();if(!c||c.kind!=="steps"){msg("
  c.items.forEach(x=>{const k=at+x.off;if(k>63){part=true;return}if(dr)pat.lanes[S.lane].st[k]=deep(x.d);else pat.st[k]=deep(x.d)});pat.valid=true;msg(part?"Steps partially\nPasted":c.items.length>1?"Steps\nPasted":"Step\nPasted");dirty()}
 
 /* ---------- projects ---------- */
-function loadProject(n){S.proj=n;mapCache.clear();P.forEach(p=>p.pend=null);S.sceneCur=-1;msg("Project\nLoaded");emit("project:"+n);dirty()}
+function loadProject(n){S.proj=n;mapCache.clear();if(typeof PADS!=="undefined")PADS.pj=null;P.forEach(p=>p.pend=null);S.sceneCur=-1;msg("Project\nLoaded");emit("project:"+n);dirty()}
 function saveProject(){const p=S.proj,r=S.ram[p];r.tracks.forEach(t=>t.valid=true);const name=S.flash[p].name;S.flash[p]=deep(r);S.flash[p].name=name;r.name=name;msg("Project\nSaved");emit("save:project");dirty()}
 function eraseProject(){const p=S.proj;S.ram[p]=newProject();S.flash[p]=newProject();msg("Project\nErased");emit("erase:project");dirty()}
 function copyProject(){const src=S.proj,dst=(src+1)%16,name=S.flash[dst].name;S.flash[dst]=deep(S.ram[src]);S.flash[dst].name=name;S.ram[dst]=deep(S.flash[dst]);msg("Project\nCopied");emit("copy:project");dirty()}
